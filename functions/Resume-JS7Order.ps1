@@ -11,7 +11,7 @@ This cmdlet resumes orders in a JS7 Controller.
 Specifies the identifier of an order.
 
 .PARAMETER Position
-Specifies the numeric position of an order in the workflow.
+Specifies the position of an order in the workflow.
 
 .PARAMETER Arguments
 Specifies the arguments for the order. Arguments are created from a hashmap,

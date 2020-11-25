@@ -2,31 +2,35 @@ function Get-JS7Workflow
 {
 <#
 .SYNOPSIS
-Returns workflows from the JS7 JOC Cockpit.
+Returns workflows from the JS7 inventory
 
 .DESCRIPTION
-Workflows are returned from JOC Cockpit - independent of their deployment status with specific Controller instances..
+Workflows are returned from JOC Cockpit - independent of their deployment status with specific Controller instances.
 Workflows can be selected either by the folder of the workflow location including sub-folders or by an individual workflow.
 
 Resulting workflows can be forwarded to other cmdlets for pipelined bulk operations.
 
 .PARAMETER WorkflowPath
 Optionally specifies the path and name of a workflow that should be returned.
-If the name of a workflow is specified then the -Directory parameter is used to determine the folder.
-Otherwise the -WorkflowPath parameter is assumed to include the full path and name of the workflow.
 
-One of the parameters -Directory or -WorkflowPath has to be specified.
+One of the parameters -Folder, -WorkflowPath or -RegularExpression has to be specified.
 
-.PARAMETER Directory
+.PARAMETER WorkflowVersionId
+Deployed workflows can be assigned a version identifier. This parameters allows to select 
+workflows that are assigned the specified version.
+
+.PARAMETER Folder
 Optionally specifies the folder for which workflows should be returned. 
 
-One of the parameters -Directory and -WorkflowPath has to be specified.
+One of the parameters -Folder, -WorkflowPath or -RegularExpression has to be specified.
 
 .PARAMETER Recursive
 Specifies that any sub-folders should be looked up. By default no sub-folders will be searched for workflows.
 
 .PARAMETER RegularExpression
 Limits result to workflow paths that correspond the given regular expression.
+
+One of the parameters -Folder, -WorkflowPath or -RegularExpression has to be specified.
 
 .PARAMETER Compact
 Specifies that fewer attributes of a workflow are returned.
@@ -40,7 +44,7 @@ $workflows = Get-JS7Workflow
 Returns all workflows.
 
 .EXAMPLE
-$workflows = Get-JS7Workflow -Directory /some_path -Recursive
+$workflows = Get-JS7Workflow -Folder /some_path -Recursive
 
 Returns all workflows that are configured with the specified path
 including any sub-folders.
@@ -60,7 +64,9 @@ param
     [Parameter(Mandatory=$False,ValueFromPipeline=$False,ValueFromPipelinebyPropertyName=$True)]
     [string] $WorkflowPath,
     [Parameter(Mandatory=$False,ValueFromPipeline=$False,ValueFromPipelinebyPropertyName=$True)]
-    [string] $Directory = '/',
+    [string] $WorkflowVersionId,
+    [Parameter(Mandatory=$False,ValueFromPipeline=$False,ValueFromPipelinebyPropertyName=$True)]
+    [string] $Folder = '/',
     [Parameter(Mandatory=$False,ValueFromPipeline=$False,ValueFromPipelinebyPropertyName=$True)]
     [switch] $Recursive,
     [Parameter(Mandatory=$False,ValueFromPipeline=$False,ValueFromPipelinebyPropertyName=$True)]
@@ -73,51 +79,53 @@ param
         Approve-JS7Command $MyInvocation.MyCommand
         $stopWatch = Start-StopWatch
 
-        $returnWorkflows = @()        
+        $workflowPaths = @()
+        $folders = @()
     }
         
     Process
     {
-        Write-Debug ".. $($MyInvocation.MyCommand.Name): parameter Directory=$Directory, Workflow=$Workflow"
+        Write-Debug ".. $($MyInvocation.MyCommand.Name): parameter Folder=$Folder, WorkflowPath=$WorkflowPath, RegularExpression=$RegularExpression"
 
-        if ( !$Directory -and !$WorkflowPath )
+        if ( !$Folder -and !$WorkflowPath -and !$RegularExpression )
         {
-            throw "$($MyInvocation.MyCommand.Name): no directory and no workflow specified, use -Directory or -WorkflowPath"
+            throw "$($MyInvocation.MyCommand.Name): no folder,no workflow path and no regular expression specified, use -Folder, -WorkflowPath or -RegularExpression"
         }
 
-        if ( $Directory -and $Directory -ne '/' )
-        { 
-            if ( $Directory.Substring( 0, 1) -ne '/' ) {
-                $Directory = '/' + $Directory
-            }
-        
-            if ( $Directory.Length -gt 1 -and $Directory.LastIndexOf( '/' )+1 -eq $Directory.Length )
-            {
-                $Directory = $Directory.Substring( 0, $Directory.Length-1 )
-            }
-        }
-
-        if ( $Directory -eq '/' -and !$WorkflowPath -and !$Recursive )
+        if ( $Folder -eq '/' -and !$WorkflowPath -and !$Recursive )
         {
             $Recursive = $true
         }
-        
-        if ( $WorkflowPath ) 
+     
+        if ( $WorkflowPath )
         {
-            if ( (Get-JS7Object-Basename $WorkflowPath) -ne $WorkflowPath ) # workflow name includes a path
+            $objWorkflow = New-Object PSObject
+            Add-Member -Membertype NoteProperty -Name 'path' -value $WorkflowPath -InputObject $body
+
+            if ( $WorkflowVersionId )
             {
-                $Directory = Get-JS7Object-Parent $WorkflowPath
-            } else { # workflow name includes no directory
-                if ( $Directory -eq '/' )
-                {
-                    $WorkflowPath = $Directory + $WorkflowPath
-                } else {
-                    $WorkflowPath = $Directory + '/' + $WorkflowPath
-                }
+                Add-Member -Membertype NoteProperty -Name 'versionId' -value $WorkflowVersionId -InputObject $body
             }
+
+            $workflowPaths += $objWorkflow
         }
 
+        if ( $Folder )
+        {
+            $objFolder = New-Object PSObject
+            Add-Member -Membertype NoteProperty -Name 'folder' -value $Folder -InputObject $body
 
+            if ( $Recursive )
+            {
+                Add-Member -Membertype NoteProperty -Name 'recursive' -value $True -InputObject $body
+            }
+
+            $folders += $objFolder
+        }
+    }
+
+    End
+    {
         $body = New-Object PSObject
         Add-Member -Membertype NoteProperty -Name 'controllerId' -value $script:jsWebService.ControllerId -InputObject $body
         
@@ -126,21 +134,14 @@ param
             Add-Member -Membertype NoteProperty -Name 'compact' -value $true -InputObject $body
         }
 
-        if ( $WorkflowPath )
+        if ( $workflowPaths )
         {
-            $objWorkflow = New-Object PSObject
-            Add-Member -Membertype NoteProperty -Name 'path' -value $WorkflowPath -InputObject $objWorkflow
-
-            Add-Member -Membertype NoteProperty -Name 'workflowIds' -value @( $objWorkflow ) -InputObject $body
+            Add-Member -Membertype NoteProperty -Name 'workflowIds' -value $workflowPaths -InputObject $body
         }
 
-        if ( $Directory )
+        if ( $folders )
         {
-            $objFolder = New-Object PSObject
-            Add-Member -Membertype NoteProperty -Name 'folder' -value $Directory -InputObject $objFolder
-            Add-Member -Membertype NoteProperty -Name 'recursive' -value ($Recursive -eq $true) -InputObject $objFolder
-
-            Add-Member -Membertype NoteProperty -Name 'folders' -value @( $objFolder ) -InputObject $body
+            Add-Member -Membertype NoteProperty -Name 'folders' -value $folders -InputObject $body
         }
 
         if ( $RegularExpression )
@@ -159,10 +160,7 @@ param
         }        
 
         $returnWorkflows
-    }
     
-    End
-    {
         Log-StopWatch $MyInvocation.MyCommand.Name $stopWatch
     }
 }

@@ -2,7 +2,7 @@ function Get-JS7Order
 {
 <#
 .SYNOPSIS
-Returns orders from the JS7 Controller.
+Returns orders from the JS7 Controller
 
 .DESCRIPTION
 Orders are selected from the JS7 Controller
@@ -14,14 +14,16 @@ Orders are selected from the JS7 Controller
 Resulting orders can be forwarded to other cmdlets for pipelined bulk operations.
 
 .PARAMETER OrderId
-Optionally specifies the unique identifier of an order that should be returned.
+Optionally specifies the identifier of an order that should be returned.
 
 .PARAMETER WorkflowPath
 Optionally specifies the path and name of a workflow for which orders should be returned.
-If the name of a workflow is specified then the -Folder parameter is used to determine the folder.
-Otherwise the -WorkflowPath parameter is assumed to include the full path and name of the workflow.
 
 One of the parameters -Folder, -WorkflowPath or -OrderId has to be specified if no pipelined order objects are provided.
+
+.PARAMETER WorkflowVersionId
+Deployed workflows can be assigned a version identifier. This parameters allows to select 
+workflows that are assigned the specified version.
 
 .PARAMETER Folder
 Optionally specifies the folder with workflows for which orders should be returned.
@@ -63,6 +65,10 @@ if a job in the workflow fails.
 Specifies that orders should be returned that are blocked by a resource, e.g. if a job's task limit
 is exceeded and the order has to wait for the next available task.
 
+.PARAMETER IgnoreFailed
+Specifies that errors relating to orders not being found are ignored.
+An empty response will be returned.
+
 .OUTPUTS
 This cmdlet returns an array of order objects.
 
@@ -74,8 +80,8 @@ Returns all orders available with a JS7 Controller.
 .EXAMPLE
 $orders = Get-JS7Order -Folder /some_path -Recursive
 
-Returns all orders that are configured for workflows with the folder "some_path"
-inclluding any sub-folders.
+Returns all orders that are configured for workflows with the folder "/some_path"
+including any sub-folders.
 
 .EXAMPLE
 $orders = Get-JS7Order -WorkflowPath /test/globals/workflow1
@@ -85,13 +91,13 @@ Returns the orders for workflow "workflow1" from the folder "/test/globals".
 .EXAMPLE
 $orders = Get-JS7Order -OrderId #2020-11-19#P0000000498-orderSampleWorfklow2a
 
-Returns the order with the respective identifier
+Returns the order with the respective identifier.
 
 .EXAMPLE
 $orders = Get-JS7Order -Suspended -Waiting
 
 Returns any orders that have been suspended, e.g. after job failures, or
-that are set back to retry execution of a job after failure.
+that are waiting to retry execution of a job after failure.
 
 .LINK
 about_js7
@@ -100,7 +106,7 @@ about_js7
 [cmdletbinding()]
 param
 (
-    [Parameter(Mandatory=$False,ValueFromPipeline=$False,ValueFromPipelinebyPropertyName=$True)]
+    [Parameter(Mandatory=$False,ValueFromPipeline=$True,ValueFromPipelinebyPropertyName=$True)]
     [string] $OrderId,
     [Parameter(Mandatory=$False,ValueFromPipeline=$False,ValueFromPipelinebyPropertyName=$True)]
     [string] $WorkflowPath,
@@ -125,7 +131,9 @@ param
     [Parameter(Mandatory=$False,ValueFromPipeline=$False,ValueFromPipelinebyPropertyName=$True)]
     [switch] $Failed,
     [Parameter(Mandatory=$False,ValueFromPipeline=$False,ValueFromPipelinebyPropertyName=$True)]
-    [switch] $Blocked
+    [switch] $Blocked,
+    [Parameter(Mandatory=$False,ValueFromPipeline=$False,ValueFromPipelinebyPropertyName=$True)]
+    [switch] $IgnoreFailed
 )
     Begin
     {
@@ -206,7 +214,7 @@ param
             }
             
             Add-Member -Membertype NoteProperty -Name 'orderId' -value $orderId -InputObject $body            
-            Add-Member -Membertype NoteProperty -Name 'suppressNotExistException' -value $True -InputObject $body            
+            Add-Member -Membertype NoteProperty -Name 'suppressNotExistException' -value $False -InputObject $body            
 
             [string] $requestBody = $body | ConvertTo-Json -Depth 100
             $response = Invoke-JS7WebRequest -Path '/order' -Body $requestBody
@@ -214,6 +222,8 @@ param
             if ( $response.StatusCode -eq 200 )
             {
                 $returnOrders = ( $response.Content | ConvertFrom-JSON )
+            } elseif ( $response.StatusCode -eq 420 -and $IgnoreFailed ) {
+                # no exception
             } else {
                 throw ( $response | Format-List -Force | Out-String )
             }
@@ -276,6 +286,8 @@ param
             if ( $response.StatusCode -eq 200 )
             {
                 $returnOrders = ( $response.Content | ConvertFrom-JSON ).orders
+            } elseif ( $response.StatusCode -eq 420 -and $IgnoreFailed ) {
+                # no exception
             } else {
                 throw ( $response | Format-List -Force | Out-String )
             }

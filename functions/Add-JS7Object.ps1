@@ -2,14 +2,14 @@ function Add-JS7Object
 {
 <#
 .SYNOPSIS
-Add a configuration object such as a workflow from a JSON file to the JOC Cockpit inventory.
+Add a configuration object such as a workflow from a JSON file to the JOC Cockpit inventory
 
 .DESCRIPTION
-This cmdlet imports configuration objects from JSON files and stores them with JOC Cockpit.
-Consider that imported objects have to be deployed with the Deploy-JS7Object cmdlet.
+This cmdlet reads configuration objects from JSON files and stores them with JOC Cockpit.
+Consider that imported objects have to be deployed with the Deploy-JS7DeployableObject and Deploy-JS7ReleasableObject cmdlets.
 
 .PARAMETER Path
-Specifies the directory, sub-directories and name of the object, e.g. a workflow path.
+Specifies the folder, sub-folder and name of the object, e.g. a workflow path.
 
 .PARAMETER Type
 Specifies the object type which is one of: 
@@ -20,7 +20,7 @@ Specifies the object type which is one of:
 * JUNCTION
 * WORKINGDAYSCALENDAR
 * NONWORKINGDAYSCALENDAR
-* ORDER
+* SCHEDULE
 
 .PARAMETER File
 Specifies the path to the JSON file that holds the configuration object.
@@ -53,9 +53,9 @@ This cmdlet accepts pipelined objects that are e.g. returned from a Get-JS7Workf
 This cmdlet returns no output.
 
 .EXAMPLE
-Import-JS7Object -Path /some/directory/sampleWorkflow -Type 'WORKFLOW' -File /tmp/workflow-174.json
+Add-JS7Object -Path /some/directory/sampleWorkflow -Type 'WORKFLOW' -File /tmp/workflow-174.json
 
-Import the worfklow configuration from the given file and store the workflow with the specified path.
+Read the worfklow configuration from the given file and store the workflow with the specified path.
 
 .LINK
 about_js7

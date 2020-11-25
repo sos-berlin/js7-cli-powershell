@@ -2,13 +2,13 @@ function Stop-JS7Order
 {
 <#
 .SYNOPSIS
-Cancels and removes orders in the JS7 Controller.
+Cancels and removes orders in the JS7 Controller
 
 .DESCRIPTION
 Orders are cancelled and removed. Orders are selected for removal
 
-* by a pipelined object, e.g. the output of the Get-JobSchedulerOrder cmdlet
-* by specifying an individual order with the -OrderId and -Workflow parameters.
+* by a pipelined object, e.g. the output of the Get-JS7Order cmdlet
+* by specifying an individual order with the -OrderId parameters.
 
 .PARAMETER OrderId
 Specifies the identifier of an order.

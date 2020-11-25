@@ -9,13 +9,13 @@ Creates a temporary order for execution with the specified workflow.
 
 .PARAMETER OrderName
 Specifies the name of an order. The JOC Cockpit web service will consider the order name
-when creating unique order iDs from the pattern #<YYYY-MM-DD>#<qualifier><timestamp>-<order name> 
+when creating unique order iDs from the pattern #<YYYY-MM-DD>#<qualifier><timestamp>-<order-name> 
 such as with #2020-11-22#T072521128-Some_Order_Name.
 
 * YYYY-MM-DD: Date for which the order is scheduled
 * qualifier: one of T(emporary), P(lan), F(ile)
 * timespan: time specified in milliseconds
-* order name: the value of the -OrderName parameter
+* order-name: the value of the -OrderName parameter
 
 .PARAMETER WorkflowPath
 Specifies the path and name of a workflow for which an order should be added.
@@ -41,21 +41,26 @@ Specifies the point in time when the order should start. Values are added like t
 Specifies the date when the order should start. The time zone is used from the date provided.
 
 .PARAMETER Timezone
-Specifies the time zone to be considered for the start time that is indicated with the -At argument.
-Without this argument the time zone of the JS7 Controller is assumed. 
+Specifies the time zone to be considered for the start time that is indicated with the -At parameter.
+Without this parameter the time zone of the JS7 Controller is assumed. 
 
-This argument should be used if the JS7 Controller runs in a time zone different to the environment 
+This parameter should be used if the JS7 Controller runs in a time zone different from the environment 
 that makes use of this cmdlet.
 
 Find the list of time zone names from https://en.wikipedia.org/wiki/List_of_tz_database_time_zones
 
-.PARAMETER State
+.PARAMETER StartPosition
 Specifies that the order should enter the workflow at the workflow node that
-is assigend the specified state.
+is assigend the specified position.
 
-.PARAMETER EndState
+.PARAMETER EndPosition
 Specifies that the order should leave the workflow at the workflow node that
-is assigend the specified state.
+is assigend the specified position.
+
+.PARAMETER RunningNumber
+This parameter is implicitely used when pipelining input to the cmdlet as e.g. with
+
+    1..10 | Add-JS7Order -WorkflowPath /some_path/some_workflow
 
 .PARAMETER AuditComment
 Specifies a free text that indicates the reason for the current intervention, 
@@ -148,12 +153,12 @@ param
 
         if ( $At -and $AtDate )
         {
-            throw "$($MyInvocation.MyCommand.Name): only one of the arguments -At and -AtDate can be used"
+            throw "$($MyInvocation.MyCommand.Name): only one of the parameters -At and -AtDate can be used"
         }
 
         if ( !$AuditComment -and ( $AuditTimeSpent -or $AuditTicketLink ) )
         {
-            throw "$($MyInvocation.MyCommand.Name): Audit Log comment required, use argument -AuditComment if one of the arguments -AuditTimeSpent or -AuditTicketLink is used"
+            throw "$($MyInvocation.MyCommand.Name): Audit Log comment required, use parameter -AuditComment if one of the parameters -AuditTimeSpent or -AuditTicketLink is used"
         }
 
         $objOrders = @()
@@ -192,28 +197,34 @@ param
             Add-Member -Membertype NoteProperty -Name 'timeZone' -value $Timezone -InputObject $objOrder
         }
 <#
-        if ( $State )
+        if ( $StartPosition )
         {
-            Add-Member -Membertype NoteProperty -Name 'state' -value $State -InputObject $objOrder
+            Add-Member -Membertype NoteProperty -Name 'startPosition' -value $StartPosition -InputObject $objOrder
         }
 
-        if ( $EndState )
+        if ( $EndPosition )
         {
-            Add-Member -Membertype NoteProperty -Name 'endState' -value $EndState -InputObject $objOrder
+            Add-Member -Membertype NoteProperty -Name 'endPosition' -value $EndPosition -InputObject $objOrder
         }
 #>
         if ( $Arguments )
         {
-            $objArgss = @()
+            $objArgs = @()
             foreach( $argument in $Arguments.GetEnumerator() )
             {
-                $objArg = New-Object PSObject
-                Add-Member -Membertype NoteProperty -Name 'name' -value $argument.key -InputObject $objArg
-                Add-Member -Membertype NoteProperty -Name 'value' -value $argument.value -InputObject $objArg
-                $objArgs += $objArg
+                if ( $argument.key )
+                {
+                    $objArg = New-Object PSObject
+                    Add-Member -Membertype NoteProperty -Name 'name' -value $argument.key -InputObject $objArg
+                    Add-Member -Membertype NoteProperty -Name 'value' -value $argument.value -InputObject $objArg
+                    $objArgs += $objArg
+                }
             }
 
-            Add-Member -Membertype NoteProperty -Name 'arguments' -value $objArgs -InputObject $objOrder
+            if ( $objArgs.count )
+            {
+                Add-Member -Membertype NoteProperty -Name 'arguments' -value $objArgs -InputObject $objOrder
+            }
         }
 
         $objOrders += $objOrder

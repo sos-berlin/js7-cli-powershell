@@ -36,7 +36,7 @@ Switches the roles of the active and passive JS7 JOC Cockpit instances:
 The active instance becomes passive and one of the passive instances becomes active.
 
 .EXAMPLE
-Switch-JS7JOCInstance -MemberId ( (Get-JS7JOCCluster).Passive | Where-Object -Property 'host' -eq -Value 'joc-2-0-secondary' ).memberId
+Switch-JS7JOCInstance -MemberId ( (Get-JS7JOCInstance).Passive | Where-Object -Property 'host' -eq -Value 'joc-2-0-secondary' ).memberId
 
 Switches the role of the active JOC Cockpit instance to the indicated cluster member that is currently passive. 
 As any number of JOC Cockpit passive cluster members can be used, one of them is selected by its hostname.

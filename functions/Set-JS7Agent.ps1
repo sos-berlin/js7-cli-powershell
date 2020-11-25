@@ -23,13 +23,13 @@ Should deployments of the same workflows be performed to a number of Controllers
 the same Agent Name has to be configured (pointing to a different Agent ID).
 
 .PARAMETER Url
-Specifies the URL for which the Agent is availabl. A URL includes the protocol (http, https), hostname and port
-for which an Agent is installed.
+Specifies the URL for which the Agent is available. A URL includes the protocol (http, https), hostname and port
+for which an Agent is operated.
 
 .PARAMETER WatchCluster
 A JS7 Controller cluster requires a minimum of one Agent to be assigned the role of a cluster watcher.
 Such an Agent will be considered if the JS7 Controller cluster decides about a fail-over situation with
-no network connection being available between primary and secondary JS7 Controller instance.
+no network connection being available between primary and secondary JS7 Controller instances.
 
 .PARAMETER Disable
 An Agent can be disabled to prevent further use in workflow configurations. Deployed workflows still can

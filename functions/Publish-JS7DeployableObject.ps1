@@ -8,7 +8,7 @@ Deploys a configuration object such as a workflow to a number of JS7 Controllers
 This cmdlet deploys a configuration object to a number of JS7 Controllers.
 
 .PARAMETER Path
-Specifies the directory, sub-directories and name of the object, e.g. a workflow path.
+Specifies the folder, sub-folder and name of the object, e.g. a workflow path.
 
 .PARAMETER Type
 Specifies the object type which is one of: 
@@ -52,7 +52,7 @@ This cmdlet returns no output.
 .EXAMPLE
 Publish-JS7DeployableObject -ControllerId testsuite,standalone -Path /TestCases/sampleWorkflow_001 -Type 'WORKFLOW'
 
-Deploys the specified workflow to the indicated path to both Controller instances.
+Deploys the specified workflow from the indicated path to both Controller instances.
 
 .LINK
 about_js7
@@ -87,15 +87,19 @@ param
             throw "$($MyInvocation.MyCommand.Name): Audit Log comment required, use parameter -AuditComment if one of the parameters -AuditTimeSpent or -AuditTicketLink is used"
         }
         
+        $controllers = @()
         $storeObjects = @()
         $deleteObjects = @()
     }
     
     Process
     {
+        $Type = $Type.ToUpper()
+        
         $body = New-Object PSObject
         Add-Member -Membertype NoteProperty -Name 'objectType' -value $Type -InputObject $body
         Add-Member -Membertype NoteProperty -Name 'path' -value $Path -InputObject $body
+        Add-Member -Membertype NoteProperty -Name 'onlyValidObjects' -value $True -InputObject $body
         
         [string] $requestBody = $body | ConvertTo-Json -Depth 100
         $response = Invoke-JS7WebRequest -Path '/inventory/deployable' -Body $requestBody
@@ -114,9 +118,9 @@ param
 
         if ( $Delete )
         {
-            $deleteObjects += @{ 'path' = $Path; 'type' = $Type; 'id' = $deployableObject.id }
+            $deleteObjects += @{ 'path' = $Path; 'type' = (Get-Culture).TextInfo.ToTitleCase($Type.ToLower()); 'id' = $deployableObject.id; 'valid' = $deployableObject.valid; 'deployed' = $deployableObject.deployed }
         } else {
-            $storeObjects += @{ 'path' = $Path; 'type' = $Type; 'id' = $deployableObject.id }
+            $storeObjects += @{ 'path' = $Path; 'type' = (Get-Culture).TextInfo.ToTitleCase($Type.ToLower()); 'id' = $deployableObject.id; 'valid' = $deployableObject.valid; 'deployed' = $deployableObject.deployed }
         }
     }
 
@@ -127,41 +131,92 @@ param
             $body = New-Object PSObject
 
             
-            $objects = @()
+            $controllers = @()
             foreach( $controller in $ControllerId )
             {
                 $controllerObject = New-Object PSObject
-                Add-Member -Membertype NoteProperty -Name 'controller' -value $controller -InputObject $controllerObject
-                $objects += $controllerObject
+                Add-Member -Membertype NoteProperty -Name 'controllerId' -value $controller -InputObject $controllerObject
+                $controllers += $controllerObject
             }
 
-            Add-Member -Membertype NoteProperty -Name 'controllers' -value $objects -InputObject $body
+            Add-Member -Membertype NoteProperty -Name 'controllerIds' -value $controllers -InputObject $body
 
         
-            $objects = @()
+            $draftConfigurations = @()
+            $deployConfigurations = @()
             foreach( $object in $storeObjects )
             {
-                $storeObject = New-Object PSObject
-                # Add-Member -Membertype NoteProperty -Name 'objectType' -value $object.type -InputObject $storeObject
-                # Add-Member -Membertype NoteProperty -Name 'path' -value $object.path -InputObject $storeObject
-                Add-Member -Membertype NoteProperty -Name 'configurationId' -value $object.id -InputObject $storeObject
-                $objects += $storeObject
+                if ( !$object.valid )
+                {
+                    throw "$($MyInvocation.MyCommand.Name): invalid object selected for deployment: path=$($object.path), type=$($object.type)"
+                }
+                
+                if ( $object.deployed )
+                {
+                    $deployConfiguration = New-Object PSObject
+                    Add-Member -Membertype NoteProperty -Name 'path' -value $object.path -InputObject $deployConfiguration
+                    Add-Member -Membertype NoteProperty -Name 'objectType' -value $object.type -InputObject $deployConfiguration
+                    # Add-Member -Membertype NoteProperty -Name 'commitId' -value $object.commitId -InputObject $deployConfiguration
+
+                    $deployConfigurationItem = New-Object PSObject
+                    Add-Member -Membertype NoteProperty -Name 'deployConfiguration' -value $deployConfiguration -InputObject $deployConfigurationItem
+
+                    $deployConfigurations += $deployConfigurationItem
+                } else {
+                    $draftConfiguration = New-Object PSObject
+                    Add-Member -Membertype NoteProperty -Name 'path' -value $object.path -InputObject $draftConfiguration
+                    Add-Member -Membertype NoteProperty -Name 'objectType' -value $object.type -InputObject $draftConfiguration
+
+                    $draftConfigurationItem = New-Object PSObject
+                    Add-Member -Membertype NoteProperty -Name 'draftConfiguration' -value $draftConfiguration -InputObject $draftConfigurationItem
+
+                    $draftConfigurations += $draftConfigurationItem
+                }
+                
             }
+
+            if ( $deployConfigurations.count -or $draftConfigurations.count )
+            {
+            
+                $storeObject = New-Object PSObject
+
+                if ( $draftConfigurations.count )
+                {
+                    Add-Member -Membertype NoteProperty -Name 'draftConfigurations' -value $draftConfigurations -InputObject $storeObject
+                }
+
+                if ( $deployConfigurations.count )
+                {
+                    Add-Member -Membertype NoteProperty -Name 'deployConfigurations' -value $deployConfigurations -InputObject $storeObject
+                }
     
-            Add-Member -Membertype NoteProperty -Name 'update' -value $objects -InputObject $body
+                Add-Member -Membertype NoteProperty -Name 'store' -value $storeObject -InputObject $body
+            }
 
-
-            $objects = @()
+            $deployConfigurations = @()
             foreach( $object in $deleteObjects )
             {
-                $deleteObject = New-Object PSObject
-                # Add-Member -Membertype NoteProperty -Name 'objectType' -value $Type -InputObject $deleteObject
-                # Add-Member -Membertype NoteProperty -Name 'path' -value $controllers -InputObject $deleteObject
-                Add-Member -Membertype NoteProperty -Name 'configurationId' -value $object.id -InputObject $deleteObject
-                $objects += $deleteObject
+                if ( $object.deployed )
+                {
+                    $deployConfiguration = New-Object PSObject
+                    Add-Member -Membertype NoteProperty -Name 'path' -value $object.path -InputObject $deployConfiguration
+                    Add-Member -Membertype NoteProperty -Name 'objectType' -value $object.type -InputObject $deployConfiguration
+                    # Add-Member -Membertype NoteProperty -Name 'commitId' -value $object.commitId -InputObject $deployConfiguration
+
+                    $deployConfigurationItem = New-Object PSObject
+                    Add-Member -Membertype NoteProperty -Name 'deployConfiguration' -value $deployConfiguration -InputObject $deployConfigurationItem
+
+                    $deployConfigurations += $deployConfigurationItem
+                }
             }
-    
-            Add-Member -Membertype NoteProperty -Name 'delete' -value $objects -InputObject $body
+
+            $deleteObject = New-Object PSObject
+
+            if ( $deployConfigurations.count )
+            {
+                Add-Member -Membertype NoteProperty -Name 'deployConfigurations' -value $deployConfigurations -InputObject $deleteObject
+                Add-Member -Membertype NoteProperty -Name 'delete' -value $deleteObject -InputObject $body
+            }
 
        
             if ( $AuditComment -or $AuditTimeSpent -or $AuditTicketLink )
@@ -198,9 +253,9 @@ param
                 throw ( $response | Format-List -Force | Out-String )
             }
         
-            Write-Verbose ".. $($MyInvocation.MyCommand.Name): object deployed"                
+            Write-Verbose ".. $($MyInvocation.MyCommand.Name): $($storeObjects.count + $deleteObjects.count) objects deployed"
         } else {
-            Write-Verbose ".. $($MyInvocation.MyCommand.Name): no object deployed"                
+            Write-Verbose ".. $($MyInvocation.MyCommand.Name): no objects deployed"                
         }
 
         Log-StopWatch $MyInvocation.MyCommand.Name $stopWatch

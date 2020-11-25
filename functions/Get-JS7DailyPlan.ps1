@@ -7,36 +7,17 @@ Returns the daily plan items for workflows scheduled for a JS7 Controller.
 .DESCRIPTION
 The daily plan items for workfows are returned.
 
-.PARAMETER Workflow
-Optionally specifies the path and name of a job chain for which daily plan items should be returned.
-If the name of a job chain is specified then the -Directory parameter is used to determine the folder.
-Otherwise the -JobChain parameter is assumed to include the full path and name of the job chain.
+.PARAMETER WorkflowPath
+Optionally specifies the path and name of a workflow for which daily plan items should be returned.
 
-.PARAMETER OrderId
-Optionally specifies the path and ID of an order for which daily plan items should be returned.
-If an order ID is specified then the -Directory parameter is used to determine the folder.
-Otherwise the -OrderId parameter is assumed to include the full path and ID of the order.
+.PARAMETER Schedule
+Optionally specifies the path and name of a schedule for which daily plan items should be returned.
 
-.PARAMETER Job
-Optionally specifies the path and name of a job for which daily plan items should be returned.
-If the name of a job is specified then the -Directory parameter is used to determine the folder.
-Otherwise the -Job parameter is assumed to include the full path and name of the job.
-
-.PARAMETER JobStream
-Optionally specifies the name of a job stream for which daily plan items should be returned.
-Job streams are unique across folders and are specified by name. 
-Therefore the -Directory parameter is ignored if this parameter is used.
-
-.PARAMETER Directory
-Optionally specifies the folder for which daily plan items should be returned. The directory is determined
-from the root folder, i.e. the "live" directory and should start with a "/".
+.PARAMETER Folder
+Optionally specifies the folder with workflows for which daily plan items should be returned.
 
 .PARAMETER Recursive
-When used with the -Directory parameter then any sub-folders of the specified directory will be looked up.
-
-.PARAMETER RegEx
-Specifies a regular expression that filters the items to be returned.
-This applies to jobs, job chains, orders and job streams that are filtered by path including their name.
+When used with the -Folder parameter then any sub-folders of the specified folder will be looked up.
 
 .PARAMETER DateFrom
 Optionally specifies the date starting from which daily plan items should be returned.
@@ -214,25 +195,10 @@ param
                 $Folder = $Folder.Substring( 0, $Folder.Length-1 )
             }
         }
-    
-        if ( $WorkflowPath ) 
-        {
-            if ( (Get-JS7Object-Basename $WorkflowPath) -ne $WorkflowPath ) # workflow includes a folder
-            {
-                $Folder = Get-JS7Object-Parent $WorkflowPath
-            } else { # job chain name includes no folder
-                if ( $Folder -eq '/' )
-                {
-                    $WorkflowPath = $Folder + $WorkflowPath
-                } else {
-                    $WorkflowPath = $Folder + '/' + $WorkflowPath
-                }
-            }
-        }
-        
+            
         if ( $Folder -eq '/' -and !$WorkflowPath -and !$Schedule -and !$Recursive )
         {
-            $Recursive = $true
+            $Recursive = $True
         }
 
    
@@ -385,7 +351,7 @@ param
                                            historyId, `
                                            state, `
                                            late, `
-                                           jobSream, `
+                                           jobStream, `
                                            startMode, `
                                            period, `
                                            @{name='plannedStartTime'; expression={ ( [System.TimeZoneInfo]::ConvertTimeFromUtc( [datetime]::SpecifyKind( [datetime] "$($_.plannedStartTime)".Substring(0, 19), 'UTC'), $Timezone ) ).ToString("yyyy-MM-dd HH:mm:ss") + $timezoneOffset }}, `

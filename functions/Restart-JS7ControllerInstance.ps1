@@ -12,7 +12,7 @@ to the passive cluster member is performed.
 Optionally the Url of the Controller to be restarted can be specified.
 Without this parameter the active Controller will be restarted.
 Consider that restarting a passive Controller in a JS7 cluster cannot perform
-a fail-over as the current cluster member instance is passive. 
+a fail-over as the current cluster member is passive. 
 
 .PARAMETER Action
 Restarting a Controller includes the following actions:
@@ -31,7 +31,7 @@ Restarting a Controller includes the following actions:
 
 .PARAMETER NoFailover
 This switch prevents a fail-over to happen when restarting the active Controller
-in a cluster. Instead, the restarted Controller will remain the active cluster instance.
+in a cluster. Instead, the restarted Controller will remain the active cluster member.
 
 .PARAMETER Service
 Retarts the JS7 Windows service.

@@ -2,7 +2,7 @@ function Start-JS7Order
 {
 <#
 .SYNOPSIS
-Starts existing orders the JS7 Controller.
+Starts existing orders the JS7 Controller
 
 .DESCRIPTION
 Start existing orders for the JS7 Controller and optionally adjust the start time and arguments.
@@ -39,13 +39,13 @@ that makes use of this cmdlet.
 
 Find the list of time zone names from https://en.wikipedia.org/wiki/List_of_tz_database_time_zones
 
-.PARAMETER State
+.PARAMETER StartPosition
 Specifies that the order should enter the workflow at the workflow node that
-is assigend the specified state.
+is assigend the specified position.
 
-.PARAMETER EndState
+.PARAMETER EndPosition
 Specifies that the order should leave the workflow at the workflow node that
-is assigend the specified state.
+is assigend the specified position.
 
 .PARAMETER AuditComment
 Specifies a free text that indicates the reason for the current intervention, e.g. "business requirement", "maintenance window" etc.
@@ -99,7 +99,7 @@ about_js7
 [cmdletbinding()]
 param
 (
-    [Parameter(Mandatory=$True,ValueFromPipeline=$False,ValueFromPipelinebyPropertyName=$True)]
+    [Parameter(Mandatory=$True,ValueFromPipeline=$True,ValueFromPipelinebyPropertyName=$True)]
     [string] $OrderId,
     [Parameter(Mandatory=$False,ValueFromPipeline=$False,ValueFromPipelinebyPropertyName=$True)]
     [hashtable] $Arguments,
@@ -110,9 +110,9 @@ param
     [Parameter(Mandatory=$False,ValueFromPipeline=$False,ValueFromPipelinebyPropertyName=$True)]
     [string] $Timezone,
     [Parameter(Mandatory=$False,ValueFromPipeline=$False,ValueFromPipelinebyPropertyName=$True)]
-    [string] $State,
+    [string] $StartPosition,
     [Parameter(Mandatory=$False,ValueFromPipeline=$False,ValueFromPipelinebyPropertyName=$True)]
-    [string] $EndState,
+    [string] $EndPosition,
     [Parameter(Mandatory=$False,ValueFromPipeline=$False,ValueFromPipelinebyPropertyName=$True)]
     [string] $AuditComment,
     [Parameter(Mandatory=$False,ValueFromPipeline=$False,ValueFromPipelinebyPropertyName=$True)]
@@ -164,6 +164,7 @@ param
             {
                 throw "$($MyInvocation.MyCommand.Name): order already started and is in $($returnOrder.state._text) state: $OrderId"                
             }
+
         } else {
             throw ( $response | Format-List -Force | Out-String )
         }
@@ -194,14 +195,14 @@ param
             Add-Member -Membertype NoteProperty -Name 'timeZone' -value $Timezone -InputObject $objOrder
         }
 <#
-        if ( $State )
+        if ( $StartPosition )
         {
-            Add-Member -Membertype NoteProperty -Name 'state' -value $State -InputObject $objOrder
+            Add-Member -Membertype NoteProperty -Name 'startPosition' -value $StartPosition -InputObject $objOrder
         }
 
-        if ( $EndState )
+        if ( $EndPosition )
         {
-            Add-Member -Membertype NoteProperty -Name 'endState' -value $EndState -InputObject $objOrder
+            Add-Member -Membertype NoteProperty -Name 'endPosition' -value $EndPosition -InputObject $objOrder
         }
 #>
         if ( $Arguments )
@@ -219,7 +220,7 @@ param
             {
                 Add-Member -Membertype NoteProperty -Name 'arguments' -value $objArguments -InputObject $objOrder
             }
-        } else {
+        } elseif ( $returnOrder.arguments ) {
             Add-Member -Membertype NoteProperty -Name 'arguments' -value $returnOrder.arguments -InputObject $objOrder            
         }
 

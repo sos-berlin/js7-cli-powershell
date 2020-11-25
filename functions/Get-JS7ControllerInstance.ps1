@@ -25,27 +25,27 @@ Without use of this switch active and passive Controller instances in a cluster 
 This cmdlet returns an array of Controller Cluster member objects.
 
 .EXAMPLE
-$Controllers = Get-JS7ControllerInstance
+$controllers = Get-JS7ControllerInstance
 
 Returns the Controller standalone instance or all members in a JS7 cluster.
 
 .EXAMPLE
-$Controllers = Get-JS7ControllerInstance -Id some-controllerId
+$controllers = Get-JS7ControllerInstance -Id some-controllerId
 
 Returns the Controller standalone instance or all members of a JS7 cluster with the specified Controller ID.
 
 .EXAMPLE
-$activeController = Get-JobSchedulerControllerInstance -Id some-controller-id -Active
+$activeController = Get-JS7ControllerInstance -Id some-controller-id -Active
 
-Returns the Controller standalone instance or all members of a JS7 cluster with the specified Controller ID.
+Returns the Controller standalone instance or the active member of a JS7 cluster with the specified Controller ID.
 
 .EXAMPLE
-$Controllers = Get-JS7ControllerInstance -Active
+$activeController = Get-JS7ControllerInstance -Active
 
 Return the Controller standalone instance or the active member of a JS7 cluster.
 
 .EXAMPLE
-$Controllers = Get-JS7ControllerInstance -Passive
+$passiveController = Get-JS7ControllerInstance -Passive
 
 Return the Controller standalone instance or the passive member of a JS7 cluster.
 

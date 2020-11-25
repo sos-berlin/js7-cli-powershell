@@ -2,35 +2,32 @@ function Get-JS7OrderHistory
 {
 <#
 .SYNOPSIS
-Returns the order execution history for workflows.
+Returns the order execution history
 
 .DESCRIPTION
-History information is returned for orders from a JobScheduler Controller. 
+History information is returned for orders from a JS7 Controller. 
 Order executions can be selected by workflow, order ID, folder, history status etc.
 
 The history information retured includes start time, end time, return code etc.
 
 .PARAMETER OrderId
-Optionally specifies the unique identifier of an order that should be returned.
+Optionally specifies the identifier of an order for which the order history should be returned.
 
 .PARAMETER WorkflowPath
-Optionally specifies the path and name of a workflow for which history information is returned.
-If the name of a workflow is specified then the -Folder parameter is used to determine the folder.
-Otherwise the -WorkflowPath parameter is assumed to include the full path and name of the workflow.
-
-One of the parameters -OrderId -Folder or -WorkflowPath has to be specified.
+Optionally specifies the path and name of a workflow for which order history information is returned.
 
 .PARAMETER Folder
-Optionally specifies the folder for which jobs should be returned. The folder is determined
-from the root folder.
+Optionally specifies the folder that includes workflows for which the order history should be returned.
 
 .PARAMETER Recursive
 Specifies that any sub-folders should be looked up when used with the -Folder parameter. 
-By default no sub-folders will be looked up for jobs.
+By default no sub-folders will be looked up for workflow paths.
 
 .PARAMETER ExcludeOrder
-This parameter accepts a single workflow path or an array of workflow paths that are excluded from the results.
-Optionally the workflow path can be appended an order ID separated by a semicolon.
+This parameter accepts a hashmap of order IDs and optionally workflow paths that are excluded from the results.
+If a workflow path is specified then all orders of the given workflow are excluded.
+
+   Get-JSOrderHistory -folder /some_folder -ExcludeOrder @{ 'workflowPath'='/some_folder/some_sub_folder/some_workflow' }
 
 .PARAMETER RegularExpression
 Specifies a regular expression that filters orders to be returned.
@@ -107,6 +104,11 @@ Returns history information for failed orders.
 .PARAMETER InProgress
 Specifies that history information for running orders should be returned.
 
+.PARAMETER WorkflowId
+This is an implicit parameter used when pipelining order objects to this cmdlet as e.g. with
+   
+   Get-JS7Order -Folder /some_path | Get-JS7OrderHistory
+
 .OUTPUTS
 This cmdlet returns an array of history items.
 
@@ -116,15 +118,9 @@ $items = Get-JS7OrderHistory
 Returns today's order execution history for any orders.
 
 .EXAMPLE
-$items = Get-JS7OrderHistory -RegularExpression '^/sos'
+$items = Get-JS7OrderHistory -RegularExpression "sos$'
 
-Returns today's order execution history for any orders from the /sos folder.
-
-.EXAMPLE
-$items = Get-JS7OrderHistory -RegularExpression 'report'
-
-Returns today's order execution history for orders that contain the string
-'report' in the order's path.
+Returns today's order execution history for any orders with an order ID that ends with the string "sos".
 
 .EXAMPLE
 $items = Get-JS7OrderHistory -Timezone (Get-Timezone)
@@ -137,16 +133,14 @@ $items = Get-JS7OrderHistory -Timezone (Get-Timezone -Id 'GMT Standard Time')
 Returns today's order execution history for any orders with dates being converted to the GMT timezone.
 
 .EXAMPLE
-$items = Get-JS7OrderHistory -WorkflowPath /sos/dailyplan/CreateDailyPlan
+$items = Get-JS7OrderHistory -WorkflowPath /some_path/some_workflow
 
 Returns today's order execution history for a given workflow.
 
 .EXAMPLE
-$items = Get-JS7OrderHistory -ExcludeOrder /sos/dailyplan/CreateDailyPlan, /sos/notification/SystemNotifier:MonitorSystem
+$items = Get-JS7OrderHistory -ExcludeOrder @{ 'workflowPath'='/some_path/some_workflow'; 'orderId'='2020-11-23#P0000000547-orderSampleWorkflow1a' }
 
-Returns today's order execution history for any orders excluding orders from the specified workflow paths.
-The workflow path '/sos/notification/SystemNotifier' is appended the order ID 'MonitorSystem' separated by a semicolon
-to indicate that the specified order ID only is excluded from the results.
+Returns today's order execution history for any orders excluding orders from the specified workflow paths and order IDs.
 
 .EXAMPLE
 $items = Get-JS7OrderHistory -Successful -DateFrom "2020-08-11 14:00:00Z"
@@ -179,7 +173,7 @@ The history is reported starting from midnight in the same timezone that is used
 .EXAMPLE
 $items = Get-JS7OrderHistory -RelativeDateFrom -1w
 
-Returns the order execution history for any jobs for the last week.
+Returns the order execution history for the last week.
 
 .EXAMPLE
 $items = Get-JS7OrderHistory -Folder /sos -Recursive -Successful -Failed
@@ -194,10 +188,8 @@ about_js7
 [cmdletbinding()]
 param
 (
-    [Parameter(Mandatory=$False,ValueFromPipeline=$False,ValueFromPipelinebyPropertyName=$True)]
+    [Parameter(Mandatory=$False,ValueFromPipeline=$True,ValueFromPipelinebyPropertyName=$True)]
     [string] $OrderId,
-    [Parameter(Mandatory=$False,ValueFromPipeline=$False,ValueFromPipelinebyPropertyName=$True)]
-    [PSCustomObject] $WorkflowId,
     [Parameter(Mandatory=$False,ValueFromPipeline=$False,ValueFromPipelinebyPropertyName=$True)]
     [string] $WorkflowPath,
     [Parameter(Mandatory=$False,ValueFromPipeline=$False,ValueFromPipelinebyPropertyName=$True)]
@@ -205,12 +197,12 @@ param
     [Parameter(Mandatory=$False,ValueFromPipeline=$False,ValueFromPipelinebyPropertyName=$True)]
     [switch] $Recursive,
     [Parameter(Mandatory=$False,ValueFromPipeline=$False,ValueFromPipelinebyPropertyName=$True)]
-    [string[]] $ExcludeOrder,
+    [hashtable] $ExcludeOrder,
     [Parameter(Mandatory=$False,ValueFromPipeline=$False,ValueFromPipelinebyPropertyName=$True)]
     [string] $RegularExpression,
-    [Parameter(Mandatory=$False,ValueFromPipelinebyPropertyName=$True)]
+    [Parameter(Mandatory=$False,ValueFromPipeline=$False,ValueFromPipelinebyPropertyName=$True)]
     [DateTime] $DateFrom = (Get-Date -Hour 0 -Minute 0 -Second 0).ToUniversalTime(),
-    [Parameter(Mandatory=$False,ValueFromPipelinebyPropertyName=$True)]
+    [Parameter(Mandatory=$False,ValueFromPipeline=$False,ValueFromPipelinebyPropertyName=$True)]
     [DateTime] $DateTo = (Get-Date -Hour 0 -Minute 0 -Second 0).AddDays(1).ToUniversalTime(),
     [Parameter(Mandatory=$False,ValueFromPipeline=$False,ValueFromPipelinebyPropertyName=$True)]
     [string] $RelativeDateFrom,
@@ -225,7 +217,9 @@ param
     [Parameter(Mandatory=$False,ValueFromPipeline=$False,ValueFromPipelinebyPropertyName=$True)]
     [switch] $Failed,
     [Parameter(Mandatory=$False,ValueFromPipeline=$False,ValueFromPipelinebyPropertyName=$True)]
-    [switch] $InProgress
+    [switch] $InProgress,
+    [Parameter(Mandatory=$False,ValueFromPipeline=$False,ValueFromPipelinebyPropertyName=$True)]
+    [PSCustomObject] $WorkflowId
 )
     Begin
     {
@@ -248,11 +242,6 @@ param
             $WorkflowPath = $WorkflowId.path
         }
     
-        if ( !$Folder -and !$WorkflowPath -and !$OrderId )
-        {
-            throw "$($MyInvocation.MyCommand.Name): no folder, no workflow path or order id specified, use -Folder or -WorkflowPath or -OrderId"
-        }
-
         if ( $Folder -and $Folder -ne '/' )
         { 
             if ( $Folder.Substring( 0, 1) -ne '/' ) {
@@ -267,7 +256,7 @@ param
     
         if ( $Folder -eq '/' -and !$WorkflowPath -and !$OrderId -and !$Recursive )
         {
-            $Recursive = $true
+            $Recursive = $True
         }
         
         if ( $Successful )
@@ -288,22 +277,23 @@ param
         if ( $OrderId -or $WorkflowPath )
         {
             $objOrder = New-Object PSObject
-            
-            if ( $WorkflowPath )
-            {
-                Add-Member -Membertype NoteProperty -Name 'workflowPath' -value $WorkflowPath -InputObject $objOrder
-            }
-            
+                        
             if ( $OrderId )
             {
                 Add-Member -Membertype NoteProperty -Name 'orderId' -value $OrderId -InputObject $objOrder
             }
             
+            if ( $WorkflowPath )
+            {
+                Add-Member -Membertype NoteProperty -Name 'workflowPath' -value $WorkflowPath -InputObject $objOrder
+            }
+
             $orders += $objOrder
         } elseif ( $Folder ) {
             $objFolder = New-Object PSObject
             Add-Member -Membertype NoteProperty -Name 'folder' -value $Folder -InputObject $objFolder
             Add-Member -Membertype NoteProperty -Name 'recursive' -value ($Recursive -eq $True) -InputObject $objFolder
+
             $folders += $objFolder
         }
 
@@ -312,15 +302,21 @@ param
             foreach( $excludeOrderItem in $ExcludeOrder )
             {
                 $objExcludeOrder = New-Object PSObject
-                if ( $excludeOrderItem.split(':').count -gt 1 )
+                
+                if ( $excludeOrderItem.orderId )
                 {
-                    $excludeOrderItems = $excludeOrderItem.split(':')
-                    Add-Member -Membertype NoteProperty -Name 'workflow' -value $excludeOrderItems[0] -InputObject $objExcludeOrder
-                    Add-Member -Membertype NoteProperty -Name 'orderId' -value $excludeOrderItems[1] -InputObject $objExcludeOrder
-                } else {
-                    Add-Member -Membertype NoteProperty -Name 'workflow' -value $excludeOrderItem -InputObject $objExcludeOrder
+                    Add-Member -Membertype NoteProperty -Name 'orderId' -value $excludeOrderItem.orderId -InputObject $objExcludeOrder
                 }
-                $excludeOrders += $objExcludeOrder
+
+                if ( $excludeOrderItem.workflowPath )
+                {
+                    Add-Member -Membertype NoteProperty -Name 'workflow' -value $excludeOrderItem.workflowPath -InputObject $objExcludeOrder
+                }
+
+                if ( $excludeOrderItem.orderId -or $excludeOrderItem.workflowPath )
+                {
+                    $excludeOrders += $objExcludeOrder
+                }
             }
         }
     }
@@ -414,16 +410,15 @@ param
             $returnHistoryItems
         } else {            
             $returnHistoryItems | Select-Object -Property `
-                                           jobschedulerId, `
+                                           controllerId, `
                                            historyId, `
                                            orderId, `
                                            workflow, `
-                                           path, `
+                                           position, `
                                            state, `
+                                           @{name='plannedTime'; expression={ ( [System.TimeZoneInfo]::ConvertTimeFromUtc( [datetime]::SpecifyKind( [datetime] "$($_.plannedTime)".Substring(0, 19), 'UTC'), $Timezone ) ).ToString("yyyy-MM-dd HH:mm:ss") + $timezoneOffset }}, `
                                            @{name='startTime'; expression={ ( [System.TimeZoneInfo]::ConvertTimeFromUtc( [datetime]::SpecifyKind( [datetime] "$($_.startTime)".Substring(0, 19), 'UTC'), $Timezone ) ).ToString("yyyy-MM-dd HH:mm:ss") + $timezoneOffset }}, `
                                            @{name='endTime';  expression={ ( [System.TimeZoneInfo]::ConvertTimeFromUtc( [datetime]::SpecifyKind( [datetime] "$($_.endTime)".SubString(0,19), 'UTC'), $($Timezone) ) ).ToString("yyyy-MM-dd HH:mm:ss") + $timezoneOffset }}, `
-                                           node, `
-                                           exitCode, `
                                            @{name='surveyDate'; expression={ ( [System.TimeZoneInfo]::ConvertTimeFromUtc( [datetime]::SpecifyKind( [datetime] "$($_.surveyDate)".SubString(0, 19), 'UTC'), $($Timezone) ) ).ToString("yyyy-MM-dd HH:mm:ss") + $timezoneOffset }}
         }
 

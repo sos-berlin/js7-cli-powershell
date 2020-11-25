@@ -2,52 +2,47 @@ function Get-JS7TaskHistory
 {
 <#
 .SYNOPSIS
-Returns the task execution history for jobs.
+Returns the task execution history for jobs
 
 .DESCRIPTION
-History information is returned for jobs from a JobScheduler Controller. 
-Task executions can be selected by job name, folder, history status etc.
+History information is returned for jobs from a JS7 Controller. 
+Task executions can be selected by job name, workflow, folder, history status etc.
 
 The history information retured includes start time, end time, return code etc.
 
 .PARAMETER Job
-Optionally specifies the path and name of a job.
-If the name of a job is specified then the -Directory parameter is used to determine the folder.
-Otherwise the -Job parameter is assumed to include the full path and name of the job.
+Optionally specifies the name of a job for which task execution results are reported.
 
-One of the parameters -Directory, -Workflow or -Job has to be specified.
+This parameter requires use of the -WorkflowPath parameter to specify the workflow 
+that includes the job.
 
-.PARAMETER Workflow
-Optionally specifies the path and name of a workflow that includes jobs.
-If the name of a workflow is specified then the -Directory parameter is used to determine the folder.
-Otherwise the -Workflow parameter is assumed to include the full path and name of the workflow.
-
-One of the parameters -Directory, -Workflow or -Job has to be specified.
+.PARAMETER WorkflowPath
+Optionally specifies the path and name of a workflow that includes jobs
+for which the task history is reported. The task execution history optionally can futher 
+be limited by specifying the -Job parameter to limit results to a job in the given workflow.
 
 .PARAMETER OrderId
 Optionally specifies the identifier of an order to limit results to jobs that 
-correspond to the order's current state.
+have been executed for the given order.
 
-.PARAMETER Directory
-Optionally specifies the folder for which jobs should be returned. The directory is determined
-from the root folder, i.e. the "live" directory.
+.PARAMETER Position
+Optionally specifies the position in a workflow to limit results to jobs that
+correspond to the given position in a workflow. This parameter requires use of the -OrderId parameter.
+
+.PARAMETER Folder
+Optionally specifies the folder that includes workflows for which the task history should be returned.
 
 .PARAMETER Recursive
-Specifies that any sub-folders should be looked up when used with the -Directory parameter. 
+Specifies that any sub-folders should be looked up when used with the -Folder parameter. 
 By default no sub-folders will be looked up for jobs.
 
-.PARAMETER State
-Specifies that only jobs are considered that an order is currently passing. This is identified by the
-order's state attribute that corresponds to the job node's state attribute.
-This parameter requires use of the -Workflow parameter. If used with the -OrderId parameter then
-only jobs for that order are considered, otherwise jobs for any orders in the given workflow are considered.
-
 .PARAMETER ExcludeJob
-This parameter accepts a single job path or an array of job paths that are excluded from the results.
+This parameter accepts a hashmap of job names and optionally workflow paths that are excluded from the results.
+If a workflow path is specified then all jobs of the given workflow are excluded.
 
-.PARAMETER RegEx
+.PARAMETER RegularExpression
 Specifies a regular expression that filters the jobs to be returned.
-The regular expression is applied to the path and name of jobs.
+The regular expression is applied to the job name.
 
 .PARAMETER DateFrom
 Specifies the date starting from which history items should be returned.
@@ -107,9 +102,21 @@ All dates in JobScheduler are UTC and can be converted e.g. to the local time zo
 
 Default: Dates are returned in UTC.
 
+.PARAMETER TaskId
+Specifies to report the execution history for the given task ID only.
+
 .PARAMETER Limit
 Specifies the max. number of history items for task executions to be returned.
 The default value is 10000, for an unlimited number of items the value -1 can be specified.
+
+.PARAMETER NormalCriticality
+Specifies to return the task history for jobs only that are assigned a "normal" criticality.
+
+.PARAMETER MinorCriticality
+Specifies to return the task history for jobs only that are assigned a "minor" criticality.
+
+.PARAMETER MajorCriticality
+Specifies to return the task history for jobs only that are assigned a "major" criticality.
 
 .PARAMETER Successful
 Returns history information for successfully completed tasks.
@@ -117,7 +124,7 @@ Returns history information for successfully completed tasks.
 .PARAMETER Failed
 Returns history information for failed tasks.
 
-.PARAMETER Incomplete
+.PARAMETER InProgress
 Specifies that history information for running tasks should be returned.
 
 .OUTPUTS
@@ -129,15 +136,9 @@ $items = Get-JS7TaskHistory
 Returns today's task execution history for any jobs.
 
 .EXAMPLE
-$items = Get-JS7TaskHistory -RegEx '^/sos'
+$items = Get-JS7TaskHistory -RegularExpression "sos$"
 
-Returns today's task execution history for any jobs from the /sos folder.
-
-.EXAMPLE
-$items = Get-JS7TaskHistory -RegEx 'report'
-
-Returns today's task execution history for jobs that contain the string
-'report' in the job path.
+Returns today's task execution history for any jobs with a job name that ends with "sos".
 
 .EXAMPLE
 $items = Get-JS7TaskHistory -Timezone (Get-Timezone)
@@ -155,14 +156,14 @@ $items = Get-JS7TaskHistory -Job /sos/dailyplan/CreateDailyPlan
 Returns today's task execution history for a given job.
 
 .EXAMPLE
-$items = Get-JS7TaskHistory -Workflow /sos/dailyplan/CreateDailyPlan
+$items = Get-JS7TaskHistory -WorkflowPath /some_path/some_workflow
 
 Returns today's task execution history for jobs in the given workflow.
 
 .EXAMPLE
-$items = Get-JS7TaskHistory -ExcludeJob /sos/dailyplan/CreateDailyPlan, /sos/housekeeping/scheduler_rotate_log
+$items = Get-JS7TaskHistory -ExcludeJob @{ 'workflowPath'='/some_path/some_workflow'; 'job'='some_job' }
 
-Returns today's task execution history for any jobs excluding the specified job paths.
+Returns today's task execution history for any jobs excluding the specified workflow paths and job names.
 
 .EXAMPLE
 $items = Get-JS7TaskHistory -Successful -DateFrom "2020-08-11 14:00:00Z"
@@ -198,7 +199,7 @@ $items = Get-JS7TaskHistory -RelativeDateFrom -1w
 Returns the task execution history for the last week.
 
 .EXAMPLE
-$items = Get-JS7TaskHistory -Directory /sos -Recursive -Successful -Failed
+$items = Get-JS7TaskHistory -Folder /sos -Recursive -Successful -Failed
 
 Returns today's task execution history for any completed tasks from the "/sos" directory
 and any sub-folders recursively.
@@ -213,22 +214,22 @@ param
     [Parameter(Mandatory=$False,ValueFromPipeline=$False,ValueFromPipelinebyPropertyName=$True)]
     [string] $Job,
     [Parameter(Mandatory=$False,ValueFromPipeline=$False,ValueFromPipelinebyPropertyName=$True)]
-    [string] $Workflow,
+    [string] $WorkflowPath,
     [Parameter(Mandatory=$False,ValueFromPipeline=$False,ValueFromPipelinebyPropertyName=$True)]
     [string] $OrderId,
     [Parameter(Mandatory=$False,ValueFromPipeline=$False,ValueFromPipelinebyPropertyName=$True)]
-    [string] $Directory = '/',
+    [string] $Position,
+    [Parameter(Mandatory=$False,ValueFromPipeline=$False,ValueFromPipelinebyPropertyName=$True)]
+    [string] $Folder = '/',
     [Parameter(Mandatory=$False,ValueFromPipeline=$False,ValueFromPipelinebyPropertyName=$True)]
     [switch] $Recursive,
     [Parameter(Mandatory=$False,ValueFromPipeline=$False,ValueFromPipelinebyPropertyName=$True)]
-    [string] $State,
+    [hashtable] $ExcludeJob,
     [Parameter(Mandatory=$False,ValueFromPipeline=$False,ValueFromPipelinebyPropertyName=$True)]
-    [string[]] $ExcludeJob,
+    [string] $RegularExpression,
     [Parameter(Mandatory=$False,ValueFromPipeline=$False,ValueFromPipelinebyPropertyName=$True)]
-    [string] $RegEx,
-    [Parameter(Mandatory=$False,ValueFromPipelinebyPropertyName=$True)]
     [DateTime] $DateFrom = (Get-Date -Hour 0 -Minute 0 -Second 0).ToUniversalTime(),
-    [Parameter(Mandatory=$False,ValueFromPipelinebyPropertyName=$True)]
+    [Parameter(Mandatory=$False,ValueFromPipeline=$False,ValueFromPipelinebyPropertyName=$True)]
     [DateTime] $DateTo = (Get-Date -Hour 0 -Minute 0 -Second 0).AddDays(1).ToUniversalTime(),
     [Parameter(Mandatory=$False,ValueFromPipeline=$False,ValueFromPipelinebyPropertyName=$True)]
     [string] $RelativeDateFrom,
@@ -237,15 +238,21 @@ param
     [Parameter(Mandatory=$False,ValueFromPipeline=$False,ValueFromPipelinebyPropertyName=$True)]
     [TimeZoneInfo] $Timezone = (Get-Timezone -Id 'UTC'),
     [Parameter(Mandatory=$False,ValueFromPipeline=$False,ValueFromPipelinebyPropertyName=$True)]
-    [int[]] $TaskId,
+    [int] $TaskId,
     [Parameter(Mandatory=$False,ValueFromPipeline=$False,ValueFromPipelinebyPropertyName=$True)]
     [int] $Limit,
+    [Parameter(Mandatory=$False,ValueFromPipeline=$False,ValueFromPipelinebyPropertyName=$True)]
+    [switch] $NormalCriticality,
+    [Parameter(Mandatory=$False,ValueFromPipeline=$False,ValueFromPipelinebyPropertyName=$True)]
+    [switch] $MinorCriticality,
+    [Parameter(Mandatory=$False,ValueFromPipeline=$False,ValueFromPipelinebyPropertyName=$True)]
+    [switch] $MajorCriticality,
     [Parameter(Mandatory=$False,ValueFromPipeline=$False,ValueFromPipelinebyPropertyName=$True)]
     [switch] $Successful,
     [Parameter(Mandatory=$False,ValueFromPipeline=$False,ValueFromPipelinebyPropertyName=$True)]
     [switch] $Failed,
     [Parameter(Mandatory=$False,ValueFromPipeline=$False,ValueFromPipelinebyPropertyName=$True)]
-    [switch] $Incomplete
+    [switch] $InProgress
 )
     Begin
     {
@@ -255,6 +262,7 @@ param
         $jobs = @()
         $orders = @()
         $folders = @()
+        $criticalities = @()
         $historyStates = @()
         $excludeJobs = @()
         $taskIds = @()
@@ -262,66 +270,38 @@ param
         
     Process
     {
-        Write-Debug ".. $($MyInvocation.MyCommand.Name): parameter Directory=$Directory, Workflow=$Workflow Job=$Job"
+        Write-Debug ".. $($MyInvocation.MyCommand.Name): parameter Folder=$Folder, Workflow=$Workflow Job=$Job"
     
-        if ( !$Directory -and !$Workflow -and !$Job -and !$TaskId )
-        {
-            throw "$($MyInvocation.MyCommand.Name): no directory, workflow or job specified, use -Directory, -Workflow, -Job or -TaskId"
-        }
-
-        if ( $Directory -and $Directory -ne '/' )
+        if ( $Folder -and $Folder -ne '/' )
         { 
-            if ( $Directory.Substring( 0, 1) -ne '/' ) {
-                $Directory = '/' + $Directory
+            if ( $Folder.Substring( 0, 1) -ne '/' ) {
+                $Folder = '/' + $Folder
             }
         
-            if ( $Directory.Length -gt 1 -and $Directory.LastIndexOf( '/' )+1 -eq $Directory.Length )
+            if ( $Folder.Length -gt 1 -and $Folder.LastIndexOf( '/' )+1 -eq $Folder.Length )
             {
-                $Directory = $Directory.Substring( 0, $Directory.Length-1 )
+                $Folder = $Folder.Substring( 0, $Folder.Length-1 )
             }
         }
-    
-        if ( $Workflow )
+            
+        if ( $Folder -eq '/' -and !$OrderId -and !$WorkflowPath -and !$Job -and !$Recursive )
         {
-            if ( (Get-JS7Object-Basename $Workflow) -ne $Workflow ) # workflow name includes a directory
-            {
-                $Directory = Get-JS7Object-Parent $Workflow
-            } else { # workflow name includes no directory
-                if ( $Directory -eq '/' )
-                {
-                    $Workflow = $Directory + $Workflow
-                } else {
-                    $Workflow = $Directory + '/' + $Workflow
-                }
-            }
+            $Recursive = $True
         }
         
-        if ( $OrderId )
+        if ( $NormalCriticality )
         {
-            if ( (Get-JS7Object-Basename $OrderId) -ne $OrderId ) # order id includes a directory
-            {
-                $Directory = Get-JS7Object-Parent $OrderId
-            } # order id includes no directory
-        }
-
-        if ( $Job )
-        {
-            if ( (Get-JS7Object-Basename $Job) -ne $Job ) # job name includes a directory
-            {
-                $Directory = Get-JS7Object-Parent $Job
-            } else { # job name includes no directory
-                if ( $Directory -eq '/' )
-                {
-                    $Job = $Directory + $Job
-                } else {
-                    $Job = $Directory + '/' + $Job
-                }
-            }
+            $criticalities += 'NORMAL'
         }
         
-        if ( $Directory -eq '/' -and !$OrderId -and !$Workflow -and !$Job -and !$Recursive )
+        if ( $MinorCriticality )
         {
-            $Recursive = $true
+            $criticalities += 'MINOR'
+        }
+        
+        if ( $MajorCriticality )
+        {
+            $criticalities += 'MAJOR'
         }
         
         if ( $Successful )
@@ -334,24 +314,24 @@ param
             $historyStates += 'FAILED'
         }
 
-        if ( $Incomplete )
+        if ( $InProgress )
         {
             $historyStates += 'INCOMPLETE'
         }
 
-        if ( $Workflow )
+        if ( $OrderId )
         {
             $objOrder = New-Object PSObject
-            Add-Member -Membertype NoteProperty -Name 'workflow' -value $Workflow -InputObject $objOrder
+            Add-Member -Membertype NoteProperty -Name 'orderId' -value $OrderId -InputObject $objOrder
             
-            if ( $OrderId )
+            if ( $WorkflowPath )
             {
-                Add-Member -Membertype NoteProperty -Name 'orderId' -value $OrderId -InputObject $objOrder
+                Add-Member -Membertype NoteProperty -Name 'workflowPath' -value $WorkflowPath -InputObject $objOrder
             }
             
-            if ( $State )
+            if ( $Position )
             {
-                Add-Member -Membertype NoteProperty -Name 'state' -value $State -InputObject $objOrder
+                Add-Member -Membertype NoteProperty -Name 'position' -value $Position -InputObject $objOrder
             }
             
             $orders += $objOrder
@@ -360,13 +340,19 @@ param
         if ( $Job ) {
             $objJob = New-Object PSObject
             Add-Member -Membertype NoteProperty -Name 'job' -value $Job -InputObject $objJob
+
+            if ( $WorkflowPath )
+            {
+                Add-Member -Membertype NoteProperty -Name 'workflowPath' -value $WorkflowPath -InputObject $objJob                
+            }
+
             $jobs += $objJob
         }
 
-        if ( !$Workflow -and $Directory )
+        if ( !$WorkflowPath -and $Folder )
         {
             $objFolder = New-Object PSObject
-            Add-Member -Membertype NoteProperty -Name 'folder' -value $Directory -InputObject $objFolder
+            Add-Member -Membertype NoteProperty -Name 'folder' -value $Folder -InputObject $objFolder
             Add-Member -Membertype NoteProperty -Name 'recursive' -value ($Recursive -eq $true) -InputObject $objFolder
             $folders += $objFolder
         }
@@ -376,8 +362,21 @@ param
             foreach( $excludeJobItem in $ExcludeJob )
             {
                 $objExcludeJob = New-Object PSObject
-                Add-Member -Membertype NoteProperty -Name 'job' -value $excludeJobItem -InputObject $objExcludeJob
-                $excludeJobs += $objExcludeJob
+                
+                if ( $excludeJobItem.job )
+                {
+                    Add-Member -Membertype NoteProperty -Name 'job' -value $excludeJobItem.job -InputObject $objExcludeJob
+                }
+
+                if ( $excludeJobItem.workflowPath )
+                {
+                    Add-Member -Membertype NoteProperty -Name 'workflow' -value $excludeJobItem.workflowPath -InputObject $objExcludeJob
+                }
+
+                if ( $excludeJobItem.job -or $excludeJobItem.workflowPath )
+                {
+                    $excludeJobs += $objExcludeJob
+                }
             }
         }
         
@@ -413,9 +412,9 @@ param
             Add-Member -Membertype NoteProperty -Name 'excludeJobs' -value $excludeJobs -InputObject $body
         }
 
-        if ( $RegEx )
+        if ( $RegularExpression )
         {
-            Add-Member -Membertype NoteProperty -Name 'regex' -value $RegEx -InputObject $body
+            Add-Member -Membertype NoteProperty -Name 'regex' -value $RegularExpression -InputObject $body
         }
 
         if ( $DateFrom -or $RelativeDateFrom )
@@ -456,6 +455,11 @@ param
             Add-Member -Membertype NoteProperty -Name 'limit' -value $Limit -InputObject $body
         }
 
+        if ( $criticalities )
+        {
+            Add-Member -Membertype NoteProperty -Name 'criticalities' -value $criticalities -InputObject $body
+        }
+
         if ( $historyStates )
         {
             Add-Member -Membertype NoteProperty -Name 'historyStates' -value $historyStates -InputObject $body
@@ -486,15 +490,18 @@ param
             $returnHistoryItems
         } else {
             $returnHistoryItems | Select-Object -Property `
-                                           jobschedulerId, `
-                                           clusterMember, `
+                                           controllerId, `
+                                           agentUrl, `
                                            taskId, `
+                                           orderId, `
+                                           workflow, `
+                                           position, `
                                            job, `
+                                           criticality, `
+                                           exitCode, `
                                            state, `
                                            @{name='startTime'; expression={ ( [System.TimeZoneInfo]::ConvertTimeFromUtc( [datetime]::SpecifyKind( [datetime] "$($_.startTime)".Substring(0, 19), 'UTC'), $Timezone ) ).ToString("yyyy-MM-dd HH:mm:ss") + $timezoneOffset }}, `
                                            @{name='endTime';  expression={ ( [System.TimeZoneInfo]::ConvertTimeFromUtc( [datetime]::SpecifyKind( [datetime] "$($_.endTime)".SubString(0,19), 'UTC'), $($Timezone) ) ).ToString("yyyy-MM-dd HH:mm:ss") + $timezoneOffset }}, `
-                                           criticality, `
-                                           exitCode, `
                                            @{name='surveyDate'; expression={ ( [System.TimeZoneInfo]::ConvertTimeFromUtc( [datetime]::SpecifyKind( [datetime] "$($_.surveyDate)".SubString(0, 19), 'UTC'), $($Timezone) ) ).ToString("yyyy-MM-dd HH:mm:ss") + $timezoneOffset }}
         }
 
