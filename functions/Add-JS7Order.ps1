@@ -128,7 +128,7 @@ param
     [Parameter(Mandatory=$False,ValueFromPipeline=$False,ValueFromPipelinebyPropertyName=$True)]
     [hashtable] $Arguments,
     [Parameter(Mandatory=$False,ValueFromPipeline=$False,ValueFromPipelinebyPropertyName=$True)]
-    [string] $At = 'now',
+    [string] $At,
     [Parameter(Mandatory=$False,ValueFromPipeline=$False,ValueFromPipelinebyPropertyName=$True)]
     [DateTime] $AtDate,
     [Parameter(Mandatory=$False,ValueFromPipeline=$False,ValueFromPipelinebyPropertyName=$True)]
@@ -143,6 +143,8 @@ param
     [int] $AuditTimeSpent,
     [Parameter(Mandatory=$False,ValueFromPipeline=$False,ValueFromPipelinebyPropertyName=$True)]
     [Uri] $AuditTicketLink,
+    [Parameter(Mandatory=$False,ValueFromPipeline=$False,ValueFromPipelinebyPropertyName=$True)]
+    [int] $BatchSize = 100,
     [Parameter(Mandatory=$False,ValueFromPipeline=$True,ValueFromPipelinebyPropertyName=$True)]
     [int] $RunningNumber
 )
@@ -228,6 +230,50 @@ param
         }
 
         $objOrders += $objOrder
+        
+        if ( $objOrders.count -ge $BatchSize )
+        {
+            $body = New-Object PSObject
+            Add-Member -Membertype NoteProperty -Name 'controllerId' -value $script:jsWebService.ControllerId -InputObject $body
+            Add-Member -Membertype NoteProperty -Name 'orders' -value $objOrders -InputObject $body
+    
+            if ( $AuditComment -or $AuditTimeSpent -or $AuditTicketLink )
+            {
+                $objAuditLog = New-Object PSObject
+                Add-Member -Membertype NoteProperty -Name 'comment' -value $AuditComment -InputObject $objAuditLog
+    
+                if ( $AuditTimeSpent )
+                {
+                    Add-Member -Membertype NoteProperty -Name 'timeSpent' -value $AuditTimeSpent -InputObject $objAuditLog
+                }
+    
+                if ( $AuditTicketLink )
+                {
+                    Add-Member -Membertype NoteProperty -Name 'ticketLink' -value $AuditTicketLink -InputObject $objAuditLog
+                }
+    
+                Add-Member -Membertype NoteProperty -Name 'auditLog' -value $objAuditLog -InputObject $body
+            }
+    
+            [string] $requestBody = $body | ConvertTo-Json -Depth 100
+            $response = Invoke-JS7WebRequest '/orders/add' $requestBody
+
+            if ( $response.StatusCode -eq 200 )
+            {
+                $responseOrderIds = ( $response.Content | ConvertFrom-JSON ).orderIds
+                
+                if ( !$responseOrderIds )
+                {
+                    throw "could not add orders: $($requestResult.message)"
+                }
+            } else {
+                throw ( $response | Format-List -Force | Out-String )
+            }
+
+            $returnOrderIds += $responseOrderIds
+            $objOrders = @()
+            Write-Verbose ".. $($MyInvocation.MyCommand.Name): $($returnOrderIds.count) orders added"                
+        }        
     }
 
     End
@@ -261,20 +307,21 @@ param
 
             if ( $response.StatusCode -eq 200 )
             {
-                $returnOrderIds = ( $response.Content | ConvertFrom-JSON ).orderIds
+                $responseOrderIds = ( $response.Content | ConvertFrom-JSON ).orderIds
                 
-                if ( !$returnOrderIds )
+                if ( !$responseOrderIds )
                 {
                     throw "could not add orders: $($requestResult.message)"
                 }
             } else {
                 throw ( $response | Format-List -Force | Out-String )
             }
-            
-            $returnOrderIds
-        } else {
-            Write-Verbose ".. $($MyInvocation.MyCommand.Name): no orders added"                
+
+            $returnOrderIds += $responseOrderIds            
+            Write-Verbose ".. $($MyInvocation.MyCommand.Name): $($returnOrderIds.count) orders added"                
         }
+
+        $returnOrderIds
 
         Log-StopWatch $MyInvocation.MyCommand.Name $stopWatch
     }

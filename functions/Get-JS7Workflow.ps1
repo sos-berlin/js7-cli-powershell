@@ -94,7 +94,7 @@ param
 
         if ( $Folder -eq '/' -and !$WorkflowPath -and !$Recursive )
         {
-            $Recursive = $true
+            $Recursive = $True
         }
      
         if ( $WorkflowPath )

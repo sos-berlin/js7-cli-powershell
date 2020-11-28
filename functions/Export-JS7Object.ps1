@@ -2,38 +2,80 @@ function Export-JS7Object
 {
 <#
 .SYNOPSIS
-Export an XML configuration object such as a job, a job chain etc. from JOC Cockpit.
+Export inventory objects, e.g. workflows, schedules etc. from JOC Cockpit
 
 .DESCRIPTION
-This cmdlet exports an XML configuration object that is stored with JOC Cockpit.
+This cmdlet exports inventory objects that are stored with JOC Cockpit. 
 
-.PARAMETER Name
-Specifies the name of the object, e.g. a job name.
+* Deployable Objects: use of the -Deployable parameter
+** Inventory objects such as workflows are deployed to a JS7 Controller. The -Type parameter can be used to restrict object types.
+** When exporting deployable objects then either a draft version can be used or the latest deployed version is requested by use of the -Deployed parameter.
+* Releasable Objects: use of the -Releasable parameter
+** Inventory objects such as calendars and schedules are not deployed to a Controller but are used by JOC Cockpit.
+** When exporting releasable objects then either a draft version can be used or the latest released version is requested by use of the -Released parameter.
 
-.PARAMETER Directory
-Specifies the directory in JOC Cockpit in which the object is available.
+.PARAMETER Path
+Specifies the path and name of an individual inventory object that should be exported, e.g. a workflow.
 
 .PARAMETER Type
-Specifies the object type which is one of: 
+Optionally restricts the object type to export which is one of: 
 
-* JOB
-* JOBCHAIN
-* ORDER
-* PROCESSCLASS
-* AGENTCLUSTER
-* LOCK
-* SCHEDULE
-* MONITOR
-* NODEPARAMS
-* HOLIDAYS
+* Deployable Object Types
+** WORKFLOW
+** JOBCLASS
+** LOCK
+** JUNCTION
+* Releasable Object Types
+** WORKINGDAYSCALENDAR
+** NONWORKINGDAYSCALENDAR
+** SCHEDULE
+
+The -Type parameter can be used to restrict either deployable or releasable object types to be exported.
+Without specifying this parameter objects of any type within the areas of releasable or deployable objects are exported
+depending on use of the -Releasable and -Deployable parameters.
+
+.PARAMETER Folder
+Optionally specifies the folder for which all included inventory objects should be exported. 
+This parameter is used alternatively to the -Path parameter that specifies export of an individual inventory object.
+
+.PARAMETER Recursive
+Specifies that any sub-folders should be looked up if the -Folder parameter is used.
+By default no sub-folders will be searched for exportable objects.
+
+.PARAMETER Releasable
+Specifies that only releasable objects should be exported that include the object types:
+
+  * WORKINGDAYSCALENDAR
+  * NONWORKINGDAYSCALENDAR
+  * SCHEDULE
+
+If none of the parameters -Releasable or -Deployable is used then both releasable and deployable inventory objects are exported.
+
+.PARAMETER Deployable
+Specifies that only deployable objects should be exported that include the object types:
+
+  * WORKFLOW
+  * JOBCLASS
+  * LOCK
+  * JUNCTION
+
+If none of the parameters -Releasable or -Deployable is used then both releasable and deployable inventory objects are exported.
+
+.PARAMETER Released
+Specifies that no draft versions of the releasable objects will be exported but only released versions.
+Without this parameter the unreleased draft version of inventory objects will be exported or the latest released version depending on availability.
+
+.PARAMETER Deployed
+Specifies that no draft versions of the deployable objects will be exported but only deployed versions.
+Without this parameter the undeployed draft version of the inventory object will be exported or the latest deployed version depending on availability.
+
+.PARAMETER Valid
+Specifies that only valid versions of inventory objects are eligible for export. Only draft versions of 
+inventory objects can be invalid, any deployed or relased versions of inventory objects are valid.
+Without this parameter draft versions can be exported that are in progress and therefore are not validated.
 
 .PARAMETER File
-Specifies the XML file that the exported configuration object is written to.
-
-.PARAMETER ForeLive
-Specifies that the XML configuration object is not used from JOC Cockpit but is retrieved from the Controller's "live" folder. 
-This option can be used to ensure that no draft versions of configurations objects are exported but objects only that
-have been deployed to a Controller.
+Specifies the output file that the exported inventory objects are written to.
 
 .PARAMETER AuditComment
 Specifies a free text that indicates the reason for the current intervention, e.g. "business requirement", "maintenance window" etc.
@@ -54,20 +96,51 @@ This information is visible with the Audit Log view of JOC Cockpit.
 It can be useful when integrated with a ticket system that logs interventions with JobScheduler.
 
 .INPUTS
-This cmdlet accepts pipelined job objects that are e.g. returned from a Get-Job cmdlet.
+This cmdlet accepts pipelined objects that are returned e.g. from the Get-JS7Workflow cmdlet.
 
 .OUTPUTS
-This cmdlet returns the XML configuration object.
+This cmdlet returns an octet-stream that can be piped to an output file, e.g. with the Out-File cmdlet.
 
 .EXAMPLE
-$jobXml = Export-JobSchedulerObject -Name job174 -Directory /some/directory -Type JOB
+Export-JS7Object | Out-File /tmp/export.zip -Encoding UTF8
 
-Returns the exported job configuration from the specified directory.
+Exports all inventory objects to a zipped file. This includes deployable and releasable inventory objects.
+By default draft versions are used instead of deployed or released versions.
+If no draft version exists then the latest deployed or released version is used.
 
 .EXAMPLE
-Export-JobSchedulerObject -Name job174 -Directory /some/directory -Type JOB -File /tmp/job174.job.xml | Out-Null
+Export-JS7Object -Folder /some_folder -File /tmp/export.zip
 
-Exports the XML job configuration to the specified file.
+Exports any objects from the given folder to a zipped file.
+
+.EXAMPLE
+Export-JS7Object -Folder /some_folder -Deployable -File /tmp/export.zip
+
+Exports deployable objects only from the given folder to a zipped file.
+
+.EXAMPLE
+Export-JS7Object -Path /some_folder/some_workflow -Type WORKFLOW -File /tmp/export.zip
+
+Exports the specified workflow from the indcated path to a zipped file. 
+Use of the -Path parameter requires to specify the -Type parameter for the object type.
+
+Depending on availability the draft version or the latest deployed version of the workflow is used.
+If a draft version is available then it is eligible for export independent from the fact that the draft is valid or invalid.
+
+.EXAMPLE
+Export-JS7Object -Path /some_folder/some_workflow -Type WORKFLOW -Valid -File /tmp/export.zip
+
+Exports the specified workflow from the indcated path to a zipped file. 
+Use of the -Path parameter requires to specify the -Type parameter for the object type.
+
+Depending on availability the draft version or the latest deployed version of the workflow is used.
+A draft version is considered only if it is valid otherwise the deployed version is used.
+
+.EXAMPLE
+Export-JS7Object -Folder /some_folder -Deployable -File /tmp/export.zip
+
+Exports any deployable inventory objects such as workflows, junctions, locks etc that are available 
+from the specified folder to a zipped file. The latest deployed version of the workflow is used.
 
 .LINK
 about_js7
@@ -76,19 +149,33 @@ about_js7
 [cmdletbinding()]
 param
 (
-    [Parameter(Mandatory=$True,ValueFromPipeline=$False,ValueFromPipelinebyPropertyName=$True)]
-    [string] $Path,
-    [Parameter(Mandatory=$True,ValueFromPipeline=$False,ValueFromPipelinebyPropertyName=$True)]
-    [ValidateSet('WORKFLOW','JOBCLASS','LOCK','JUNCTION','WORKINGDAYSCALENDAR','NONWORKINGDAYSCALENDAR','ORDER')]
-    [string] $Type,
     [Parameter(Mandatory=$False,ValueFromPipeline=$False,ValueFromPipelinebyPropertyName=$True)]
-    [string] $FileExtension = 'zip',
+    [string] $Path,
+    [Parameter(Mandatory=$False,ValueFromPipeline=$False,ValueFromPipelinebyPropertyName=$True)]
+    [ValidateSet('WORKFLOW','JOBCLASS','LOCK','JUNCTION','WORKINGDAYSCALENDAR','NONWORKINGDAYSCALENDAR','ORDER')]
+    [string[]] $Type,
+    [Parameter(Mandatory=$False,ValueFromPipeline=$False,ValueFromPipelinebyPropertyName=$True)]
+    [string] $Folder = '/',
+    [Parameter(Mandatory=$False,ValueFromPipeline=$False,ValueFromPipelinebyPropertyName=$True)]
+    [switch] $Recursive,
+    [Parameter(Mandatory=$False,ValueFromPipeline=$False,ValueFromPipelinebyPropertyName=$True)]
+    [switch] $Releasable,
+    [Parameter(Mandatory=$False,ValueFromPipeline=$False,ValueFromPipelinebyPropertyName=$True)]
+    [switch] $Deployable,
+    [Parameter(Mandatory=$False,ValueFromPipeline=$False,ValueFromPipelinebyPropertyName=$True)]
+    [switch] $Released,
+    [Parameter(Mandatory=$False,ValueFromPipeline=$False,ValueFromPipelinebyPropertyName=$True)]
+    [switch] $Deployed,
+    [Parameter(Mandatory=$False,ValueFromPipeline=$False,ValueFromPipelinebyPropertyName=$True)]
+    [switch] $Valid,
+    [Parameter(Mandatory=$False,ValueFromPipeline=$False,ValueFromPipelinebyPropertyName=$True)]
+    [string] $File,
     [Parameter(Mandatory=$False,ValueFromPipeline=$False,ValueFromPipelinebyPropertyName=$True)]
     [string] $AuditComment,
     [Parameter(Mandatory=$False,ValueFromPipeline=$False,ValueFromPipelinebyPropertyName=$True)]
     [int] $AuditTimeSpent,
     [Parameter(Mandatory=$False,ValueFromPipeline=$False,ValueFromPipelinebyPropertyName=$True)]
-    [Uri] $AuditTicketLink    
+    [Uri] $AuditTicketLink  
 )
 	Begin
 	{
@@ -97,7 +184,17 @@ param
 
         if ( $Path.endsWith('/') )
         {
-            throw "$($MyInvocation.MyCommand.Name): path has to include directory, sub-directory and object name"
+            throw "$($MyInvocation.MyCommand.Name): path has to include folder, sub-folder and object name"
+        }
+        
+        if ( $Path -and !$Type )
+        {
+            throw "$($MyInvocation.MyCommand.Name): path requires to specify the object type, use -Type parameter"
+        }
+        
+        if ( $Path -and $Folder -and ($Folder -ne '/') )
+        {
+            throw "$($MyInvocation.MyCommand.Name): only one of the parameters -Path or -Folder can be used"
         }
         
         if ( !$AuditComment -and ( $AuditTimeSpent -or $AuditTicketLink ) )
@@ -105,32 +202,176 @@ param
             throw "$($MyInvocation.MyCommand.Name): Audit Log comment required, use parameter -AuditComment if one of the parameters -AuditTimeSpent or -AuditTicketLink is used"
         }
         
+        $deployableTypes = @('WORKFLOW','JOBCLASS','LOCK','JUNCTION')
+        $releasableTypes = @('WORKINGDAYSCALENDAR','NONWORKINGDAYSCALENDAR','ORDER')
         $exportObjects = @()
-        $downloadFilename = "tmp-$(Get-Random).$($FileExtension)"
     }
     
     Process
     {
-        $body = New-Object PSObject
-        Add-Member -Membertype NoteProperty -Name 'objectType' -value $Type -InputObject $body
-        Add-Member -Membertype NoteProperty -Name 'path' -value $Path -InputObject $body
-        
-        [string] $requestBody = $body | ConvertTo-Json -Depth 100
-        $response = Invoke-JS7WebRequest -Path '/inventory/deployable' -Body $requestBody
-
-        if ( $response.StatusCode -eq 200 )
+        if ( $Folder -eq '/' -and !$Path -and !$Recursive )
         {
-            $deployableObject = ( $response.Content | ConvertFrom-JSON ).deployable
-            
-            if ( !$deployableObject.id )
-            {
-                throw ( $response | Format-List -Force | Out-String )
-            }
-        } else {
-            throw ( $response | Format-List -Force | Out-String )
+            $Recursive = $True
         }
+        
+        if ( !$Deployable -and !$Releasable )
+        {
+            $Deployable = $True
+            $Releasable = $True
+        }
+        
+        if ( $Deployable )
+        {
+            if ( !$Type )
+            {
+                $Type = $deployableTypes
+            }
+            
+            if ( $Path )
+            {
+                $body = New-Object PSObject
+                Add-Member -Membertype NoteProperty -Name 'objectType' -value $Type[0] -InputObject $body
+                Add-Member -Membertype NoteProperty -Name 'path' -value $Path -InputObject $body
+                Add-Member -Membertype NoteProperty -Name 'onlyValidObjects' -value ($Valid -eq $True) -InputObject $body                    
+                Add-Member -Membertype NoteProperty -Name 'withVersions' -value ($Deployable -eq $True) -InputObject $body
+                
+                [string] $requestBody = $body | ConvertTo-Json -Depth 100
+                $response = Invoke-JS7WebRequest -Path '/inventory/deployable' -Body $requestBody
+        
+                if ( $response.StatusCode -eq 200 )
+                {
+                    $deployableObject = ( $response.Content | ConvertFrom-JSON ).deployable
+                    
+                    if ( !$deployableObject.id )
+                    {
+                        throw ( $response | Format-List -Force | Out-String )
+                    }                
+                } else {
+                    throw ( $response | Format-List -Force | Out-String )
+                }
+                
+                if ( !$deployableObject.deployablesVersions.count -or ( $deployableObject.deploymentId -ne $deployableObject.deployablesVersions[0].deploymentId ) )
+                {
+                    throw "$($MyInvocation.MyCommand.Name): could not find deployment for object: $Path"
+                }
+                
+                if ( $Deployed -eq $False -or $deployableObject.deployed )
+                {
+                    $exportObjects += @{ 'area' = 'deployable'; 'path' = $Path; 'type' = $Type[0]; 'commitId' = $deployableObject.deployablesVersions[0].commitId }
+                }
+            } else {
+                $body = New-Object PSObject
+                Add-Member -Membertype NoteProperty -Name 'folder' -value $Folder -InputObject $body
+                Add-Member -Membertype NoteProperty -Name 'recursive' -value ($Recursive -eq $True) -InputObject $body                                    
+                Add-Member -Membertype NoteProperty -Name 'objectTypes' -value $Type -InputObject $body
+                Add-Member -Membertype NoteProperty -Name 'onlyValidObjects' -value ($Valid -eq $True) -InputObject $body                    
+                Add-Member -Membertype NoteProperty -Name 'withVersions' -value ($Deployable -eq $True) -InputObject $body
+                
+                [string] $requestBody = $body | ConvertTo-Json -Depth 100
+                $response = Invoke-JS7WebRequest -Path '/inventory/deployables' -Body $requestBody
+        
+                if ( $response.StatusCode -eq 200 )
+                {
+                    $deployableObjects = ( $response.Content | ConvertFrom-JSON ).deployables                    
+                } else {
+                    throw ( $response | Format-List -Force | Out-String )
+                }
+                
+                foreach( $deployableObject in $deployableObjects )
+                {
+                    if ( $Deployed -eq $False -or $deployableObject.deployed )
+                    {
+                        if ( $deployableObject.deployablesVersions.count -and ( $deployableObject.deploymentId -eq $deployableObject.deployablesVersions[0].deploymentId ) )
+                        {
+                            if ( $deployableObject.folder -and !$deployableObject.folder.endsWith( '/' ) )
+                            {
+                                $deployableObject.folder += '/'
+                            }
+                        
+                            $exportObjects += @{ 'area' = 'deployable'; 'path' = "$($deployableObject.folder)$($deployableObject.objectName)"; 'type' = $deployableObject.objectType; 'commitId' = $deployableObject.deployablesVersions[0].commitId }
+                        }
+                    }
+                }
+            }
+        }
+        
+        if ( $Releasable )
+        {
+            if ( !$Type )
+            {
+                $Type = $releasableTypes
+            }
 
-        $exportObjects += $deployableObject.id        
+            if ( $Path )
+            {
+                $body = New-Object PSObject
+                Add-Member -Membertype NoteProperty -Name 'objectType' -value $Type[0] -InputObject $body
+                Add-Member -Membertype NoteProperty -Name 'path' -value $Path -InputObject $body
+                Add-Member -Membertype NoteProperty -Name 'onlyValidObjects' -value ($Valid -eq $True) -InputObject $body                    
+                
+                [string] $requestBody = $body | ConvertTo-Json -Depth 100
+                $response = Invoke-JS7WebRequest -Path '/inventory/releasable' -Body $requestBody
+        
+                if ( $response.StatusCode -eq 200 )
+                {
+                    $releasableObject = ( $response.Content | ConvertFrom-JSON ).releasable
+                    
+                    if ( !$releasableObject.id )
+                    {
+                        throw ( $response | Format-List -Force | Out-String )
+                    }                
+                } else {
+                    throw ( $response | Format-List -Force | Out-String )
+                }
+                
+                if ( $Released -eq $False -or $releasbleObject.released )
+                {
+                    if ( $releasableObject.folder -and !$releasableObject.folder.endsWith( '/' ) )
+                    {
+                        $releasableObject.folder += '/'
+                    }
+                
+                    $exportObjects += @{ 'area' = 'releasable'; 'path' = "$($releasableObject.folder)$($releasableObject.objectName)"; 'type' = $releasableObject.objectType }                
+                }
+            } else {
+                $body = New-Object PSObject
+                Add-Member -Membertype NoteProperty -Name 'folder' -value $Folder -InputObject $body
+                Add-Member -Membertype NoteProperty -Name 'recursive' -value ($Recursive -eq $True) -InputObject $body                                    
+                Add-Member -Membertype NoteProperty -Name 'objectTypes' -value $Type -InputObject $body
+                Add-Member -Membertype NoteProperty -Name 'onlyValidObjects' -value ($Valid -eq $True) -InputObject $body                    
+                
+                [string] $requestBody = $body | ConvertTo-Json -Depth 100
+                $response = Invoke-JS7WebRequest -Path '/inventory/releasables' -Body $requestBody
+        
+                if ( $response.StatusCode -eq 200 )
+                {
+                    $releasableObjects = ( $response.Content | ConvertFrom-JSON ).releasables
+                    
+                    if ( !$releasableObjects.deliveryDate )
+                    {
+                        throw ( $response | Format-List -Force | Out-String )
+                    }                
+                } else {
+                    throw ( $response | Format-List -Force | Out-String )
+                }
+                
+                foreach( $releasableObject in $releasableObjects )
+                {
+                    if ( $Released -eq $False -or $releasbleObject.released )
+                    {
+                        if ( $releasableObject.id )
+                        {
+                            if ( $releasableObject.folder -and !$releasableObject.folder.endsWith( '/' ) )
+                            {
+                                $releasableObject.folder += '/'
+                            }
+                        
+                            $exportObjects += @{ 'area' = 'releasable'; 'path' = "$($releasableObject.folder)$($releasableObject.objectName)"; 'type' = $releasableObject.objectType }
+                        }
+                    }
+                }
+            }
+        }
     }
 
     End
@@ -138,29 +379,75 @@ param
         if ( $exportObjects.count )
         {
             $body = New-Object PSObject
-            Add-Member -Membertype NoteProperty -Name 'configurations' -value $exportObjects -InputObject $body            
-            Add-Member -Membertype NoteProperty -Name 'filename' -value $downloadFilename -InputObject $body
-    
-            [string] $requestBody = $body | ConvertTo-Json -Depth 100
-            $response = Invoke-JS7WebRequest -Path '/publish/export' -Body $requestBody
             
-            if ( $response.StatusCode -eq 200 )
-            {
-                $requestResult = ( $response.Content | ConvertFrom-JSON )
-                
-                if ( !$requestResult.ok )
+            $draftConfigurations = @()
+            $deployConfigurations = @()
+            
+            foreach( $object in $exportObjects )
+            {                
+                if ( $object.area -eq 'deployable' )
                 {
-                    throw ( $response | Format-List -Force | Out-String )
+                    $deployConfiguration = New-Object PSObject
+                    Add-Member -Membertype NoteProperty -Name 'path' -value $object.path -InputObject $deployConfiguration
+                    Add-Member -Membertype NoteProperty -Name 'objectType' -value $object.type -InputObject $deployConfiguration
+                    Add-Member -Membertype NoteProperty -Name 'commitId' -value $object.commitId -InputObject $deployConfiguration
+
+                    $deployConfigurationItem = New-Object PSObject
+                    Add-Member -Membertype NoteProperty -Name 'deployConfiguration' -value $deployConfiguration -InputObject $deployConfigurationItem
+
+                    $deployConfigurations += $deployConfigurationItem
+                } elseif ( $object.area -eq 'releasable' ) {
+                    $draftConfiguration = New-Object PSObject
+                    Add-Member -Membertype NoteProperty -Name 'path' -value $object.path -InputObject $draftConfiguration
+                    Add-Member -Membertype NoteProperty -Name 'objectType' -value $object.type -InputObject $draftConfiguration
+
+                    $draftConfigurationItem = New-Object PSObject
+                    Add-Member -Membertype NoteProperty -Name 'draftConfiguration' -value $draftConfiguration -InputObject $draftConfigurationItem
+
+                    $draftConfigurations += $draftConfigurationItem
                 }
-            } else {
+            }
+
+            Add-Member -Membertype NoteProperty -Name 'draftConfigurations' -value $draftConfigurations -InputObject $body
+            Add-Member -Membertype NoteProperty -Name 'deployConfigurations' -value $deployConfigurations -InputObject $body
+
+            if ( $AuditComment -or $AuditTimeSpent -or $AuditTicketLink )
+            {
+                $objAuditLog = New-Object PSObject
+                Add-Member -Membertype NoteProperty -Name 'comment' -value $AuditComment -InputObject $objAuditLog
+    
+                if ( $AuditTimeSpent )
+                {
+                    Add-Member -Membertype NoteProperty -Name 'timeSpent' -value $AuditTimeSpent -InputObject $objAuditLog
+                }
+    
+                if ( $AuditTicketLink )
+                {
+                    Add-Member -Membertype NoteProperty -Name 'ticketLink' -value $AuditTicketLink -InputObject $objAuditLog
+                }
+    
+                Add-Member -Membertype NoteProperty -Name 'auditLog' -value $objAuditLog -InputObject $body
+            }
+       
+
+            [string] $requestBody = $body | ConvertTo-Json -Depth 100
+            $response = Invoke-JS7WebRequest -Path '/inventory/export' -Body $requestBody
+            
+            if ( $response.StatusCode -ne 200 )
+            {
                 throw ( $response | Format-List -Force | Out-String )
             }
 
-            $requestResult
-            
-            Write-Verbose ".. $($MyInvocation.MyCommand.Name): object exported"                
+            if ( $File )
+            {
+                [System.Text.Encoding]::UTF8.GetString( $response.Content ) | Out-File $File -Encoding UTF8
+            } else {
+                [System.Text.Encoding]::UTF8.GetString( $response.Content )                
+            }
+
+            Write-Verbose ".. $($MyInvocation.MyCommand.Name): objects exported"                
         } else {
-            Write-Verbose ".. $($MyInvocation.MyCommand.Name): no object exported"                
+            Write-Verbose ".. $($MyInvocation.MyCommand.Name): no objects exported"                
         }
 
         Log-StopWatch $MyInvocation.MyCommand.Name $stopWatch
