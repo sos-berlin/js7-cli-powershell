@@ -1,38 +1,38 @@
-function Get-JS7DailyPlan
+function Get-JS7DailyPlanOrder
 {
 <#
 .SYNOPSIS
-Returns the daily plan items for workflows scheduled for a JS7 Controller.
+Returns the daily plan orders for workflows scheduled for a JS7 Controller
 
 .DESCRIPTION
-The daily plan items for workfows are returned.
+The daily plan orders for workfows are returned.
 
 .PARAMETER WorkflowPath
-Optionally specifies the path and name of a workflow for which daily plan items should be returned.
+Optionally specifies the path and name of a workflow for which daily plan orders should be returned.
 
-.PARAMETER Schedule
-Optionally specifies the path and name of a schedule for which daily plan items should be returned.
+.PARAMETER SchedulePath
+Optionally specifies the path and name of a schedule for which daily plan orders should be returned.
 
 .PARAMETER Folder
-Optionally specifies the folder with workflows for which daily plan items should be returned.
+Optionally specifies the folder with workflows for which daily plan orders should be returned.
 
 .PARAMETER Recursive
 When used with the -Folder parameter then any sub-folders of the specified folder will be looked up.
 
 .PARAMETER DateFrom
-Optionally specifies the date starting from which daily plan items should be returned.
+Optionally specifies the date starting from which daily plan orders should be returned.
 Consider that a UTC date has to be provided.
 
 Default: Begin of the current day as a UTC date
 
 .PARAMETER DateTo
-Optionally specifies the date until which daily plan items should be returned.
+Optionally specifies the date until which daily plan orders should be returned.
 Consider that a UTC date has to be provided.
 
 Default: End of the current day as a UTC date
 
 .PARAMETER RelativeDateFrom
-Specifies a relative date starting from which daily plan items should be returned, e.g. 
+Specifies a relative date starting from which daily plan orders should be returned, e.g. 
 
 * -1d, -2d: one day ago, two days ago
 * +1d, +2d: one day later, two days later
@@ -50,7 +50,7 @@ for the timezone that is specified with the -Timezone parameter.
 This parameter takes precedence over the -DateFrom parameter.
 
 .PARAMETER RelativeDateTo
-Specifies a relative date until which daily plan items should be returned, e.g. 
+Specifies a relative date until which daily plan orders should be returned, e.g. 
 
 * -1d, -2d: one day ago, two days ago
 * +1d, +2d: one day later, two days later
@@ -80,58 +80,58 @@ All dates in JobScheduler are UTC and can be converted e.g. to the local time zo
 Default: Dates are returned in UTC.
 
 .PARAMETER Late
-Specifies that daily plan items are returned that are late or that started later than expected.
+Specifies that daily plan orders are returned that are late or that started later than expected.
 
 .PARAMETER Successful
-Specifies that daily plan items are returned completed successfully.
+Specifies that daily plan orders are returned completed successfully.
 
 .PARAMETER Failed
-Specifies that daily plan items are returned that completed with errors.
+Specifies that daily plan orders are returned that completed with errors.
 
 .PARAMETER InProgress
-Specifies that daily plan items are returned for jobs, orders, job streams that did not yet complete.
+Specifies that daily plan orders are returned for jobs, orders, job streams that did not yet complete.
 
 .PARAMETER Planned
-Specifies that daily plan items are returned that did not yet start.
+Specifies that daily plan orders are returned that did not yet start.
 
 .OUTPUTS
-This cmdlet returns an array of daily plan items.
+This cmdlet returns an array of daily plan orders.
 
 .EXAMPLE
-$items = Get-JS7DailyPlan
+$orders = Get-JS7DailyPlanOrder
 
-Returns daily plan items for the current day.
-
-.EXAMPLE
-$items = Get-JS7DailyPlan -Timezone (Get-Timezone)
-
-Returns today's daily plan for any jobs with dates being converted to the local timezone.
+Returns daily plan orders for the current day.
 
 .EXAMPLE
-$items = Get-JS7DailyPlan -Timezone (Get-Timezone -Id 'GMT Standard Time')
+$orders = Get-JS7DailyPlanOrder -Timezone (Get-Timezone)
 
-Returns today's daily plan for any jobs with dates being converted to the GMT timezone.
-
-.EXAMPLE
-$items = Get-JS7DailyPlan -DateTo (Get-Date).AddDays(3)
-
-Returns the daily plan items for the next 3 days.
+Returns today's daily plan orders for any jobs with dates being converted to the local timezone.
 
 .EXAMPLE
-$items = Get-JS7DailyPlan -RelativeDateFrom -3d
+$orders = Get-JS7DailyPlanOrder -Timezone (Get-Timezone -Id 'GMT Standard Time')
 
-Returns the daily plan for the last three days.
+Returns today's daily plan orders for any jobs with dates being converted to the GMT timezone.
+
+.EXAMPLE
+$orders = Get-JS7DailyPlanOrder -DateTo (Get-Date).AddDays(3)
+
+Returns the daily plan orders for the next 3 days.
+
+.EXAMPLE
+$orders = Get-JS7DailyPlanOrder -RelativeDateFrom -3d
+
+Returns the daily plan orders for the last three days.
 The daily plan is reported starting from midnight UTC.
 
 .EXAMPLE
-$items = Get-JS7DailyPlan -Failed -Late
+$orders = Get-JS7DailyPlanOrder -Failed -Late
 
-Returns today's daily plan items for jobs that failed or are late, i.e. that did not start at the expected point in time.
+Returns today's daily plan orders for jobs that failed or are late, i.e. that did not start at the expected point in time.
 
 .EXAMPLE
-$items = Get-JS7DailyPlan -WorkflowPath /ap/apWorkflow1b
+$orders = Get-JS7DailyPlanOrder -WorkflowPath /ap/apWorkflow1b
 
-Returns the daily plan items for any orders of the given workflow.
+Returns the daily plan orders for the given workflow.
 
 .LINK
 about_js7
@@ -174,7 +174,7 @@ param
         $stopWatch = Start-StopWatch
 
         $workflowPaths = @()
-        $schedules = @()
+        $schedulePaths = @()
         $folders = @()
         $states = @()
         $returnDailyPlanItems = @()        
@@ -190,7 +190,7 @@ param
                 $Folder = '/' + $Folder
             }
         
-            if ( $Folder.Length -gt 1 -and $Folder.LastIndexOf( '/' )+1 -eq $Folder.Length )
+            if ( $Folder.endsWith( '/' ) )
             {
                 $Folder = $Folder.Substring( 0, $Folder.Length-1 )
             }
@@ -228,9 +228,9 @@ param
             $workflowPaths = @( $WorkflowPath )
         }
 
-        if ( $Schedule )
+        if ( $SchedulePath )
         {
-            $schedules = @( $Schedule )
+            $schedulePaths = @( $SchedulePath )
         }
 
         if ( $Folder -ne '/' )
@@ -311,7 +311,7 @@ param
                 {
                     $objFolder = New-Object PSObject
                     Add-Member -Membertype NoteProperty -Name 'folder' -value $folder -InputObject $objFolder
-                    Add-Member -Membertype NoteProperty -Name 'recursive' -value ( $Recursive -eq $true ) -InputObject $objFolder
+                    Add-Member -Membertype NoteProperty -Name 'recursive' -value ($Recursive -eq $True) -InputObject $objFolder
                     $objFolders += $objFolder
                 }
                 
@@ -323,9 +323,9 @@ param
                 Add-Member -Membertype NoteProperty -Name 'workflow' -value $workflowPaths[0] -InputObject $body
             }
     
-            if ( $schedules )
+            if ( $schedulePaths )
             {
-                Add-Member -Membertype NoteProperty -Name 'orderTemplates' -value $schedules -InputObject $body
+                Add-Member -Membertype NoteProperty -Name 'orderTemplates' -value $schedulePaths -InputObject $body
             }
     
             [string] $requestBody = $body | ConvertTo-Json -Depth 100
@@ -363,9 +363,9 @@ param
 
         if ( $returnDailyPlanItems.count )
         {
-            Write-Verbose ".. $($MyInvocation.MyCommand.Name): $($returnDailyPlanItems.count) Daily Plan items found"
+            Write-Verbose ".. $($MyInvocation.MyCommand.Name): $($returnDailyPlanItems.count) Daily Plan orders found"
         } else {
-            Write-Verbose ".. $($MyInvocation.MyCommand.Name): no Daily Plan items found"
+            Write-Verbose ".. $($MyInvocation.MyCommand.Name): no Daily Plan orders found"
         }
         
         Log-StopWatch $MyInvocation.MyCommand.Name $stopWatch

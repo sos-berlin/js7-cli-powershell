@@ -35,8 +35,7 @@ Specifies that any sub-folders should be looked up if the -Folder parameter is u
 By default no sub-folders will be searched for orders.
 
 .PARAMETER RegularExpression
-Specifies that any sub-folders should be looked up if the -Folder parameter is used.
-By default no sub-folders will be searched for orders.
+Specifies that a regular expession is applied to the order IDs to filter results.
 
 .PARAMETER Compact
 Specifies that fewer attributes of orders are returned.
@@ -150,18 +149,19 @@ param
     {
         Write-Debug ".. $($MyInvocation.MyCommand.Name): parameter Folder=$Folder, WorkflowPath=$WorkflowPath, OrderId=$OrderId"
     
-        if ( !$Folder -and !$WorkflowPath -and !$OrderId )
+        if ( !$Folder -and !$WorkflowPath -and !$OrderId -and !$RegularExpression)
         {
-            throw "$($MyInvocation.MyCommand.Name): no folder, no workflow path or order id specified, use -Folder or -WorkflowPath or -OrderId"
+            throw "$($MyInvocation.MyCommand.Name): no folder, no workflow path, order id or regular expression is specified, use -Folder or -WorkflowPath or -OrderId or -RegularExpression"
         }
 
         if ( $Folder -and $Folder -ne '/' )
         { 
-            if ( $Folder.Substring( 0, 1) -ne '/' ) {
+            if ( $Folder.Substring( 0, 1) -ne '/' ) 
+            {
                 $Folder = '/' + $Folder
             }
         
-            if ( $Folder.Length -gt 1 -and $Folder.LastIndexOf( '/' )+1 -eq $Folder.Length )
+            if ( $Folder.endsWith( '/' ) )
             {
                 $Folder = $Folder.Substring( 0, $Folder.Length-1 )
             }
@@ -223,7 +223,7 @@ param
             {
                 $returnOrders = ( $response.Content | ConvertFrom-JSON )
             } elseif ( $response.StatusCode -eq 420 -and $IgnoreFailed ) {
-                # no exception
+                # exception not forwarded
             } else {
                 throw ( $response | Format-List -Force | Out-String )
             }
@@ -268,11 +268,7 @@ param
             if ( $folders.count )
             {
                 Add-Member -Membertype NoteProperty -Name 'folders' -value $folders -InputObject $body
-    
-                if ( $RegularExpression )
-                {
-                    Add-Member -Membertype NoteProperty -Name 'regex' -value $RegularExpression -InputObject $body                
-                }
+                Add-Member -Membertype NoteProperty -Name 'recursive' -value ($Recursive -eq $True) -InputObject $body                
             }
             
             if ( $states.count )

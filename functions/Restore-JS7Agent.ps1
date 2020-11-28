@@ -2,38 +2,15 @@ function Restore-JS7Agent
 {
 <#
 .SYNOPSIS
-Add an Agent to the JS7 Controller or modify Agent properties
+Reassigns Agents to a JS7 Controller
 
 .DESCRIPTION
-This cmdlet adds an Agent to a JS7 Controller. A number of Agent properties can be modified.
+This cmdlet reassigns Agents to a JS7 Controller. Any Agents that previously have been
+added with the Set-JS7Agent cmdlet are assgined a Controller. This operation is not required
+for normal operation, however, if Controller's journal has to be dropped then the Controller
+will loose the information about assigned Agents. 
 
-Consider that the Agent identification specified with the -AgentId parameter cannot be modified
-for the lifetime of an Agent.
-
-.PARAMETER AgentId
-Specifies a unique identifier for an Agent. This identifier cannot be modified during the lifetime of an Agent.
-In order to modify the Agent identifier the Controller connected Agents have to be terminated and
-journals have to be cleaned up.
-
-.PARAMETER AgentName
-The name of an Agent is used e.g. in job assignments of a workflow. During deployment the Agent Name
-is replaced by the respective Agent ID for the Controller to which the workflow is deployed.
-
-Should deployments of the same workflows be performed to a number of Controllers then for each Controller
-the same Agent Name has to be configured (pointing to a different Agent ID).
-
-.PARAMETER Url
-Specifies the URL for which the Agent is available. A URL includes the protocol (http, https), hostname and port
-for which an Agent is operated.
-
-.PARAMETER WatchCluster
-A JS7 Controller cluster requires a minimum of one Agent to be assigned the role of a cluster watcher.
-Such an Agent will be considered if the JS7 Controller cluster decides about a fail-over situation with
-no network connection being available between primary and secondary JS7 Controller instances.
-
-.PARAMETER Disable
-An Agent can be disabled to prevent further use in workflow configurations. Deployed workflows still can
-use a disabled Agent.
+Use of this cmdlet restores the Agent assignment for the given Controller.
 
 .PARAMETER AuditComment
 Specifies a free text that indicates the reason for the current intervention, e.g. "business requirement", "maintenance window" etc.
@@ -60,14 +37,9 @@ This cmdlet accepts pipelined input.
 This cmdlet returns no output.
 
 .EXAMPLE
-Set-JS7Agent -AgentId agent_001 -AgentName primaryAgent -Url https://agent-2-0-primary:4443 -WatchCluster
+Restore-JS7Agent
 
-Adds an Agent with the specified attributes.
-
-.EXAMPLE
-Set-JS7Agent -AgentId agent_002 -AgentName secondaryAgent -Url https://agent-2-0-secondary:4443
-
-Adds an Agent with the specified attributes.
+Reassigns any Agents to the current Controller.
 
 .LINK
 about_js7

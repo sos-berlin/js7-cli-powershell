@@ -35,8 +35,10 @@ FunctionsToExport = @(
     'Get-JS7AgentInstance',
     'Get-JS7AgentReport',
     'Get-JS7AgentStatus',
+    'Get-JS7Calendar',
+    'Get-JS7CalendarDates',
     'Get-JS7ControllerInstance',
-    'Get-JS7DailyPlan',
+    'Get-JS7DailyPlanOrder',
     'Get-JS7JOCInstance',
     'Get-JS7JOCProperties',
     'Get-JS7Order',
@@ -48,10 +50,12 @@ FunctionsToExport = @(
     'Get-JS7TaskLog',
     'Get-JS7Version',
     'Get-JS7Workflow',
+    'New-JS7DailyPlanOrder',
     'Publish-JS7DeployableObject',
     'Publish-JS7ReleasableObject',
     'Rename-JS7Folder',
     'Rename-JS7Object',
+    'Remove-JS7DailyPlanOrder',
     'Remove-JS7Folder',
     'Remove-JS7Object',
     'Restart-JS7ControllerInstance',
@@ -66,7 +70,8 @@ FunctionsToExport = @(
     'Stop-JS7Order',
     'Suspend-JS7Order',
     'Switch-JS7ControllerInstance',
-    'Switch-JS7JOCInstance'
+    'Switch-JS7JOCInstance',
+    'Test-JS7ControllerInstance'
 )
 
 # # Cmdlets to export from this module
