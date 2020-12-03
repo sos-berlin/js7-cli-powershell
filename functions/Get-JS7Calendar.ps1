@@ -133,15 +133,16 @@ param
 
         if ( $Folder -and $Folder -ne '/' )
         { 
-            if ( $Folder.startsWith( '/' ) ) {
+            if ( !$Folder.StartsWith( '/' ) )
+            {
                 $Folder = '/' + $Folder
             }
         
-            if ( $Folder.Length -gt 1 -and $Folder.endsWith( '/' ) )
+            if ( $Folder.EndsWith( '/' ) )
             {
                 $Folder = $Folder.Substring( 0, $Folder.Length-1 )
             }
-        }           
+        }
 
         if ( $Folder -eq '/' -and !$WorkflowPath -and !$RegularExpression -and !$Recursive )
         {

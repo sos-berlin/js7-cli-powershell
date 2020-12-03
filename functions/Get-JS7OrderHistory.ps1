@@ -230,7 +230,6 @@ param
         $folders = @()
         $historyStates = @()
         $excludeOrders = @()
-        $returnHistoryItems = @()
     }
         
     Process
@@ -244,11 +243,12 @@ param
     
         if ( $Folder -and $Folder -ne '/' )
         { 
-            if ( $Folder.Substring( 0, 1) -ne '/' ) {
+            if ( !$Folder.StartsWith( '/' ) )
+            {
                 $Folder = '/' + $Folder
             }
         
-            if ( $Folder.Length -gt 1 -and $Folder.LastIndexOf( '/' )+1 -eq $Folder.Length )
+            if ( $Folder.EndsWith( '/' ) )
             {
                 $Folder = $Folder.Substring( 0, $Folder.Length-1 )
             }
@@ -327,7 +327,7 @@ param
         $timezoneOffsetPrefix = if ( $Timezone.BaseUtcOffset.toString().startsWith( '-' ) ) { '-' } else { '+' }
         $timezoneOffsetHours = $Timezone.BaseUtcOffset.Hours
 
-        if ( $Timezone.SupportsDaylightSavingTime )
+        if ( $Timezone.SupportsDaylightSavingTime -and $Timezone.IsDaylightSavingTime( (Get-Date) ) )
         {
             $timezoneOffsetHours += 1
         }
@@ -396,7 +396,7 @@ param
         }
 
         [string] $requestBody = $body | ConvertTo-Json -Depth 100
-        $response = Invoke-JS7WebRequest '/orders/history' $requestBody
+        $response = Invoke-JS7WebRequest -Path '/orders/history' -Body $requestBody
         
         if ( $response.StatusCode -eq 200 )
         {

@@ -87,6 +87,19 @@ param
     {
         Write-Debug ".. $($MyInvocation.MyCommand.Name): parameter Folder=$Folder, WorkflowPath=$WorkflowPath, RegularExpression=$RegularExpression"
 
+        if ( $Folder -and $Folder -ne '/' )
+        { 
+            if ( !$Folder.StartsWith( '/' ) )
+            {
+                $Folder = '/' + $Folder
+            }
+        
+            if ( $Folder.EndsWith( '/' ) )
+            {
+                $Folder = $Folder.Substring( 0, $Folder.Length-1 )
+            }
+        }
+
         if ( !$Folder -and !$WorkflowPath -and !$RegularExpression )
         {
             throw "$($MyInvocation.MyCommand.Name): no folder,no workflow path and no regular expression specified, use -Folder, -WorkflowPath or -RegularExpression"

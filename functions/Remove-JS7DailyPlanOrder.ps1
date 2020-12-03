@@ -104,21 +104,21 @@ param
     
             if ( $orderIds.count )
             {
-                Add-Member -Membertype NoteProperty -Name 'orderKeys' -value $orderIds -InputObject $body
+                Add-Member -Membertype NoteProperty -Name 'orderIds' -value $orderIds -InputObject $body
             }
     
             if ( $workflowPaths.count )
             {
-                Add-Member -Membertype NoteProperty -Name 'workflow' -value $workflowPaths[0] -InputObject $body
+                Add-Member -Membertype NoteProperty -Name 'workflowPaths' -value $workflowPaths[0] -InputObject $body
             }
             
             if ( $schedulePaths.count )
             {
-                Add-Member -Membertype NoteProperty -Name 'orderTemplates' -value $schedulePaths -InputObject $body
+                Add-Member -Membertype NoteProperty -Name 'schedules' -value $schedulePaths -InputObject $body
             }
     
             [string] $requestBody = $body | ConvertTo-Json -Depth 100
-            $response = Invoke-JS7WebRequest -Path '/daily_plan/remove_orders' -Body $requestBody
+            $response = Invoke-JS7WebRequest -Path '/daily_plan/orders/remove' -Body $requestBody
             
             if ( $response.StatusCode -eq 200 )
             {

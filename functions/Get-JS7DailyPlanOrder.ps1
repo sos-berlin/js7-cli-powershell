@@ -214,7 +214,7 @@ param
 
         if ( $InProgress )
         {
-            $states += 'INCOMPLETE'
+            $states += 'INPROGRESS'
         }
 
         if ( $Planned )
@@ -245,7 +245,7 @@ param
         $timezoneOffsetPrefix = if ( $Timezone.BaseUtcOffset.toString().startsWith( '-' ) ) { '-' } else { '+' }
         $timezoneOffsetHours = $Timezone.BaseUtcOffset.Hours
 
-        if ( $Timezone.SupportsDaylightSavingTime )
+        if ( $Timezone.SupportsDaylightSavingTime -and $Timezone.IsDaylightSavingTime( (Get-Date) ) )
         {
             $timezoneOffsetHours += 1
         }
@@ -325,7 +325,7 @@ param
     
             if ( $schedulePaths )
             {
-                Add-Member -Membertype NoteProperty -Name 'orderTemplates' -value $schedulePaths -InputObject $body
+                Add-Member -Membertype NoteProperty -Name 'schedules' -value $schedulePaths -InputObject $body
             }
     
             [string] $requestBody = $body | ConvertTo-Json -Depth 100

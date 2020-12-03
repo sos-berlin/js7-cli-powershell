@@ -156,7 +156,7 @@ param
 
         if ( $Folder -and $Folder -ne '/' )
         { 
-            if ( $Folder.Substring( 0, 1) -ne '/' ) 
+            if ( !$Folder.StartsWith( '/' ) )
             {
                 $Folder = '/' + $Folder
             }

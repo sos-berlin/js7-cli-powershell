@@ -35,6 +35,7 @@ FunctionsToExport = @(
     'Get-JS7AgentInstance',
     'Get-JS7AgentReport',
     'Get-JS7AgentStatus',
+    'Get-JS7AuditLog',
     'Get-JS7Calendar',
     'Get-JS7CalendarDates',
     'Get-JS7ControllerInstance',

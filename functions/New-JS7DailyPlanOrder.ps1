@@ -95,20 +95,20 @@ param
 
     Process
     {
-        Write-Debug ".. $($MyInvocation.MyCommand.Name): parameter Folder=$Folder, WorkflowPath=$WorkflowPath, Schedule=$Schedule"
+        Write-Debug ".. $($MyInvocation.MyCommand.Name): parameter Folder=$Folder, WorkflowPath=$WorkflowPath, SchedulePath=$SchedulePath"
 
         if ( $Folder -and $Folder -ne '/' )
         { 
-            if ( $Folder.Substring( 0, 1) -ne '/' )
+            if ( !$Folder.StartsWith( '/' ) )
             {
                 $Folder = '/' + $Folder
             }
         
-            if ( $Folder.endsWith( '/' ) )
+            if ( $Folder.EndsWith( '/' ) )
             {
                 $Folder = $Folder.Substring( 0, $Folder.Length-1 )
             }
-        }           
+        }
 
         if ( $Folder )
         {
@@ -138,15 +138,11 @@ param
             
             # TODO: enable Controllers
             Add-Member -Membertype NoteProperty -Name 'controllerId' -value $script:jsWebService.ControllerId -InputObject $body
-
-            if ( $DailyPlanDate )
-            {
-                Add-Member -Membertype NoteProperty -Name 'dailyPlanDate' -value (Get-Date $DailyPlanDate -Format 'yyyy-MM-dd') -InputObject $body
-            }
+            Add-Member -Membertype NoteProperty -Name 'dailyPlanDate' -value (Get-Date $DailyPlanDate -Format 'yyyy-MM-dd') -InputObject $body
     
             if ( $schedulePaths.count )
             {
-                Add-Member -Membertype NoteProperty -Name 'orderTemplates' -value $schedulePaths -InputObject $body
+                Add-Member -Membertype NoteProperty -Name 'schedules' -value $schedulePaths -InputObject $body
             }
 
             # TODO: enable folders
