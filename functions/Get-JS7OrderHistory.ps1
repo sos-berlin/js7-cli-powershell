@@ -8,7 +8,7 @@ Returns the order execution history
 History information is returned for orders from a JS7 Controller. 
 Order executions can be selected by workflow, order ID, folder, history status etc.
 
-The history information retured includes start time, end time, return code etc.
+The history information returned includes start time, end time, return code etc.
 
 .PARAMETER OrderId
 Optionally specifies the identifier of an order for which the order history should be returned.

@@ -276,6 +276,11 @@ param
                 Add-Member -Membertype NoteProperty -Name 'states' -value $states -InputObject $body
             }
 
+            if ( $RegularExpression )
+            {
+                Add-Member -Membertype NoteProperty -Name 'regex' -value $RegularExpression -InputObject $body
+            }
+
             [string] $requestBody = $body | ConvertTo-Json -Depth 100
             $response = Invoke-JS7WebRequest -Path '/orders' -Body $requestBody
         

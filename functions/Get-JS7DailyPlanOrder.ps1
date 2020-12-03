@@ -143,7 +143,7 @@ param
     [Parameter(Mandatory=$False,ValueFromPipelinebyPropertyName=$True)]
     [string] $WorkflowPath,
     [Parameter(Mandatory=$False,ValueFromPipelinebyPropertyName=$True)]
-    [string] $Schedule,
+    [string] $SchedulePath,
     [Parameter(Mandatory=$False,ValueFromPipeline=$False,ValueFromPipelinebyPropertyName=$True)]
     [string] $Folder = '/',
     [Parameter(Mandatory=$False,ValueFromPipeline=$False,ValueFromPipelinebyPropertyName=$True)]
@@ -182,11 +182,11 @@ param
 
     Process
     {
-        Write-Debug ".. $($MyInvocation.MyCommand.Name): parameter Folder=$Folder, WorkflowPath=$WorkflowPath, Schedule=$Schedule"
+        Write-Debug ".. $($MyInvocation.MyCommand.Name): parameter Folder=$Folder, WorkflowPath=$WorkflowPath, SchedulePath=$SchedulePath"
 
         if ( $Folder -and $Folder -ne '/' )
         { 
-            if ( $Folder.Substring( 0, 1) -ne '/' ) {
+            if ( !$Folder.startsWith( '/' ) ) {
                 $Folder = '/' + $Folder
             }
         
@@ -196,7 +196,7 @@ param
             }
         }
             
-        if ( $Folder -eq '/' -and !$WorkflowPath -and !$Schedule -and !$Recursive )
+        if ( $Folder -eq '/' -and !$WorkflowPath -and !$SchedulePath -and !$Recursive )
         {
             $Recursive = $True
         }
@@ -301,7 +301,7 @@ param
     
             if ( $Late )
             {
-                Add-Member -Membertype NoteProperty -Name 'late' -value ( $Late -eq $true ) -InputObject $body
+                Add-Member -Membertype NoteProperty -Name 'late' -value ( $Late -eq $True ) -InputObject $body
             }
             
             if ( $folders )

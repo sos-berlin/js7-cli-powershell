@@ -2,13 +2,13 @@ function Stop-JS7Order
 {
 <#
 .SYNOPSIS
-Cancels and removes orders in the JS7 Controller
+Cancels and removes an order in the JS7 Controller
 
 .DESCRIPTION
 Orders are cancelled and removed. Orders are selected for removal
 
 * by a pipelined object, e.g. the output of the Get-JS7Order cmdlet
-* by specifying an individual order with the -OrderId parameters.
+* by specifying an individual order with the -OrderId parameter.
 
 .PARAMETER OrderId
 Specifies the identifier of an order.
@@ -53,7 +53,7 @@ Retrieves and cancels all orders for the given workflow.
 .EXAMPLE
 Get-JS7Order -Folder /sos -Recursive | Stop-JS7Order
 
-Retrieves and cancels all ad hoc orders from the indicated folder including any sub-folders.
+Retrieves and cancels all orders from the indicated folder including any sub-folders.
 
 .LINK
 about_js7

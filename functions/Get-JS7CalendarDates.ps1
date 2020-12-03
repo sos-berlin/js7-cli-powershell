@@ -10,21 +10,19 @@ Return the list of dates that are included with a calendar.
 Past and future dates can be retrieved.
 
 .PARAMETER CalendarPath
-Optionally specifies the path and name of a calendar that should be returned.
-
-One of the parameters -Folder, -CalendarPath or -RegularExpression has to be specified if no pipelined order objects are provided.
+Specifies the path and name of a calendar that should be returned.
 
 .PARAMETER DateFrom
-Specifies the date starting from which calendar dates should be returned.
+Optionally specifies the date starting from which calendar dates should be returned.
 Consider that a UTC date has to be provided.
 
 Default: Begin of the current day as a UTC date
 
 .PARAMETER DateTo
-Specifies the date until which calendar dates should be returned.
+Optionally specifies the date until which calendar dates should be returned.
 Consider that a UTC date has to be provided.
 
-Default: End of the calendar's date range or the end of the current year as a UTC date
+Default: End of the calendar's date range or the end of the current year as a UTC date.
 
 .OUTPUTS
 This cmdlet returns an array of calendar dates.
@@ -38,6 +36,11 @@ Returns the dates specified by the indicated calendar that is stored with the pa
 $dates = Get-JS7CalendarDates -CalendarPath /BusinessDays -DateTo (Get-Date).AddDays(30)
 
 Returns the calendar dates for the next 30 days.
+
+.EXAMPLE
+$dates = Get-JS7Calendar -WorkingDays | Get-JS7calendarDates
+
+Retursn the dates from any working day calendars available with the inventory.
 
 .LINK
 about_js7

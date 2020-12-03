@@ -1,4 +1,4 @@
-function Get-JS7Version
+function Get-JS7ControllerVersion
 {
 <#
 .SYNOPSIS
@@ -7,15 +7,10 @@ Returns the JS7 Controller version
 .DESCRIPTION
 The cmdlet returns the version of the JS7 Controller.
 
-.PARAMETER NoCache
-Specifies that the cache for JS7 objects is ignored.
-This results in the fact that for each Get-JS7* cmdlet execution the response is 
-retrieved directly from the JS7 Controller and is not resolved from the cache.
-
 .EXAMPLE
-Get-JS7Version
+Get-JS7ControllerVersion
 
-Returns the JS7 version.
+Returns the JS7 Controller version.
 
 .LINK
 about_js7

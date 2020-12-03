@@ -6,7 +6,7 @@ Returns workflows from the JS7 inventory
 
 .DESCRIPTION
 Workflows are returned from JOC Cockpit - independent of their deployment status with specific Controller instances.
-Workflows can be selected either by the folder of the workflow location including sub-folders or by an individual workflow.
+Workflows can be selected either by the folder of the workflow location including sub-folders or by an individual workflow path.
 
 Resulting workflows can be forwarded to other cmdlets for pipelined bulk operations.
 
@@ -44,9 +44,9 @@ $workflows = Get-JS7Workflow
 Returns all workflows.
 
 .EXAMPLE
-$workflows = Get-JS7Workflow -Folder /some_path -Recursive
+$workflows = Get-JS7Workflow -Folder /some_folder -Recursive
 
-Returns all workflows that are configured with the specified path
+Returns all workflows that are configured with the specified folder
 including any sub-folders.
 
 .EXAMPLE

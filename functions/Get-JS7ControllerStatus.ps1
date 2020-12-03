@@ -1,4 +1,4 @@
-function Get-JS7Status
+function Get-JS7ControllerStatus
 {
 <#
 .SYNOPSIS
@@ -17,17 +17,17 @@ Specifies that summary infromation about orders and jobs should be returned.
 Specifies that formatted output will be displayed, otherwise a status object will be returned that contain the respective information.
 
 .EXAMPLE
-Get-JS7Status
+Get-JS7ControllerStatus
 
 Returns status information about the JS7 Controller.
 
 .EXAMPLE
-Get-JS7Status -Summary -Display
+Get-JS7ControllerStatus -Summary -Display
 
 Returns status information and summary information about orders and jobs. Formatted output is displayed.
 
 .EXAMPLE
-$status = Get-JS7Status -Summary
+$status = Get-JS7ControllerStatus -Summary
 
 Returns an object including status information and summary information.
 

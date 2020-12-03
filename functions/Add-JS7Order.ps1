@@ -112,7 +112,7 @@ Adds the indicated order for a later date that is specified for the "Europe/Berl
 $orderId = Add-JS7Order -WorkflowPath /sos/reporting/Reporting -At "now+3600" -Arguments @{'param1' = 'value1'; 'param2' = 'value2'}
 
 Adds an order to the indicated workflow. The order will start one hour later and will use the
-arguments from the indicated arguments.
+arguments as specified by the -Arguments parameter.
 
 .LINK
 about_js7

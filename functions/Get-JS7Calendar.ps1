@@ -16,16 +16,16 @@ Resulting calendars can be forwarded to other cmdlets for pipelined bulk operati
 .PARAMETER CalendarPath
 Optionally specifies the path and name of a calendar that should be returned.
 
-One of the parameters -Folder, -CalendarPath or -RegularExpression has to be specified if no pipelined order objects are provided.
+One of the parameters -Folder, -CalendarPath or -RegularExpression has to be specified if no pipelined calendar objects are provided.
 
 .PARAMETER Folder
-Optionally specifies the folder with workflows for which orders should be returned.
+Optionally specifies the folder for which calendars should be returned.
 
-One of the parameters -Folder, -CalendarPath or -OrderId has to be specified if no pipelined order objects are provided.
+One of the parameters -Folder, -CalendarPath or -RegularExpression has to be specified if no pipelined calendar objects are provided.
 
 .PARAMETER Recursive
 Specifies that any sub-folders should be looked up if the -Folder parameter is used.
-By default no sub-folders will be searched for orders.
+By default no sub-folders will be searched for calendars.
 
 .PARAMETER RegularExpression
 Specifies that a regular expession is applied to the calendar name to filter results.
@@ -37,9 +37,13 @@ Specifies that fewer attributes of calendars are returned.
 Specifies that only calendars for working days should be returned.
 Such calendars specify days for which orders should be executed with a JS7 Controller.
 
+Only one of the parameters -WorkingDays or -NonWorkingDays can be used.
+
 .PARAMETER NonWorkingDays
 Specifies that only calendars for non-working days should be returned.
 Such calendars specify days for which no orders should be executed with a JS7 Controller.
+
+Only one of the parameters -WorkingDays or -NonWorkingDays can be used.
 
 .OUTPUTS
 This cmdlet returns an array of calendar objects.
@@ -63,7 +67,7 @@ Returns the calendar that is stored with the path "/BusinessDays".
 .EXAMPLE
 $calendars = Get-JS7Calendar -WorkingDays
 
-Returns the calendars for working days only.
+Returns the calendars that define working days only.
 
 .LINK
 about_js7
@@ -92,10 +96,15 @@ param
         Approve-JS7Command $MyInvocation.MyCommand
         $stopWatch = Start-StopWatch
 
+        if ( $WorkingDays -and $NonWorkingDays )
+        {
+            throw "$($MyInvocation.MyCommand.Name): only one of the parameters -WorkingDays or -NonWorkingDays can be used"
+        }
+
         $returnCalendars = @()
         $calendarPaths = @()
         $folders = @()
-        $types = @()
+        $type = $null
     }
         
     Process
@@ -124,31 +133,30 @@ param
 
         if ( $Folder -and $Folder -ne '/' )
         { 
-            if ( $Folder.Substring( 0, 1) -ne '/' ) {
+            if ( $Folder.startsWith( '/' ) ) {
                 $Folder = '/' + $Folder
             }
         
-            if ( $Folder.Length -gt 1 -and $Folder.LastIndexOf( '/' )+1 -eq $Folder.Length )
+            if ( $Folder.Length -gt 1 -and $Folder.endsWith( '/' ) )
             {
                 $Folder = $Folder.Substring( 0, $Folder.Length-1 )
             }
         }           
 
-        if ( $Folder -eq '/' -and !$WorkflowPath -and !$OrderId -and !$Recursive )
+        if ( $Folder -eq '/' -and !$WorkflowPath -and !$RegularExpression -and !$Recursive )
         {
             $Recursive = $True
         }
 
         if ( $WorkingDays )
         {
-            $types += 'WORKINGDAYSCALENDAR '
+            $type = 'WORKINGDAYSCALENDAR'
         }
 
         if ( $NonWorkingDays )
         {
-            $types += 'NONWORKINGDAYSCALENDAR '
+            $type = 'NONWORKINGDAYSCALENDAR'
         }
-
 
         if ( $CalendarPath )
         {
@@ -183,9 +191,9 @@ param
                 Add-Member -Membertype NoteProperty -Name 'folders' -value $folders -InputObject $body    
             }
             
-            if ( $types.count )
+            if ( $type )
             {
-                Add-Member -Membertype NoteProperty -Name 'type' -value $types -InputObject $body
+                Add-Member -Membertype NoteProperty -Name 'type' -value $type -InputObject $body
             }
 
             if ( $RegularExpression )
@@ -203,7 +211,16 @@ param
                 throw ( $response | Format-List -Force | Out-String )
             }
         
-            $returnCalendars
+            $returnCalendars | Select-Object -Property `
+                               @{name='calendarPath'; expression={$_.path}}, `
+                               from, `
+                               id, `
+                               includes, `
+                               name, `
+                               path, `
+                               title, `
+                               to, `
+                               type
         }
 
         if ( $returnCalendars.count )

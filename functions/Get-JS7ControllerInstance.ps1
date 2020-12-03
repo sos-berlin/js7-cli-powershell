@@ -2,24 +2,24 @@ function Get-JS7ControllerInstance
 {
 <#
 .SYNOPSIS
-Returns Controller information from the JOC Cockpit.
+Returns information about a JS7 Controller instance from JOC Cockpit
 
 .DESCRIPTION
-Returns any JobScheduler Controller Cluster members - including standalone instances - that are connected to JOC Cockpit.
+Returns any JS7 standalone Controller instace or JS7 Controller Cluster members that are connected to JOC Cockpit.
 
 .PARAMETER Id
-Specifies the ID of a JobScheduler Controller that was used during installation of the product.
-If no ID is specified then the first JobScheduler Controller registered with JOC Cockpit will be used.
+Specifies the ID of a JS7 Controller that was specified during installation of the product.
+If no ID is specified then the first JS7 Controller registered with JOC Cockpit will be used.
 
 .PARAMETER Active
-This switch specifies that only the active instance of a JobScheduler Controller cluster should be returned.
+This switch specifies that only the active instance of a JS7 Controller cluster should be returned.
 
-Without use of this switch active and passive Controller instances in a cluster are returned.
+Without use of this switch active and passive Controller instances of a cluster are returned.
 
 .PARAMETER Passive
-This switch specifies that only the passive instance of a JobScheduler Controller cluster should be returned.
+This switch specifies that only the passive instance of a JS7 Controller cluster should be returned.
 
-Without use of this switch active and passive Controller instances in a cluster are returned.
+Without use of this switch active and passive Controller instances of a cluster are returned.
 
 .OUTPUTS
 This cmdlet returns an array of Controller Cluster member objects.
@@ -27,12 +27,12 @@ This cmdlet returns an array of Controller Cluster member objects.
 .EXAMPLE
 $controllers = Get-JS7ControllerInstance
 
-Returns the Controller standalone instance or all members in a JS7 cluster.
+Returns the Controller standalone instance or all members of a JS7 cluster.
 
 .EXAMPLE
 $controllers = Get-JS7ControllerInstance -Id some-controllerId
 
-Returns the Controller standalone instance or all members of a JS7 cluster with the specified Controller ID.
+Returns the Controller standalone instance or all members of a JS7 Controller cluster with the specified Controller ID.
 
 .EXAMPLE
 $activeController = Get-JS7ControllerInstance -Id some-controller-id -Active
@@ -96,7 +96,6 @@ param
         } else {
             throw ( $response | Format-List -Force | Out-String )
         }    
-
 
         [string] $requestBody = $body | ConvertTo-Json -Depth 100
         $response = Invoke-JS7WebRequest -Path '/controllers/p' -Body $requestBody

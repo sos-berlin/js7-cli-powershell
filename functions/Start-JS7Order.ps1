@@ -2,10 +2,10 @@ function Start-JS7Order
 {
 <#
 .SYNOPSIS
-Starts existing orders the JS7 Controller
+Starts an existing order the JS7 Controller
 
 .DESCRIPTION
-Start existing orders for the JS7 Controller and optionally adjust the start time and arguments.
+Start an existing order for the JS7 Controller and optionally adjust the start time and arguments.
 
 .PARAMETER OrderId
 Specifies the identifier of the order.

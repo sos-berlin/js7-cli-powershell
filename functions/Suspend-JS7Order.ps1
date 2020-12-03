@@ -2,13 +2,13 @@ function Suspend-JS7Order
 {
 <#
 .SYNOPSIS
-Suspends orders in the JS7 Controller.
+Suspends an order in the JS7 Controller.
 
 .DESCRIPTION
-This cmdlet suspends orders in a JS7 Controller.
+This cmdlet suspends an order in a JS7 Controller.
 
 .PARAMETER OrderId
-Specifies the identifier of an order.
+Specifies the identifier of the order.
 
 .PARAMETER Kill
 Specifies if the running task for the indicated order should be sent a SIGTERM signal (default, -Kill:$false) or a SIGKILLL signal (-Kill:$true).
