@@ -209,7 +209,7 @@ param
                 }
             }
             
-            if ( $Delete -and $Folder )
+            if ( $Type[0] -eq 'FOLDER' -and $Delete -and $Folder )
             {
                 $deleteObjects += @{ 'path' = "$($Folder)"; 'type' = 'FOLDER'; 'valid' = $True; 'released' = $True }                
             }            
@@ -285,6 +285,7 @@ param
             Write-Verbose ".. $($MyInvocation.MyCommand.Name): no objects released"                
         }
 
-        Log-StopWatch $MyInvocation.MyCommand.Name $stopWatch
+        Log-StopWatch -CommandName $MyInvocation.MyCommand.Name -StopWatch $stopWatch
+        Touch-JS7Session
     }
 }

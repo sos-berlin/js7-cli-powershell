@@ -68,6 +68,7 @@ param
             Write-Verbose ".. $($MyInvocation.MyCommand.Name): no Agents found"
         }
         
-        Log-StopWatch $MyInvocation.MyCommand.Name $stopWatch
+        Log-StopWatch -CommandName $MyInvocation.MyCommand.Name -StopWatch $stopWatch
+        Touch-JS7Session        
     }
 }

@@ -133,6 +133,7 @@ ________________________________________________________________________
             return $returnAgents
         }
 
-        Log-StopWatch $MyInvocation.MyCommand.Name $stopWatch
+        Log-StopWatch -CommandName $MyInvocation.MyCommand.Name -StopWatch $stopWatch
+        Touch-JS7Session
     }
 }

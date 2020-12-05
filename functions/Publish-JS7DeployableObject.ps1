@@ -5,8 +5,16 @@ function Publish-JS7DeployableObject
 Deploys a configuration object such as a workflow to a number of JS7 Controllers.
 
 .DESCRIPTION
-This cmdlet deploys a configuration object to a number of JS7 Controllers. Deployment includes
-to permanently delete previously removed objects from Controllers and from the inventory.
+This cmdlet deploys a configuration object to a number of JS7 Controllers. Consider a workflow
+that can be deployed to more than one Controller.
+
+Deployment includes that objects such as workflows are digitally signed and forwarded to a Controller.
+Depending on the security level JOC Cockpit is operated for signging is available with a general certificate, 
+with a user based certificate or by external signing.
+
+Deployment includes to permanently delete previously removed objects from Controllers and from the inventory.
+Therefore, if a deployable object is removed, e.g. with the Remove-JS7Object cmdlet, then this removal has to 
+be committed using this cmdlet for deployment.
 
 .PARAMETER Path
 Specifies the folder, sub-folder and name of the object, e.g. a workflow path.
@@ -67,6 +75,12 @@ Deletes the specified folder from the inventory and deletes any included deploya
 
 .EXAMPLE
 Publish-JS7DeployableObject -ControllerId testsuite -Folder /PowerShell -Delete
+
+Deletes any deployable objects such as workflows from the specified folder recursively.
+Consider that the specified folder is not deleted but its contents only.
+
+.EXAMPLE
+Publish-JS7DeployableObject -ControllerId testsuite -Path /PowerShell -Type FOLDER -Delete
 
 Deletes any deployable objects such as workflows from the specified folder recursively.
 Consider that the specified folder is not deleted but its contents only.
@@ -226,7 +240,7 @@ param
                # }
             }
             
-            if ( $Delete -and $Folder )
+            if ( $Type[0] -eq 'FOLDER' -and $Delete -and $Folder )
             {
                 $deleteObjects += @{ 'path' = "$($Folder)"; 'type' = 'FOLDER'; 'valid' = $True; 'deployed' = $True }                
             }
@@ -363,6 +377,6 @@ param
             Write-Verbose ".. $($MyInvocation.MyCommand.Name): no objects deployed"                
         }
 
-        Log-StopWatch $MyInvocation.MyCommand.Name $stopWatch
+        Log-StopWatch -CommandName $MyInvocation.MyCommand.Name -StopWatch $stopWatch
     }
 }

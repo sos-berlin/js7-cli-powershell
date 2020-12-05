@@ -157,7 +157,9 @@ param
             throw ( $response | Format-List -Force | Out-String )
         }
     
-        Write-Verbose ".. $($MyInvocation.MyCommand.Name): Agent stored: $AgentId"                
-        Log-StopWatch $MyInvocation.MyCommand.Name $stopWatch
+        Write-Verbose ".. $($MyInvocation.MyCommand.Name): Agent stored: $AgentId"
+        
+        Log-StopWatch -CommandName $MyInvocation.MyCommand.Name -StopWatch $stopWatch
+        Touch-JS7Session
     }
 }
