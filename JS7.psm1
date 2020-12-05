@@ -434,6 +434,17 @@ function isPowerShellVersion( [int] $Major=-1, [int] $Minor=-1, [int] $Patch=-1 
     $rc
 }
 
+function Touch-JS7Session()
+{
+    try
+    {
+        if ( $script:jsWebService.ControllerId )
+        {
+            Invoke-JS7WebRequest -Path '/touch' | Out-Null
+        }
+    } catch {}    
+}
+
 function Invoke-JS7WebRequest( [string] $Path, [string] $Body, [string] $ContentType='application/json', [hashtable] $Headers=@{'Accept' = 'application/json'} )
 {
     if ( $script:jsWebService.Url.UserInfo )
@@ -505,12 +516,7 @@ function Invoke-JS7WebRequest( [string] $Path, [string] $Body, [string] $Content
 
         if ( $response -and $response.StatusCode -and $response.Content )
         {
-            if ( $response.StatusCode -eq 200 -and $response.Content )
-            {
-                $response
-            } else {
-                $response
-            }
+            $response
         } else {
             $message = $response | Format-List -Force | Out-String
             throw $message
