@@ -7,10 +7,11 @@ Removes an object such as a workflow from the JOC Cockpit inventory.
 .DESCRIPTION
 This cmdlet removes an object such as a workflow form the JOC Cockpit inventory.
 
-Consider to apply changes by deploying the object, see the Publish-JS7Object cmdlet.
+Consider to commit removals by deploying or releasing the object, 
+see the Publish-JS7DeployableObject and  Publish-JS7ReleasableObject cmdlets.
 
 .PARAMETER Path
-Specifies the directory and sub-directories of the object.
+Specifies the folder and sub-folders of the object.
 
 .PARAMETER Type
 Specifies the object type which is one of: 
@@ -21,7 +22,7 @@ Specifies the object type which is one of:
 * JUNCTION
 * WORKINGDAYSCALENDAR
 * NONWORKINGDAYSCALENDAR
-* ORDER
+* SCHEDULE
 
 .PARAMETER AuditComment
 Specifies a free text that indicates the reason for the current intervention, e.g. "business requirement", "maintenance window" etc.
@@ -48,7 +49,7 @@ This cmdlet accepts pipelined objects that are e.g. returned from a Get-JS7Workf
 This cmdlet returns no output.
 
 .EXAMPLE
-Remove-JS7Object -Path /some/directory/sampleWorkflow -Type 'WORKFLOW'
+Remove-JS7Object -Path /some_folder/sampleWorkflow -Type 'WORKFLOW'
 
 Removes the indicated worfklow from the JOC Cockpit inventory.
 
@@ -62,7 +63,7 @@ param
     [Parameter(Mandatory=$True,ValueFromPipeline=$False,ValueFromPipelinebyPropertyName=$True)]
     [string] $Path,
     [Parameter(Mandatory=$True,ValueFromPipeline=$False,ValueFromPipelinebyPropertyName=$True)]
-    [ValidateSet('WORKFLOW','JOBCLASS','LOCK','JUNCTION','WORKINGDAYSCALENDAR','NONWORKINGDAYSCALENDAR','ORDER')]
+    [ValidateSet('WORKFLOW','JOBCLASS','LOCK','JUNCTION','WORKINGDAYSCALENDAR','NONWORKINGDAYSCALENDAR','SCHEDULE')]
     [string] $Type,
     [Parameter(Mandatory=$False,ValueFromPipeline=$False,ValueFromPipelinebyPropertyName=$True)]
     [string] $AuditComment,
@@ -76,11 +77,6 @@ param
 		Approve-JS7Command $MyInvocation.MyCommand
         $stopWatch = Start-StopWatch
 
-        if ( $Type -ne 'FOLDER' -and $Path.endsWith('/') )
-        {
-            throw "$($MyInvocation.MyCommand.Name): path has to include directory, sub-directory and object name"
-        }
-        
         if ( !$AuditComment -and ( $AuditTimeSpent -or $AuditTicketLink ) )
         {
             throw "$($MyInvocation.MyCommand.Name): Audit Log comment required, use parameter -AuditComment if one of the parameters -AuditTimeSpent or -AuditTicketLink is used"
@@ -89,6 +85,11 @@ param
     
     Process
     {
+        if ( $Type -ne 'FOLDER' -and $Path.endsWith('/') )
+        {
+            throw "$($MyInvocation.MyCommand.Name): path has to include folder, sub-folder and object name"
+        }
+        
         if ( $Path.endsWith('/') )
         {
             $Path = $Path.Substring( 0, $Path.Length-1 )
@@ -131,7 +132,7 @@ param
             throw ( $response | Format-List -Force | Out-String )
         }
     
-        Write-Verbose ".. $($MyInvocation.MyCommand.Name): object removed: $Name"                
+        Write-Verbose ".. $($MyInvocation.MyCommand.Name): object removed: $Path"                
     }
 
     End

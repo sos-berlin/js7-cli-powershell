@@ -61,6 +61,8 @@ FunctionsToExport = @(
     'Remove-JS7Object',
     'Restart-JS7ControllerInstance',
     'Restore-JS7Agent',
+    'Restore-JS7Folder',
+    'Restore-JS7Object',
     'Resume-JS7Order',
     'Set-JS7Agent',
     'Set-JS7Credentials',

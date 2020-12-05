@@ -5,12 +5,16 @@ function Remove-JS7Folder
 Removes a folder from the JOC Cockpit inventory.
 
 .DESCRIPTION
-This cmdlet removes a folder from the JOC Cockpit inventory.
+This cmdlet marks for deletion a folder and its contents, i.e. deployable and releasable objects
+in the JOC Cockpit inventory.
 
-Should the folder contain deployable objects such as worksflows then this change has to be deployed, see the Publish-JS7Object cmdlet.
+The objects from the folder are not immediately erased, instead this change has to be committed:
+
+* For deployable objects use of the cmdlet the Publish-JS7DeployableObject cmdlet with the -Delete switch is required.
+* For releasable objects use of the cmdlet the Publish-JS7ReleasableObject cmdlet with the -Delete switch is required.
 
 .PARAMETER Path
-Specifies the directory and sub-directories of the folder.
+Specifies the folder and optionally sub-folders to be removed.
 
 .PARAMETER AuditComment
 Specifies a free text that indicates the reason for the current intervention, e.g. "business requirement", "maintenance window" etc.
@@ -37,7 +41,7 @@ This cmdlet accepts pipelined input.
 This cmdlet returns no output.
 
 .EXAMPLE
-Remove-JS7Folder -Path /some/directory
+Remove-JS7Folder -Path /some/path
 
 Removes the specified folder from the JOC Cockpit inventory.
 
@@ -94,7 +98,7 @@ param
             throw ( $response | Format-List -Force | Out-String )
         }
     
-        Write-Verbose ".. $($MyInvocation.MyCommand.Name): folder removed: $Name"                
+        Write-Verbose ".. $($MyInvocation.MyCommand.Name): folder removed: $Path"                
     }
 
     End

@@ -6,7 +6,7 @@ Deploys a configuration object such as a workflow to a number of JS7 Controllers
 
 .DESCRIPTION
 This cmdlet deploys a configuration object to a number of JS7 Controllers. Deployment includes
-to permanently delete previously removed objects from Controllers.
+to permanently delete previously removed objects from Controllers and from the inventory.
 
 .PARAMETER Path
 Specifies the folder, sub-folder and name of the object, e.g. a workflow path.
@@ -21,14 +21,14 @@ Specifies the object type which is one of:
 * JUNCTION
 
 .PARAMETER Folder
-Optionally specifies the folder for which all included inventory objects should be published. 
+Optionally specifies the folder for which included inventory objects should be published. 
 This parameter is used alternatively to the -Path parameter that specifies to publish an individual inventory object.
 
 .PARAMETER ControllerId
 Specifies one or more Controllers to which the indicated objects should be deployed.
 
 .PARAMETER Delete
-Specifies the action to permanently delete objects from a Controller. Withtout this switch objects
+Specifies the action to permanently delete objects from a Controller. Without this switch objects
 are published for use with a Controller.
 
 .PARAMETER AuditComment
@@ -101,25 +101,6 @@ param
 		Approve-JS7Command $MyInvocation.MyCommand
         $stopWatch = Start-StopWatch
 
-        if ( $Path.endsWith('/') )
-        {
-            throw "$($MyInvocation.MyCommand.Name): path has to include folder, sub-folder and object name"
-        }
-        
-        if ( $Path -and !$Type )
-        {
-            throw "$($MyInvocation.MyCommand.Name): path requires to specify the object type, use -Type parameter"
-        }
-        
-        if ( $Path -and $Folder -and ($Folder -ne '/') )
-        {
-            throw "$($MyInvocation.MyCommand.Name): only one of the parameters -Path or -Folder can be used"
-        }
-        if ( !$Path -and !$Folder )
-        {
-            throw "$($MyInvocation.MyCommand.Name): one of the parameters -Path or -Folder has to be used"
-        }
-        
         if ( !$AuditComment -and ( $AuditTimeSpent -or $AuditTicketLink ) )
         {
             throw "$($MyInvocation.MyCommand.Name): Audit Log comment required, use parameter -AuditComment if one of the parameters -AuditTimeSpent or -AuditTicketLink is used"
@@ -134,6 +115,37 @@ param
     
     Process
     {
+        if ( $Path.endsWith('/') )
+        {
+            throw "$($MyInvocation.MyCommand.Name): path has to include folder, sub-folder and object name"
+        }
+        
+        if ( $Path -and !$Type )
+        {
+            throw "$($MyInvocation.MyCommand.Name): path requires to specify the object type, use -Type parameter"
+        }
+        
+        if ( $Path -and $Folder -and ($Folder -ne '/') )
+        {
+            throw "$($MyInvocation.MyCommand.Name): only one of the parameters -Path or -Folder can be used"
+        }
+
+        if ( !$Path -and !$Folder )
+        {
+            throw "$($MyInvocation.MyCommand.Name): one of the parameters -Path or -Folder has to be used"
+        }
+        
+        if ( $Type )
+        {
+            foreach( $typeItem in $Type )
+            {
+                if ( $deployableTypes -notcontains $typeItem )
+                {
+                    throw "$($MyInvocation.MyCommand.Name): value of -Type parameter not allowed ($($deployableTypes)): $typeItem"
+                }
+            }
+        }
+
         if ( !$Type )
         {
             $Type = $deployableTypes
@@ -153,7 +165,7 @@ param
                 $body = New-Object PSObject
                 Add-Member -Membertype NoteProperty -Name 'objectType' -value $Type[0] -InputObject $body
                 Add-Member -Membertype NoteProperty -Name 'path' -value $Path -InputObject $body
-                Add-Member -Membertype NoteProperty -Name 'onlyValidObjects' -value $True -InputObject $body
+                Add-Member -Membertype NoteProperty -Name 'onlyValidObjects' -value $False -InputObject $body
                 Add-Member -Membertype NoteProperty -Name 'withVersions' -value $False -InputObject $body
                 
                 [string] $requestBody = $body | ConvertTo-Json -Depth 100
@@ -183,8 +195,8 @@ param
             Add-Member -Membertype NoteProperty -Name 'folder' -value $Folder -InputObject $body
             Add-Member -Membertype NoteProperty -Name 'recursive' -value $True -InputObject $body                                    
             Add-Member -Membertype NoteProperty -Name 'objectTypes' -value $Type -InputObject $body
-            Add-Member -Membertype NoteProperty -Name 'onlyValidObjects' -value $True -InputObject $body                    
-            Add-Member -Membertype NoteProperty -Name 'withVersions' -value $True -InputObject $body
+            Add-Member -Membertype NoteProperty -Name 'onlyValidObjects' -value $False -InputObject $body                    
+            Add-Member -Membertype NoteProperty -Name 'withVersions' -value $False -InputObject $body
             
             [string] $requestBody = $body | ConvertTo-Json -Depth 100
             $response = Invoke-JS7WebRequest -Path '/inventory/deployables' -Body $requestBody
@@ -198,23 +210,25 @@ param
 
             foreach( $deployableObject in $deployableObjects )
             {
-                if ( $Deployed -eq $False -or $deployableObject.deployed )
-                {
-                    if ( $deployableObject.deployablesVersions.count -and ( $deployableObject.deploymentId -eq $deployableObject.deployablesVersions[0].deploymentId ) )
+               # if ( $deployableObject.deployablesVersions.count -and ( $deployableObject.deploymentId -eq $deployableObject.deployablesVersions[0].deploymentId ) )
+               # {
+                    if ( $deployableObject.folder -and !$deployableObject.folder.endsWith( '/' ) )
                     {
-                        if ( $deployableObject.folder -and !$deployableObject.folder.endsWith( '/' ) )
-                        {
-                            $deployableObject.folder += '/'
-                        }
-                    
-                        if ( $Delete )
-                        {
-                            $deleteObjects += @{ 'path' = "$($deployableObject.folder)$($deployableObject.objectName)"; 'type' = $deployableObject.objectType; 'valid' = $deployableObject.valid; 'deployed' = $deployableObject.deployed; 'commitId' = $deployableObject.deployablesVersions[0].commitId }
-                        } else {
-                            $storeObjects += @{ 'path' = "$($deployableObject.folder)$($deployableObject.objectName)"; 'type' = $deployableObject.objectType; 'valid' = $deployableObject.valid; 'deployed' = $deployableObject.deployed; 'commitId' = $deployableObject.deployablesVersions[0].commitId }                            
-                        }
+                        $deployableObject.folder += '/'
                     }
-                }
+                
+                    if ( $Delete )
+                    {
+                        $deleteObjects += @{ 'path' = "$($deployableObject.folder)$($deployableObject.objectName)"; 'type' = $deployableObject.objectType; 'valid' = $deployableObject.valid; 'deployed' = $deployableObject.deployed }
+                    } else {
+                        $storeObjects += @{ 'path' = "$($deployableObject.folder)$($deployableObject.objectName)"; 'type' = $deployableObject.objectType; 'valid' = $deployableObject.valid; 'deployed' = $deployableObject.deployed }
+                    }
+               # }
+            }
+            
+            if ( $Delete -and $Folder )
+            {
+                $deleteObjects += @{ 'path' = "$($Folder)"; 'type' = 'FOLDER'; 'valid' = $True; 'deployed' = $True }                
             }
         }    
     }

@@ -149,9 +149,9 @@ param
     [Parameter(Mandatory=$False,ValueFromPipeline=$False,ValueFromPipelinebyPropertyName=$True)]
     [switch] $Recursive,
     [Parameter(Mandatory=$False,ValueFromPipelinebyPropertyName=$True)]
-    [DateTime] $DateFrom = (Get-Date -Hour 0 -Minute 0 -Second 0),
+    [DateTime] $DateFrom = (Get-Date (Get-Date).ToUniversalTime() -Format 'yyyy-MM-dd'),
     [Parameter(Mandatory=$False,ValueFromPipelinebyPropertyName=$True)]
-    [DateTime] $DateTo = (Get-Date -Hour 0 -Minute 0 -Second 0),
+    [DateTime] $DateTo,
     [Parameter(Mandatory=$False,ValueFromPipelinebyPropertyName=$True)]
     [string] $RelativeDateFrom,
     [Parameter(Mandatory=$False,ValueFromPipelinebyPropertyName=$True)]
@@ -201,7 +201,6 @@ param
             $Recursive = $True
         }
 
-   
         if ( $Successful )
         {
             $states += 'SUCCESSFUL'
@@ -283,6 +282,11 @@ param
                 'y' { $dailyPlanDateTo = (Get-Date).AddYears( "$($dateDirection)$($dateRange)" ) }
             }
         } else {
+            if ( !$DateTo )
+            {
+                $DateTo = $dailyPlanDateFrom
+            }
+            
             $dailyPlanDateTo = Get-Date (Get-Date $DateTo)
         }
 

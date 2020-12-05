@@ -1,17 +1,18 @@
-function Rename-JS7Folder
+function Restore-JS7Folder
 {
 <#
 .SYNOPSIS
-Rename a folder in the JOC Cockpit inventory
+Restores a removed folder from the JOC Cockpit inventory.
 
 .DESCRIPTION
-This cmdlet renames a folder in the JOC Cockpit inventory.
+This cmdlet restores a folder and its contents that have perviously been removed provided
+that the deletion of objects has not yet been committed with one of the cmdlets:
+
+* For deployable objects use of the cmdlet the Publish-JS7DeployableObject cmdlet with the -Delete switch commits permanent deletion.
+* For releasable objects use of the cmdlet the Publish-JS7ReleasableObject cmdlet with the -Delete switch commits permanent deletion.
 
 .PARAMETER Path
-Specifies the folder - optionally including sub-folders - that should be rename
-
-.PARAMETER Name
-Specifies the new folder name.
+Specifies the folder and optionally sub-folders to be removed.
 
 .PARAMETER AuditComment
 Specifies a free text that indicates the reason for the current intervention, e.g. "business requirement", "maintenance window" etc.
@@ -38,9 +39,9 @@ This cmdlet accepts pipelined input.
 This cmdlet returns no output.
 
 .EXAMPLE
-Rename-JS7Folder -Path /some-folder/some-sub-folder -Name /some-other-folder
+Restore-JS7Folder -Path /some/path
 
-Renames the specified folder including e.g. to move a sub-folder to a different folder.
+Restores the specified folder in the JOC Cockpit inventory.
 
 .LINK
 about_js7
@@ -51,8 +52,6 @@ param
 (
     [Parameter(Mandatory=$True,ValueFromPipeline=$False,ValueFromPipelinebyPropertyName=$True)]
     [string] $Path,
-    [Parameter(Mandatory=$True,ValueFromPipeline=$False,ValueFromPipelinebyPropertyName=$True)]
-    [string] $Name,
     [Parameter(Mandatory=$False,ValueFromPipeline=$False,ValueFromPipelinebyPropertyName=$True)]
     [string] $AuditComment,
     [Parameter(Mandatory=$False,ValueFromPipeline=$False,ValueFromPipelinebyPropertyName=$True)]
@@ -81,10 +80,9 @@ param
         $body = New-Object PSObject
         Add-Member -Membertype NoteProperty -Name 'path' -value $Path -InputObject $body
         Add-Member -Membertype NoteProperty -Name 'objectType' -value 'FOLDER' -InputObject $body
-        Add-Member -Membertype NoteProperty -Name 'name' -value $Name -InputObject $body
             
         [string] $requestBody = $body | ConvertTo-Json -Depth 100
-        $response = Invoke-JS7WebRequest -Path '/inventory/rename' -Body $requestBody
+        $response = Invoke-JS7WebRequest -Path '/inventory/recover' -Body $requestBody
         
         if ( $response.StatusCode -eq 200 )
         {
@@ -98,7 +96,7 @@ param
             throw ( $response | Format-List -Force | Out-String )
         }
     
-        Write-Verbose ".. $($MyInvocation.MyCommand.Name): folder renamed: $Name"                
+        Write-Verbose ".. $($MyInvocation.MyCommand.Name): folder restored: $Path"                
     }
 
     End

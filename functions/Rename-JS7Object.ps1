@@ -2,37 +2,27 @@ function Rename-JS7Object
 {
 <#
 .SYNOPSIS
-Import an XML configuration object such as a job, a job chain etc. to JOC Cockpit.
+Rename an object in the JOC Cockpit inventory
 
 .DESCRIPTION
-This cmdlet imports an XML configuration object that is stored with JOC Cockpit.
-However, the object is not immediately deployed, see Deploy-JobSchedulerObject cmdlet.
+This cmdlet renames an object in the JOC Cockpit inventory.
 
-.PARAMETER Name
-Specifies the name of the object, e.g. a job name.
-
-.PARAMETER Directory
-Specifies the directory in JOC Cockpit to which the object should be stored.
+.PARAMETER Path
+Specifies the folder, sub-folders and object name that should be renamed in the JOC Cockpit inventory.
 
 .PARAMETER Type
 Specifies the object type which is one of: 
 
-* JOB
-* JOBCHAIN
-* ORDER
-* PROCESSCLASS
-* AGENTCLUSTER
+* WORKFLOW
+* JOBCLASS
 * LOCK
+* JUNCTION
+* WORKINGDAYSCALENDAR
+* NONWORKINGDAYSCALENDAR
 * SCHEDULE
-* MONITOR
-* NODEPARAMS
-* HOLIDAYS
 
-.PARAMETER File
-Specifies the XML file that holds the configuration object.
-
-.PARAMETER DocPath
-Specifies the path to the documentation that is assigned the object.
+.PARAMETER Name
+Specifies the new name of the object, e.g. the name of a workflow.
 
 .PARAMETER AuditComment
 Specifies a free text that indicates the reason for the current intervention, e.g. "business requirement", "maintenance window" etc.
@@ -53,15 +43,15 @@ This information is visible with the Audit Log view of JOC Cockpit.
 It can be useful when integrated with a ticket system that logs interventions with JobScheduler.
 
 .INPUTS
-This cmdlet accepts pipelined job objects that are e.g. returned from a Get-Job cmdlet.
+This cmdlet accepts pipelined job objects that are e.g. returned from a Get-JS7Workflow cmdlet.
 
 .OUTPUTS
 This cmdlet returns no output.
 
 .EXAMPLE
-Import-JobSchedulerObject -Name job174 -Directory /some/directory -Type JOB -File /tmp/job174.job.xml
+Rename-JS7Object -Path /some_path/workflow173 -Type WORKFLOW -Name workflow174
 
-Import the job configuration from the given file and store the job with the specified directory and name.
+Renames the given workflow in the JOC Cockpit inventory.
 
 .LINK
 about_js7
@@ -73,7 +63,7 @@ param
     [Parameter(Mandatory=$True,ValueFromPipeline=$False,ValueFromPipelinebyPropertyName=$True)]
     [string] $Path,
     [Parameter(Mandatory=$True,ValueFromPipeline=$False,ValueFromPipelinebyPropertyName=$True)]
-    [ValidateSet('FOLDER','WORKFLOW','JOBCLASS','AGENTCLUSTER','LOCK','JUNCTION','WORKINGDAYSCALENDAR','NONWORKINGDAYSCALENDAR','ORDER')]
+    [ValidateSet('WORKFLOW','JOBCLASS','LOCK','JUNCTION','WORKINGDAYSCALENDAR','NONWORKINGDAYSCALENDAR','SCHEDULE')]
     [string] $Type,
     [Parameter(Mandatory=$True,ValueFromPipeline=$False,ValueFromPipelinebyPropertyName=$True)]
     [string] $Name,
@@ -89,11 +79,6 @@ param
 		Approve-JS7Command $MyInvocation.MyCommand
         $stopWatch = Start-StopWatch
 
-        if ( $Type -ne 'FOLDER' -and $Path.endsWith('/') )
-        {
-            throw "$($MyInvocation.MyCommand.Name): path has to include directory, sub-directory and object name"
-        }
-        
         if ( !$AuditComment -and ( $AuditTimeSpent -or $AuditTicketLink ) )
         {
             throw "$($MyInvocation.MyCommand.Name): Audit Log comment required, use parameter -AuditComment if one of the parameters -AuditTimeSpent or -AuditTicketLink is used"
@@ -104,7 +89,12 @@ param
     {
         if ( $Path.endsWith('/') )
         {
-            $Path = $Path.Substring( 0, $Path.Length-1 )
+            throw "$($MyInvocation.MyCommand.Name): path has to include folder, sub-folder and object name"
+        }
+        
+        if ( $Name.IndexOf( '/' ) -ge 0 )
+        {
+            throw "$($MyInvocation.MyCommand.Name): object name cannot container a folder separator such as '/'"            
         }
         
         $body = New-Object PSObject

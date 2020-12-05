@@ -13,14 +13,15 @@ Optionally specifies the order ID of the daily plan order that should be removed
 .PARAMETER WorkflowPath
 Optionally specifies the path and name of a workflow for which daily plan orders should be removed.
 
-.PARAMETER Schedule
-Optionally specifies the path and name of a schedule for which daily plan orders should be returned.
+.PARAMETER SchedulePath
+Optionally specifies the path and name of a schedule for which daily plan orders should be removed.
 
 .PARAMETER DailyPlanDate
-Optionally specifies the date starting from which daily plan orders should be returned.
+Specifies the date starting for which daily plan orders should be removed.
 Consider that a UTC date has to be provided.
 
-Default: Begin of the current day as a UTC date
+Default: Current day as a UTC date
+
 .OUTPUTS
 This cmdlet returns an array of daily plan orders.
 
@@ -58,7 +59,7 @@ param
     [Parameter(Mandatory=$False,ValueFromPipelinebyPropertyName=$True)]
     [string] $SchedulePath,
     [Parameter(Mandatory=$False,ValueFromPipelinebyPropertyName=$True)]
-    [DateTime] $DailyPlanDate
+    [DateTime] $DailyPlanDate = (Get-Date (Get-Date).ToUniversalTime() -Format 'yyyy-MM-dd')
 )
     Begin
     {
@@ -73,6 +74,11 @@ param
     Process
     {
         Write-Debug ".. $($MyInvocation.MyCommand.Name): parameter Folder=$Folder, WorkflowPath=$WorkflowPath, Schedule=$Schedule"
+
+        if ( !$DailyPlanDate )
+        {
+            throw "$($MyInvocation.MyCommand.Name): daily plan date is required, use parameter -DailyPlanDate"
+        }
 
         if ( $OrderId )
         {
@@ -96,11 +102,7 @@ param
         {
             $body = New-Object PSObject
             Add-Member -Membertype NoteProperty -Name 'controllerId' -value $script:jsWebService.ControllerId -InputObject $body
-
-            if ( $DailyPlanDate )
-            {
-                Add-Member -Membertype NoteProperty -Name 'dailyPlanDate' -value (Get-Date $DailyPlanDate -Format 'yyyy-MM-dd') -InputObject $body
-            }
+            Add-Member -Membertype NoteProperty -Name 'dailyPlanDate' -value (Get-Date $DailyPlanDate -Format 'yyyy-MM-dd') -InputObject $body
     
             if ( $orderIds.count )
             {

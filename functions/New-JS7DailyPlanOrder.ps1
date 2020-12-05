@@ -8,10 +8,6 @@ Create the daily plan orders for a JS7 Controller
 Creates daily plan orders for a JS7 Controller. Orders are submitted to any
 JS7 Controllers that are deployed the respective workflows.
 
-.PARAMETER DailyPlanDate
-Specifies the date for which daily plan orders should be created.
-Consider that a UTC date has to be provided.
-
 .PARAMETER SchedulePath
 Optionally specifies the path and name of a schedule for which daily plan orders should be created.
 
@@ -27,6 +23,12 @@ Specifies the Controller to which daily plan orders are submitted should the -Su
 
 Without this parameter daily plan orders are submitted to any Controllers that are deployed the
 workflows that are indicated with the respective schedules.
+
+.PARAMETER DailyPlanDate
+Specifies the date for which daily plan orders should be created.
+Consider that a UTC date has to be provided.
+
+Default: current day as a UTC date
 
 .PARAMETER Submit
 Specifies to immediately submit the daily plan orders to a JS7 Controller.
@@ -68,8 +70,6 @@ about_js7
 [cmdletbinding()]
 param
 (
-    [Parameter(Mandatory=$True,ValueFromPipelinebyPropertyName=$True)]
-    [DateTime] $DailyPlanDate,
     [Parameter(Mandatory=$False,ValueFromPipelinebyPropertyName=$True)]
     [string] $SchedulePath,
     [Parameter(Mandatory=$False,ValueFromPipelinebyPropertyName=$True)]
@@ -78,6 +78,8 @@ param
     [switch] $Recursive,
     [Parameter(Mandatory=$False,ValueFromPipelinebyPropertyName=$True)]
     [string] $ControllerId,
+    [Parameter(Mandatory=$False,ValueFromPipelinebyPropertyName=$True)]
+    [DateTime] $DailyPlanDate = (Get-Date (Get-Date).ToUniversalTime() -Format 'yyyy-MM-dd'),
     [Parameter(Mandatory=$False,ValueFromPipelinebyPropertyName=$True)]
     [switch] $Submit,
     [Parameter(Mandatory=$False,ValueFromPipelinebyPropertyName=$True)]
@@ -96,6 +98,11 @@ param
     Process
     {
         Write-Debug ".. $($MyInvocation.MyCommand.Name): parameter Folder=$Folder, WorkflowPath=$WorkflowPath, SchedulePath=$SchedulePath"
+
+        if ( !$DailyPlanDate )
+        {
+            throw "$($MyInvocation.MyCommand.Name): daily plan date is required, use parameter -DailyPlanDate"
+        }
 
         if ( $Folder -and $Folder -ne '/' )
         { 
@@ -123,6 +130,11 @@ param
         {
             $schedulePaths += $SchedulePath
         }
+        
+        if ( !$ControllerId )
+        {
+            $ControllerId = $script:jsWebService.ControllerId
+        }
 
         if ( $ControllerId )
         {
@@ -137,7 +149,7 @@ param
             $body = New-Object PSObject
             
             # TODO: enable Controllers
-            Add-Member -Membertype NoteProperty -Name 'controllerId' -value $script:jsWebService.ControllerId -InputObject $body
+            Add-Member -Membertype NoteProperty -Name 'controllerId' -value $ControllerId -InputObject $body
             Add-Member -Membertype NoteProperty -Name 'dailyPlanDate' -value (Get-Date $DailyPlanDate -Format 'yyyy-MM-dd') -InputObject $body
     
             if ( $schedulePaths.count )
@@ -153,7 +165,7 @@ param
             
             if ( $Folder )
             {
-                Add-Member -Membertype NoteProperty -Name 'orderTemplateFolder' -value $Folder -InputObject $body                
+                Add-Member -Membertype NoteProperty -Name 'scheduleFolder' -value $Folder -InputObject $body                
             }
 
             Add-Member -Membertype NoteProperty -Name 'withSubmit' -value ($Submit -eq $True) -InputObject $body

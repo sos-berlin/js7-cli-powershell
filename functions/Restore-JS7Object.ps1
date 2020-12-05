@@ -1,17 +1,30 @@
-function Rename-JS7Folder
+function Restore-JS7Object
 {
 <#
 .SYNOPSIS
-Rename a folder in the JOC Cockpit inventory
+Restores an object such as a workflow in the JOC Cockpit inventory.
 
 .DESCRIPTION
-This cmdlet renames a folder in the JOC Cockpit inventory.
+This cmdlet restores an object such as a workflow that have perviously been removed provided
+that the deletion of object has not yet been committed with one of the cmdlets:
+
+* For deployable objects use of the cmdlet the Publish-JS7DeployableObject cmdlet with the -Delete switch commits permanent deletion.
+* For releasable objects use of the cmdlet the Publish-JS7ReleasableObject cmdlet with the -Delete switch commits permanent deletion.
+
 
 .PARAMETER Path
-Specifies the folder - optionally including sub-folders - that should be rename
+Specifies the folder and sub-folders of the object.
 
-.PARAMETER Name
-Specifies the new folder name.
+.PARAMETER Type
+Specifies the object type which is one of: 
+
+* WORKFLOW
+* JOBCLASS
+* LOCK
+* JUNCTION
+* WORKINGDAYSCALENDAR
+* NONWORKINGDAYSCALENDAR
+* SCHEDULE
 
 .PARAMETER AuditComment
 Specifies a free text that indicates the reason for the current intervention, e.g. "business requirement", "maintenance window" etc.
@@ -32,15 +45,15 @@ This information is visible with the Audit Log view of JOC Cockpit.
 It can be useful when integrated with a ticket system that logs interventions with JobScheduler.
 
 .INPUTS
-This cmdlet accepts pipelined input.
+This cmdlet accepts pipelined objects that are e.g. returned from a Get-JS7Workflow cmdlet.
 
 .OUTPUTS
 This cmdlet returns no output.
 
 .EXAMPLE
-Rename-JS7Folder -Path /some-folder/some-sub-folder -Name /some-other-folder
+Restore-JS7Object -Path /some_folder/sampleWorkflow -Type 'WORKFLOW'
 
-Renames the specified folder including e.g. to move a sub-folder to a different folder.
+Restores the indicated worfklow in the JOC Cockpit inventory.
 
 .LINK
 about_js7
@@ -52,7 +65,8 @@ param
     [Parameter(Mandatory=$True,ValueFromPipeline=$False,ValueFromPipelinebyPropertyName=$True)]
     [string] $Path,
     [Parameter(Mandatory=$True,ValueFromPipeline=$False,ValueFromPipelinebyPropertyName=$True)]
-    [string] $Name,
+    [ValidateSet('WORKFLOW','JOBCLASS','LOCK','JUNCTION','WORKINGDAYSCALENDAR','NONWORKINGDAYSCALENDAR','SCHEDULE')]
+    [string] $Type,
     [Parameter(Mandatory=$False,ValueFromPipeline=$False,ValueFromPipelinebyPropertyName=$True)]
     [string] $AuditComment,
     [Parameter(Mandatory=$False,ValueFromPipeline=$False,ValueFromPipelinebyPropertyName=$True)]
@@ -75,16 +89,38 @@ param
     {
         if ( $Path.endsWith('/') )
         {
+            throw "$($MyInvocation.MyCommand.Name): path has to include folder, sub-folder and object name"
+        }
+        
+        if ( $Path.endsWith('/') )
+        {
             $Path = $Path.Substring( 0, $Path.Length-1 )
         }
         
         $body = New-Object PSObject
         Add-Member -Membertype NoteProperty -Name 'path' -value $Path -InputObject $body
-        Add-Member -Membertype NoteProperty -Name 'objectType' -value 'FOLDER' -InputObject $body
-        Add-Member -Membertype NoteProperty -Name 'name' -value $Name -InputObject $body
+        Add-Member -Membertype NoteProperty -Name 'objectType' -value $Type -InputObject $body
             
+        if ( $AuditComment -or $AuditTimeSpent -or $AuditTicketLink )
+        {
+            $objAuditLog = New-Object PSObject
+            Add-Member -Membertype NoteProperty -Name 'comment' -value $AuditComment -InputObject $objAuditLog
+
+            if ( $AuditTimeSpent )
+            {
+                Add-Member -Membertype NoteProperty -Name 'timeSpent' -value $AuditTimeSpent -InputObject $objAuditLog
+            }
+
+            if ( $AuditTicketLink )
+            {
+                Add-Member -Membertype NoteProperty -Name 'ticketLink' -value $AuditTicketLink -InputObject $objAuditLog
+            }
+
+            Add-Member -Membertype NoteProperty -Name 'auditLog' -value $objAuditLog -InputObject $body
+        }
+
         [string] $requestBody = $body | ConvertTo-Json -Depth 100
-        $response = Invoke-JS7WebRequest -Path '/inventory/rename' -Body $requestBody
+        $response = Invoke-JS7WebRequest -Path '/inventory/recover' -Body $requestBody
         
         if ( $response.StatusCode -eq 200 )
         {
@@ -98,7 +134,7 @@ param
             throw ( $response | Format-List -Force | Out-String )
         }
     
-        Write-Verbose ".. $($MyInvocation.MyCommand.Name): folder renamed: $Name"                
+        Write-Verbose ".. $($MyInvocation.MyCommand.Name): object restored: $Path"                
     }
 
     End
