@@ -36,7 +36,7 @@ Remove-JS7DailyPlanOrder -DailyPlanDate (Get-Date).AddDays(3)
 Removes any daily plan orders for a date three days from now.
 
 .EXAMPLE
-Remove-JS7DailyPlanOrder -OrderId #2020-11-19#P0000000498-orderSampleWorfklow2a
+Remove-JS7DailyPlanOrder -OrderId "#2020-11-19#P0000000498-orderSampleWorfklow2a"
 
 Removes the given order ID from the daily plan.
 

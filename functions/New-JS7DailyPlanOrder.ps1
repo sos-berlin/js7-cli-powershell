@@ -39,7 +39,7 @@ Specifies to overwrite daily plan orders for the same date and schedule.
 If such orders exist with a Controller and the -Submit parameter is used then they are cancelled and re-created.
 
 .OUTPUTS
-This cmdlet returns an array of daily plan orders.
+This cmdlet returns no output.
 
 .EXAMPLE
 New-JS7DailyPlanOrder -DailyPlanDate "2020-12-31"

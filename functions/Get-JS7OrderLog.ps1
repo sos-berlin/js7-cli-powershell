@@ -46,7 +46,7 @@ This cmdlet returns and an object with history properties including the order lo
 .EXAMPLE
 Get-JS7OrderHistory -WorkflowPath /product_demo/sample_workflow | Get-JS7OrderLog
 
-Retrieves the most recent order log for the given workflow.
+Returns the most recent order log for the given workflow.
 
 .EXAMPLE
 Get-JS7OrderHistory -WorkflowPath /product_demo/sample_workflow | Get-JS7OrderLog | Out-File /tmp/shell_chain.log -Encoding Unicode
