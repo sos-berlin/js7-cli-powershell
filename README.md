@@ -86,7 +86,7 @@ The JS7 CLI provides a number of cmdlets, see [PowerShell CLI - Cmdlets](https:
     * Cmdlets come with a full name that includes the term JS7.
 * `PS > Get-JSControllerStatus`
     * The term JS7 can be abbreviated to JS.
-* `PS > Get-Status`
+* `PS > Get-ControllerStatus`
     * The term JS7 can further be omitted if the resulting alias does not conflict with existing cmdlets.
     * To prevent conflicts with existing cmdlets from other modules no conflicting aliases are created. This includes aliases for cmdlets from the PowerShell Core as e.g. Get-Job, Start-Job, Stop-Job etc. and cmdlets from other modules loaded prior to the JS7 CLI.
 * `PS > Get-Help Get-JS7ControllerStatus -detailed`
@@ -107,7 +107,7 @@ The JS7 CLI provides a number of cmdlets, see [PowerShell CLI - Cmdlets](https:
 * `PS > Get-JS7Order | Suspend-JS7Order`
   * performs and emergency stop and kills all running tasks.
 * `PS > $orders = ( Get-JS7Order -Folder /my_workflows -Recursive | Suspend-JS7Order )`
-  * retrieves orders from the *my_jobs* folder and any sub-folders with orders found being suspended. The list of affected orders is returned.
+  * retrieves orders from the *my_workflows* folder and any sub-folders with orders found being suspended. The list of affected orders is returned.
 * `PS > $orders | Stop-JS7Order`
   * remove orders based on a list that has previously been retrieved.
 
@@ -123,6 +123,13 @@ JS7 cmdlets consider verbosity and debug settings.
     * This will cause debug output to be created from cmdlets.
 * `PS > $DebugPreference = "SilentlyContinue"`
     * The debug level is reset.
+
+JS7 cmdlets can be used to return log information.
+
+* `PS > Get-JS7JOCLog | Out-File /tmp/joc.log
+    * Returns the output of the most recent JOC Cockpit log and writes it to a file.
+* `PS > Get-JS7OrderHistory -WorkflowPath /product_demo/sample_workflow | Get-JS7OrderLog
+    * Returns the most recent order log for the given workflow.
  
 # Further Reading
 
