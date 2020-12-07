@@ -9,7 +9,7 @@ This cmdlet reads configuration objects from JSON files and stores them with JOC
 Consider that imported objects have to be deployed with the Deploy-JS7DeployableObject and Deploy-JS7ReleasableObject cmdlets.
 
 .PARAMETER Path
-Specifies the folder, sub-folder and name of the object, e.g. a workflow path.
+Specifies the folder, sub-folder and name of the object to be added, e.g. a workflow path.
 
 .PARAMETER Type
 Specifies the object type which is one of: 
@@ -105,7 +105,7 @@ param
     {
         if ( !(Test-Path -Path $File -ErrorAction Continue) )
         {
-            throw "file not found or not accessible: $File"
+            throw "$($MyInvocation.MyCommand.Name): file not found or not accessible: $File"
         }
 
 
