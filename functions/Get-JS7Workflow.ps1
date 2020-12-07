@@ -2,7 +2,7 @@ function Get-JS7Workflow
 {
 <#
 .SYNOPSIS
-Returns workflows from the JS7 inventory
+Returns workflows from the JOC Cockpit inventory
 
 .DESCRIPTION
 Workflows are returned from JOC Cockpit - independent of their deployment status with specific Controller instances.
@@ -113,11 +113,11 @@ param
         if ( $WorkflowPath )
         {
             $objWorkflow = New-Object PSObject
-            Add-Member -Membertype NoteProperty -Name 'path' -value $WorkflowPath -InputObject $body
+            Add-Member -Membertype NoteProperty -Name 'path' -value $WorkflowPath -InputObject $objWorkflow
 
             if ( $WorkflowVersionId )
             {
-                Add-Member -Membertype NoteProperty -Name 'versionId' -value $WorkflowVersionId -InputObject $body
+                Add-Member -Membertype NoteProperty -Name 'versionId' -value $WorkflowVersionId -InputObject $objWorkflow
             }
 
             $workflowPaths += $objWorkflow
@@ -126,11 +126,11 @@ param
         if ( $Folder )
         {
             $objFolder = New-Object PSObject
-            Add-Member -Membertype NoteProperty -Name 'folder' -value $Folder -InputObject $body
+            Add-Member -Membertype NoteProperty -Name 'folder' -value $Folder -InputObject $objFolder
 
             if ( $Recursive )
             {
-                Add-Member -Membertype NoteProperty -Name 'recursive' -value $True -InputObject $body
+                Add-Member -Membertype NoteProperty -Name 'recursive' -value $True -InputObject $objFolder
             }
 
             $folders += $objFolder
@@ -174,6 +174,13 @@ param
 
         $returnWorkflows
     
+        if ( $returnWorkflows.count )
+        {
+            Write-Verbose ".. $($MyInvocation.MyCommand.Name): $($returnWorkflows.count) workflows found"
+        } else {
+            Write-Verbose ".. $($MyInvocation.MyCommand.Name): no workflows found"
+        }
+
         Log-StopWatch -CommandName $MyInvocation.MyCommand.Name -StopWatch $stopWatch
         Touch-JS7Session
     }
