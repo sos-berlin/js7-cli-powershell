@@ -74,8 +74,15 @@ Specifies that only valid versions of inventory objects are eligible for export.
 inventory objects can be invalid, any deployed or relased versions of inventory objects are valid.
 Without this parameter draft versions can be exported that are in progress and therefore are not validated.
 
-.PARAMETER File
-Specifies the output file that the exported inventory objects are written to.
+.PARAMETER FileType
+Specifies the type of the archive file that will be returned: .zip, .tar.gz or .gz.
+
+If the -FilePath parameter is specified then the extension of the file name will be used for the file type.
+
+.PARAMETER FilePath
+Specifies the path to the output file that the exported inventory objects are written to.
+
+If no output file is specified then an octet stream is returned by the cmdlet.
 
 .PARAMETER AuditComment
 Specifies a free text that indicates the reason for the current intervention, e.g. "business requirement", "maintenance window" etc.
@@ -152,7 +159,7 @@ param
     [Parameter(Mandatory=$False,ValueFromPipeline=$False,ValueFromPipelinebyPropertyName=$True)]
     [string] $Path,
     [Parameter(Mandatory=$False,ValueFromPipeline=$False,ValueFromPipelinebyPropertyName=$True)]
-    [ValidateSet('WORKFLOW','JOBCLASS','LOCK','JUNCTION','WORKINGDAYSCALENDAR','NONWORKINGDAYSCALENDAR','ORDER')]
+    [ValidateSet('WORKFLOW','JOBCLASS','LOCK','JUNCTION','WORKINGDAYSCALENDAR','NONWORKINGDAYSCALENDAR','SCHEDULE')]
     [string[]] $Type,
     [Parameter(Mandatory=$False,ValueFromPipeline=$False,ValueFromPipelinebyPropertyName=$True)]
     [string] $Folder = '/',
@@ -169,7 +176,14 @@ param
     [Parameter(Mandatory=$False,ValueFromPipeline=$False,ValueFromPipelinebyPropertyName=$True)]
     [switch] $Valid,
     [Parameter(Mandatory=$False,ValueFromPipeline=$False,ValueFromPipelinebyPropertyName=$True)]
-    [string] $File,
+    [switch] $ForSigning,
+    [Parameter(Mandatory=$False,ValueFromPipeline=$False,ValueFromPipelinebyPropertyName=$True)]
+    [string] $ControllerId,
+    [Parameter(Mandatory=$False,ValueFromPipeline=$False,ValueFromPipelinebyPropertyName=$True)]
+    [ValidateSet('.zip','.tar.gz','.gz')]
+    [string] $Filetype = '.zip',
+    [Parameter(Mandatory=$False,ValueFromPipeline=$False,ValueFromPipelinebyPropertyName=$True)]
+    [string] $Filepath,
     [Parameter(Mandatory=$False,ValueFromPipeline=$False,ValueFromPipelinebyPropertyName=$True)]
     [string] $AuditComment,
     [Parameter(Mandatory=$False,ValueFromPipeline=$False,ValueFromPipelinebyPropertyName=$True)]
@@ -196,14 +210,24 @@ param
         {
             throw "$($MyInvocation.MyCommand.Name): only one of the parameters -Path or -Folder can be used"
         }
-        
+
+        if ( $ForSigning -and !$ControllerId )
+        {
+            throw "$($MyInvocation.MyCommand.Name): if parameter -ForSigning is used then the -ControllerId parameter has to be specified."
+        }
+
+        if ( $FilePath -and !$FilePath.endsWith('.zip') -and !$FilePath.endsWith('.tar.gz') -and !$FilePath.endsWith('.gz') )
+        {
+            throw "$($MyInvocation.MyCommand.Name): unsupported value for -FileType parameter specified, use .zip, .tar.gz or .gz."
+        }
+
         if ( !$AuditComment -and ( $AuditTimeSpent -or $AuditTicketLink ) )
         {
             throw "$($MyInvocation.MyCommand.Name): Audit Log comment required, use parameter -AuditComment if one of the parameters -AuditTimeSpent or -AuditTicketLink is used"
         }
         
         $deployableTypes = @('WORKFLOW','JOBCLASS','LOCK','JUNCTION')
-        $releasableTypes = @('WORKINGDAYSCALENDAR','NONWORKINGDAYSCALENDAR','ORDER')
+        $releasableTypes = @('WORKINGDAYSCALENDAR','NONWORKINGDAYSCALENDAR','SCHEDULE')
         $exportObjects = @()
     }
     
@@ -212,6 +236,11 @@ param
         if ( $Folder -eq '/' -and !$Path -and !$Recursive )
         {
             $Recursive = $True
+        }
+        
+        if ( $FilePath )
+        {
+            $FileType = [System.IO.Path]::GetExtension($FilePath)
         }
         
         if ( !$Deployable -and !$Releasable )
@@ -254,10 +283,20 @@ param
                 {
                     throw "$($MyInvocation.MyCommand.Name): could not find deployment for object: $Path"
                 }
-                
-                if ( $Deployed -eq $False -or $deployableObject.deployed )
+
+                if ( $deployableObject.deployablesVersions -and $deployableObject.deployablesVersions[0].commitId )
                 {
-                    $exportObjects += @{ 'area' = 'deployable'; 'path' = $Path; 'type' = $Type[0]; 'commitId' = $deployableObject.deployablesVersions[0].commitId }
+                    $commitId = $deployableObject.deployablesVersions[0].commitId
+                } else {
+                    $commitId = $null
+                }
+                
+                # if ( $Deployed -eq $False -or $deployableObject.deployed )
+                if ( $commitId )
+                {
+                    $exportObjects += @{ 'area' = 'deployable'; 'path' = $Path; 'type' = $Type[0]; 'deployed' = $deployableObject.deployed; 'commitId' = $commitId }
+                } else {
+                    $exportObjects += @{ 'area' = 'deployable'; 'path' = $Path; 'type' = $Type[0]; 'deployed' = $deployableObject.deployed }
                 }
             } else {
                 $body = New-Object PSObject
@@ -281,14 +320,24 @@ param
                 {
                     if ( $Deployed -eq $False -or $deployableObject.deployed )
                     {
-                        if ( $deployableObject.deployablesVersions.count -and ( $deployableObject.deploymentId -eq $deployableObject.deployablesVersions[0].deploymentId ) )
+                        if ( $deployableObject.deployablesVersions -and $deployableObject.deployablesVersions[0].commitId )
                         {
-                            if ( $deployableObject.folder -and !$deployableObject.folder.endsWith( '/' ) )
-                            {
-                                $deployableObject.folder += '/'
-                            }
+                            $commitId = $deployableObject.deployablesVersions[0].commitId
+                        } else {
+                            $commitId = $null
+                        }
+
+                        if ( $deployableObject.folder -and !$deployableObject.folder.endsWith( '/' ) )
+                        {
+                            $deployableObject.folder += '/'
+                        }
                         
-                            $exportObjects += @{ 'area' = 'deployable'; 'path' = "$($deployableObject.folder)$($deployableObject.objectName)"; 'type' = $deployableObject.objectType; 'commitId' = $deployableObject.deployablesVersions[0].commitId }
+#                       if ( $deployableObject.deployablesVersions.count -and ( $deployableObject.deploymentId -eq $deployableObject.deployablesVersions[0].deploymentId ) )
+                        if ( $commitId )
+                        {
+                            $exportObjects += @{ 'area' = 'deployable'; 'path' = "$($deployableObject.folder)$($deployableObject.objectName)"; 'type' = $deployableObject.objectType; 'deployed' = $deployableObject.deployed ; 'commitId' = $deployableObject.deployablesVersions[0].commitId }
+                        } else {
+                            $exportObjects += @{ 'area' = 'deployable'; 'path' = "$($deployableObject.folder)$($deployableObject.objectName)"; 'type' = $deployableObject.objectType; 'deployed' = $deployableObject.deployed }                            
                         }
                     }
                 }
@@ -331,7 +380,7 @@ param
                         $releasableObject.folder += '/'
                     }
                 
-                    $exportObjects += @{ 'area' = 'releasable'; 'path' = "$($releasableObject.folder)$($releasableObject.objectName)"; 'type' = $releasableObject.objectType }                
+                    $exportObjects += @{ 'area' = 'releasable'; 'path' = "$($releasableObject.folder)$($releasableObject.objectName)"; 'type' = $releasableObject.objectType; 'released' = $releasableObject.released }                
                 }
             } else {
                 $body = New-Object PSObject
@@ -366,7 +415,7 @@ param
                                 $releasableObject.folder += '/'
                             }
                         
-                            $exportObjects += @{ 'area' = 'releasable'; 'path' = "$($releasableObject.folder)$($releasableObject.objectName)"; 'type' = $releasableObject.objectType }
+                            $exportObjects += @{ 'area' = 'releasable'; 'path' = "$($releasableObject.folder)$($releasableObject.objectName)"; 'type' = $releasableObject.objectType; ; 'released' = $releasableObject.released }
                         }
                     }
                 }
@@ -379,24 +428,32 @@ param
         if ( $exportObjects.count )
         {
             $body = New-Object PSObject
+            Add-Member -Membertype NoteProperty -Name 'forSigning' -value ($ForSigning -eq $True) -InputObject $body
             
-            $draftConfigurations = @()
-            $deployConfigurations = @()
+            if ( $ForSigning )
+            {
+                Add-Member -Membertype NoteProperty -Name 'controllerId' -value $ControllerId -InputObject $body
+            }
+            
+            $deployableDraftConfigurations = @()
+            $deployableDeployedConfigurations = @()
+            $releasableDraftConfigurations = @()
+            $releasableReleasedConfigurations = @()
             
             foreach( $object in $exportObjects )
             {                
-                if ( $object.area -eq 'deployable' )
+                if ( $object.area -eq 'deployable' -and $object.deployed )
                 {
-                    $deployConfiguration = New-Object PSObject
-                    Add-Member -Membertype NoteProperty -Name 'path' -value $object.path -InputObject $deployConfiguration
-                    Add-Member -Membertype NoteProperty -Name 'objectType' -value $object.type -InputObject $deployConfiguration
-                    Add-Member -Membertype NoteProperty -Name 'commitId' -value $object.commitId -InputObject $deployConfiguration
+                    $deployedConfiguration = New-Object PSObject
+                    Add-Member -Membertype NoteProperty -Name 'path' -value $object.path -InputObject $deployedConfiguration
+                    Add-Member -Membertype NoteProperty -Name 'objectType' -value $object.type -InputObject $deployedConfiguration
+                    Add-Member -Membertype NoteProperty -Name 'commitId' -value $object.commitId -InputObject $deployedConfiguration
 
-                    $deployConfigurationItem = New-Object PSObject
-                    Add-Member -Membertype NoteProperty -Name 'deployConfiguration' -value $deployConfiguration -InputObject $deployConfigurationItem
+                    $deployedConfigurationItem = New-Object PSObject
+                    Add-Member -Membertype NoteProperty -Name 'deployConfiguration' -value $deployedConfiguration -InputObject $deployedConfigurationItem
 
-                    $deployConfigurations += $deployConfigurationItem
-                } elseif ( $object.area -eq 'releasable' ) {
+                    $deployableDeployedConfigurations += $deployedConfigurationItem
+                } elseif ( $object.area -eq 'deployable' -and !$object.deployed ) {
                     $draftConfiguration = New-Object PSObject
                     Add-Member -Membertype NoteProperty -Name 'path' -value $object.path -InputObject $draftConfiguration
                     Add-Member -Membertype NoteProperty -Name 'objectType' -value $object.type -InputObject $draftConfiguration
@@ -404,12 +461,77 @@ param
                     $draftConfigurationItem = New-Object PSObject
                     Add-Member -Membertype NoteProperty -Name 'draftConfiguration' -value $draftConfiguration -InputObject $draftConfigurationItem
 
-                    $draftConfigurations += $draftConfigurationItem
+                    $deployableDraftConfigurations += $draftConfigurationItem
+                } elseif ( $object.area -eq 'releasable' -and $object.released ) {
+                    $releasedConfiguration = New-Object PSObject
+                    Add-Member -Membertype NoteProperty -Name 'path' -value $object.path -InputObject $releasedConfiguration
+                    Add-Member -Membertype NoteProperty -Name 'objectType' -value $object.type -InputObject $releasedConfiguration
+
+                    $releasedConfigurationItem = New-Object PSObject
+                    Add-Member -Membertype NoteProperty -Name 'deployConfiguration' -value $releasedConfiguration -InputObject $releasedConfigurationItem
+
+                    $releasableReleasedConfigurations += $releasedConfigurationItem
+                } elseif ( $object.area -eq 'releasable' -and !$object.released ) {
+                    $draftConfiguration = New-Object PSObject
+                    Add-Member -Membertype NoteProperty -Name 'path' -value $object.path -InputObject $draftConfiguration
+                    Add-Member -Membertype NoteProperty -Name 'objectType' -value $object.type -InputObject $draftConfiguration
+
+                    $draftConfigurationItem = New-Object PSObject
+                    Add-Member -Membertype NoteProperty -Name 'draftConfiguration' -value $draftConfiguration -InputObject $draftConfigurationItem
+
+                    $releasableDraftConfigurations += $draftConfigurationItem
                 }
             }
 
-            Add-Member -Membertype NoteProperty -Name 'draftConfigurations' -value $draftConfigurations -InputObject $body
-            Add-Member -Membertype NoteProperty -Name 'deployConfigurations' -value $deployConfigurations -InputObject $body
+            if ( $deployableDeployedConfigurations.count -or $deployableDraftConfigurations.count )
+            {                
+                $deployablesObj = New-Object PSObject
+
+                if ( $deployableDeployedConfigurations.count )
+                {
+                    Add-Member -Membertype NoteProperty -Name 'deployConfigurations' -value $deployableDeployedConfigurations -InputObject $deployablesObj
+                } else {
+                    # Add-Member -Membertype NoteProperty -Name 'deployConfigurations' -value $deployableDeployedConfigurations -InputObject $deployablesObj
+                }
+                
+                if ( $deployableDraftConfigurations.count )
+                {
+                    Add-Member -Membertype NoteProperty -Name 'draftConfigurations' -value $deployableDraftConfigurations -InputObject $deployablesObj
+                } else {
+                    # Add-Member -Membertype NoteProperty -Name 'draftConfigurations' -value $deployableDraftConfigurations -InputObject $deployablesObj                    
+                }
+                
+                Add-Member -Membertype NoteProperty -Name 'deployables' -value $deployablesObj -InputObject $body
+            }
+
+            
+            if ( $releasableReleasedConfigurations.count -or $releasableDraftConfigurations.count )
+            {                
+                $releasablesObj = New-Object PSObject
+
+                if ( $releasableReleasedConfigurations.count )
+                {
+                    Add-Member -Membertype NoteProperty -Name 'deployConfigurations' -value $releasableReleasedConfigurations -InputObject $releasablesObj
+                } else {
+                    # Add-Member -Membertype NoteProperty -Name 'deployConfigurations' -value $releasableReleasedConfigurations -InputObject $releasablesObj
+                }
+                
+                if ( $releasableDraftConfigurations.count )
+                {
+                    Add-Member -Membertype NoteProperty -Name 'draftConfigurations' -value $releasableDraftConfigurations -InputObject $releasablesObj
+                } else {
+                    # Add-Member -Membertype NoteProperty -Name 'draftConfigurations' -value $releasableDraftConfigurations -InputObject $releasablesObj                    
+                }
+                
+                Add-Member -Membertype NoteProperty -Name 'releasables' -value $releasablesObj -InputObject $body
+            }
+            
+            if ( $FilePath )
+            {
+                Add-Member -Membertype NoteProperty -Name 'filename' -value "$([System.IO.Path]::GetFileName($FilePath))" -InputObject $body
+            } else {
+                Add-Member -Membertype NoteProperty -Name 'filename' -value "joc-export$($FileType)" -InputObject $body                
+            }
 
             if ( $AuditComment -or $AuditTimeSpent -or $AuditTicketLink )
             {
@@ -438,9 +560,9 @@ param
                 throw ( $response | Format-List -Force | Out-String )
             }
 
-            if ( $File )
+            if ( $FilePath )
             {
-                [System.Text.Encoding]::UTF8.GetString( $response.Content ) | Out-File $File -Encoding UTF8
+                [System.Text.Encoding]::UTF8.GetString( $response.Content ) | Out-File $FilePath -Encoding UTF8
             } else {
                 [System.Text.Encoding]::UTF8.GetString( $response.Content )                
             }

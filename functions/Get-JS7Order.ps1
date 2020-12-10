@@ -44,9 +44,13 @@ Specifies that fewer attributes of orders are returned.
 Specifies that orders in a pending state should be returned. Such orders are scheduled
 for a later start.
 
+.PARAMETER InProgress
+Specifies that orders in progress should be returned, i.e. orders that started but that
+are currently not executing jobs.
+
 .PARAMETER Running
-Specifies that orders in a running state should be returned, i.e. orders for which a job has
-been executed in a workflow.
+Specifies that orders in a running state should be returned, i.e. orders for which a job is
+currently being executed in a workflow.
 
 .PARAMETER Suspended
 Specifies that orders in suspended state should be returned. An order can be suspended
@@ -122,6 +126,8 @@ param
     [Parameter(Mandatory=$False,ValueFromPipeline=$False,ValueFromPipelinebyPropertyName=$True)]
     [switch] $Pending,
     [Parameter(Mandatory=$False,ValueFromPipeline=$False,ValueFromPipelinebyPropertyName=$True)]
+    [switch] $InProgress,
+    [Parameter(Mandatory=$False,ValueFromPipeline=$False,ValueFromPipelinebyPropertyName=$True)]
     [switch] $Running,
     [Parameter(Mandatory=$False,ValueFromPipeline=$False,ValueFromPipelinebyPropertyName=$True)]
     [switch] $Suspended,
@@ -175,6 +181,11 @@ param
         if ( $Pending )
         {
             $states += 'PENDING'
+        }
+
+        if ( $InProgress )
+        {
+            $states += 'INPROGRESS'
         }
 
         if ( $Running )

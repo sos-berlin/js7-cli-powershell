@@ -120,7 +120,7 @@ param
             }
     
             [string] $requestBody = $body | ConvertTo-Json -Depth 100
-            $response = Invoke-JS7WebRequest -Path '/daily_plan/orders/remove' -Body $requestBody
+            $response = Invoke-JS7WebRequest -Path '/orders/delete' -Body $requestBody
             
             if ( $response.StatusCode -eq 200 )
             {

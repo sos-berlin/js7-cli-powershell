@@ -17,7 +17,7 @@ param
 )
     Process
     {
-        $response = Invoke-JS7WebRequest -Path '/security/logout' -Body ""
+        $response = Invoke-JS7WebRequest -Path '/authentication/logout' -Body ""
         
         if ( $response.StatusCode -eq 200 )
         {

@@ -259,9 +259,9 @@ param
 
         if ( $Url.UserInfo )
         {
-            $authenticationUrl = $Url.scheme + '://' + $Url.UserInfo + '@' + $Url.Authority + $Base + '/security/login'
+            $authenticationUrl = $Url.scheme + '://' + $Url.UserInfo + '@' + $Url.Authority + $Base + '/authentication/login'
         } else {
-            $authenticationUrl = $Url.scheme + '://' + $Url.Authority + $Base + '/security/login'
+            $authenticationUrl = $Url.scheme + '://' + $Url.Authority + $Base + '/authentication/login'
         }
 
         if ( $RootCertificatePath )
