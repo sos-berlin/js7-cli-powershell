@@ -1,4 +1,4 @@
-function Publish-JS7DeployableObject
+function Publish-JS7DeployableItem
 {
 <#
 .SYNOPSIS
@@ -64,23 +64,23 @@ This cmdlet accepts pipelined job objects that are e.g. returned from a Get-JS7W
 This cmdlet returns no output.
 
 .EXAMPLE
-Publish-JS7DeployableObject -ControllerId testsuite,standalone -Path /TestCases/sampleWorkflow_001 -Type 'WORKFLOW'
+Publish-JS7DeployableItem -ControllerId testsuite,standalone -Path /TestCases/sampleWorkflow_001 -Type 'WORKFLOW'
 
 Deploys the specified workflow from the indicated path to both Controller instances.
 
 .EXAMPLE
-Publish-JS7DeployableObject -ControllerId testsuite -Path /TestCases/sampleWorkflows -Type 'FOLDER' -Delete
+Publish-JS7DeployableItem -ControllerId testsuite -Path /TestCases/sampleWorkflows -Type 'FOLDER' -Delete
 
 Deletes the specified folder from the inventory and deletes any included deployable objects such as workflows from the indicated Controller and inventory.
 
 .EXAMPLE
-Publish-JS7DeployableObject -ControllerId testsuite -Folder /PowerShell -Delete
+Publish-JS7DeployableItem -ControllerId testsuite -Folder /PowerShell -Delete
 
 Deletes any deployable objects such as workflows from the specified folder recursively.
 Consider that the specified folder is not deleted but its contents only.
 
 .EXAMPLE
-Publish-JS7DeployableObject -ControllerId testsuite -Path /PowerShell -Type FOLDER -Delete
+Publish-JS7DeployableItem -ControllerId testsuite -Path /PowerShell -Type FOLDER -Delete
 
 Deletes any deployable objects such as workflows from the specified folder recursively.
 Consider that the specified folder is not deleted but its contents only.

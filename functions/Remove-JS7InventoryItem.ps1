@@ -1,4 +1,4 @@
-function Remove-JS7Object
+function Remove-JS7InventoryItem
 {
 <#
 .SYNOPSIS
@@ -49,7 +49,7 @@ This cmdlet accepts pipelined objects that are e.g. returned from a Get-JS7Workf
 This cmdlet returns no output.
 
 .EXAMPLE
-Remove-JS7Object -Path /some_folder/sampleWorkflow -Type 'WORKFLOW'
+Remove-JS7InventoryItem -Path /some_folder/sampleWorkflow -Type 'WORKFLOW'
 
 Removes the indicated worfklow from the JOC Cockpit inventory.
 

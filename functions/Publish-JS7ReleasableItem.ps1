@@ -1,4 +1,4 @@
-function Publish-JS7ReleasableObject
+function Publish-JS7ReleasableItem
 {
 <#
 .SYNOPSIS
@@ -51,12 +51,12 @@ This cmdlet accepts pipelined job objects that are e.g. returned from a Get-JS7W
 This cmdlet returns no output.
 
 .EXAMPLE
-Publish-JS7ReleasableObject -Path /TestCases/sampleSchedule001 -Type 'SCHEDULE'
+Publish-JS7ReleasableItem -Path /TestCases/sampleSchedule001 -Type 'SCHEDULE'
 
 Releases the specified schedule with the indicated path for use with a JS7 Controller.
 
 .EXAMPLE
-Publish-JS7ReleasableObject -Path /TestCases/sampleWorkflow -Type 'WORKFLOW' -Delete
+Publish-JS7ReleasableItem -Path /TestCases/sampleWorkflow -Type 'WORKFLOW' -Delete
 
 Marks for deletion the specified workflow.
 

@@ -1,15 +1,14 @@
-function Add-JS7Object
+function Rename-JS7InventoryItem
 {
 <#
 .SYNOPSIS
-Add a configuration object such as a workflow from a JSON file to the JOC Cockpit inventory
+Rename an object in the JOC Cockpit inventory
 
 .DESCRIPTION
-This cmdlet reads configuration objects from JSON files and stores them with JOC Cockpit.
-Consider that imported objects have to be deployed with the Deploy-JS7DeployableObject and Deploy-JS7ReleasableObject cmdlets.
+This cmdlet renames an object in the JOC Cockpit inventory.
 
 .PARAMETER Path
-Specifies the folder, sub-folder and name of the object to be added, e.g. a workflow path.
+Specifies the folder, sub-folders and object name that should be renamed in the JOC Cockpit inventory.
 
 .PARAMETER Type
 Specifies the object type which is one of: 
@@ -22,11 +21,8 @@ Specifies the object type which is one of:
 * NONWORKINGDAYSCALENDAR
 * SCHEDULE
 
-.PARAMETER File
-Specifies the path to the JSON file that holds the configuration object.
-
-.PARAMETER DocPath
-Specifies the path to the documentation that is assigned the object.
+.PARAMETER Name
+Specifies the new name of the object, e.g. the name of a workflow.
 
 .PARAMETER AuditComment
 Specifies a free text that indicates the reason for the current intervention, e.g. "business requirement", "maintenance window" etc.
@@ -47,15 +43,15 @@ This information is visible with the Audit Log view of JOC Cockpit.
 It can be useful when integrated with a ticket system that logs interventions with JobScheduler.
 
 .INPUTS
-This cmdlet accepts pipelined objects that are e.g. returned from a Get-JS7Workflow cmdlet.
+This cmdlet accepts pipelined job objects that are e.g. returned from a Get-JS7Workflow cmdlet.
 
 .OUTPUTS
 This cmdlet returns no output.
 
 .EXAMPLE
-Add-JS7Object -Path /some/directory/sampleWorkflow -Type 'WORKFLOW' -File /tmp/workflow-174.json
+Rename-JS7InventoryItem -Path /some_path/workflow173 -Type WORKFLOW -Name workflow174
 
-Read the worfklow configuration from the given file and store the workflow with the specified path.
+Renames the given workflow in the JOC Cockpit inventory.
 
 .LINK
 about_js7
@@ -67,12 +63,10 @@ param
     [Parameter(Mandatory=$True,ValueFromPipeline=$False,ValueFromPipelinebyPropertyName=$True)]
     [string] $Path,
     [Parameter(Mandatory=$True,ValueFromPipeline=$False,ValueFromPipelinebyPropertyName=$True)]
-    [ValidateSet('WORKFLOW','JOBCLASS','LOCK','JUNCTION','WORKINGDAYSCALENDAR','NONWORKINGDAYSCALENDAR','ORDER')]
+    [ValidateSet('WORKFLOW','JOBCLASS','LOCK','JUNCTION','WORKINGDAYSCALENDAR','NONWORKINGDAYSCALENDAR','SCHEDULE')]
     [string] $Type,
-    [Parameter(Mandatory=$False,ValueFromPipeline=$False,ValueFromPipelinebyPropertyName=$True)]
-    [string] $File,
-    [Parameter(Mandatory=$False,ValueFromPipeline=$False,ValueFromPipelinebyPropertyName=$True)]
-    [string] $DocPath,
+    [Parameter(Mandatory=$True,ValueFromPipeline=$False,ValueFromPipelinebyPropertyName=$True)]
+    [string] $Name,
     [Parameter(Mandatory=$False,ValueFromPipeline=$False,ValueFromPipelinebyPropertyName=$True)]
     [string] $AuditComment,
     [Parameter(Mandatory=$False,ValueFromPipeline=$False,ValueFromPipelinebyPropertyName=$True)]
@@ -85,16 +79,6 @@ param
 		Approve-JS7Command $MyInvocation.MyCommand
         $stopWatch = Start-StopWatch
 
-        if ( $Path.endsWith('/') )
-        {
-            throw "$($MyInvocation.MyCommand.Name): path has to include directory, sub-directory and object name"
-        }
-        
-        if ( !$File )
-        {
-            throw "$($MyInvocation.MyCommand.Name): parameter -File required for import"
-        }
-
         if ( !$AuditComment -and ( $AuditTimeSpent -or $AuditTicketLink ) )
         {
             throw "$($MyInvocation.MyCommand.Name): Audit Log comment required, use parameter -AuditComment if one of the parameters -AuditTimeSpent or -AuditTicketLink is used"
@@ -103,33 +87,29 @@ param
     
     Process
     {
-        if ( !(Test-Path -Path $File -ErrorAction Continue) )
+        if ( $Path.endsWith('/') )
         {
-            throw "$($MyInvocation.MyCommand.Name): file not found or not accessible: $File"
+            throw "$($MyInvocation.MyCommand.Name): path has to include folder, sub-folder and object name"
         }
-
-
+        
+        if ( $Name.IndexOf( '/' ) -ge 0 )
+        {
+            throw "$($MyInvocation.MyCommand.Name): object name cannot container a folder separator such as '/'"            
+        }
+        
         $body = New-Object PSObject
         Add-Member -Membertype NoteProperty -Name 'path' -value $Path -InputObject $body
         Add-Member -Membertype NoteProperty -Name 'objectType' -value $Type -InputObject $body
-        Add-Member -Membertype NoteProperty -Name 'valid' -value $False -InputObject $body
-        
-        $objConfiguration = Get-Content -Raw -Path $File | ConvertFrom-Json -Depth 100
-        Add-Member -Membertype NoteProperty -Name 'configuration' -value $objConfiguration -InputObject $body
-        
-        if ( $DocPath )
-        {
-            Add-Member -Membertype NoteProperty -Name 'docPath' -value $DocPath -InputObject $body
-        }
-    
+        Add-Member -Membertype NoteProperty -Name 'name' -value $Name -InputObject $body
+            
         [string] $requestBody = $body | ConvertTo-Json -Depth 100
-        $response = Invoke-JS7WebRequest -Path '/inventory/store' -Body $requestBody
+        $response = Invoke-JS7WebRequest -Path '/inventory/rename' -Body $requestBody
         
         if ( $response.StatusCode -eq 200 )
         {
             $requestResult = ( $response.Content | ConvertFrom-JSON )
             
-            if ( !$requestResult.path )
+            if ( !$requestResult.ok )
             {
                 throw ( $response | Format-List -Force | Out-String )
             }
@@ -137,7 +117,7 @@ param
             throw ( $response | Format-List -Force | Out-String )
         }
     
-        Write-Verbose ".. $($MyInvocation.MyCommand.Name): object imported: $Path"                
+        Write-Verbose ".. $($MyInvocation.MyCommand.Name): object renamed: $Name"                
     }
 
     End

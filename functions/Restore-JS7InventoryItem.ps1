@@ -1,4 +1,4 @@
-function Restore-JS7Object
+function Restore-JS7ObjectItem
 {
 <#
 .SYNOPSIS
@@ -51,7 +51,7 @@ This cmdlet accepts pipelined objects that are e.g. returned from a Get-JS7Workf
 This cmdlet returns no output.
 
 .EXAMPLE
-Restore-JS7Object -Path /some_folder/sampleWorkflow -Type 'WORKFLOW'
+Restore-JS7ObjectItem -Path /some_folder/sampleWorkflow -Type 'WORKFLOW'
 
 Restores the indicated worfklow in the JOC Cockpit inventory.
 
