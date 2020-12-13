@@ -37,13 +37,13 @@ The regular expression is applied to the order ID.
 Specifies the date starting from which history items should be returned.
 Consider that a UTC date has to be provided.
 
-Default: Begin of the current day as a UTC date
+Default should no order ID be provided: Begin of the current day as a UTC date
 
 .PARAMETER DateTo
 Specifies the date until which history items should be returned.
 Consider that a UTC date has to be provided.
 
-Default: End of the current day as a UTC date
+Default should no order ID be provided: End of the current day as a UTC date
 
 .PARAMETER RelativeDateFrom
 Specifies a relative date starting from which history items should be returned, e.g. 
@@ -201,9 +201,9 @@ param
     [Parameter(Mandatory=$False,ValueFromPipeline=$False,ValueFromPipelinebyPropertyName=$True)]
     [string] $RegularExpression,
     [Parameter(Mandatory=$False,ValueFromPipeline=$False,ValueFromPipelinebyPropertyName=$True)]
-    [DateTime] $DateFrom = (Get-Date -Hour 0 -Minute 0 -Second 0).ToUniversalTime(),
+    [DateTime] $DateFrom,
     [Parameter(Mandatory=$False,ValueFromPipeline=$False,ValueFromPipelinebyPropertyName=$True)]
-    [DateTime] $DateTo = (Get-Date -Hour 0 -Minute 0 -Second 0).AddDays(1).ToUniversalTime(),
+    [DateTime] $DateTo,
     [Parameter(Mandatory=$False,ValueFromPipeline=$False,ValueFromPipelinebyPropertyName=$True)]
     [string] $RelativeDateFrom,
     [Parameter(Mandatory=$False,ValueFromPipeline=$False,ValueFromPipelinebyPropertyName=$True)]
@@ -272,6 +272,16 @@ param
         if ( $InProgress )
         {
             $historyStates += 'INCOMPLETE'
+        }
+
+        if ( !$OrderId -and !$DateFrom )
+        {
+            $DateFrom = (Get-Date -Hour 0 -Minute 0 -Second 0).ToUniversalTime()
+        }
+
+        if ( !$OrderId -and !$DateTo )
+        {
+            $DateTo = (Get-Date -Hour 0 -Minute 0 -Second 0).AddDays(1).ToUniversalTime()
         }
 
         if ( $OrderId -or $WorkflowPath )

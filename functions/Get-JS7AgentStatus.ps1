@@ -2,36 +2,54 @@ function Get-JS7AgentStatus
 {
 <#
 .SYNOPSIS
-Return summary information from a JS7 Agent.
+Return summary information for JS7 Agents assigned the current Controller.
 
 .DESCRIPTION
-Summary information is returned from a JS7 Agent.
+Summary information is returned for JS7 Agents that are assigned the current Controller.
 
 * Summary information includes e.g. the start date and JS7 Agent release.
 
 This cmdlet can be used to check if an Agent is available.
 
-.PARAMETER Agents
-Specifies an array of URLs that point to Agents. This is useful if specific Agents
-should be checked. Without this parameter all Agents configured for a Controller will be checked.
+.PARAMETER AgentId
+Optionally specifies the unique identifier of an Agent for which informaiton is retrieved.
+
+Without this parameter any Agents assigned the current Controller are returned.
+
+.PARAMETER Coupled
+Specifies to return information about Agents only that are coupled with a Controller.
+
+.PARAMETER Decoupled
+Specifies to return information about Agents only that are decoupled from a Controller.
+Typically this indicates either an early stage before coupling occurs or an error status.
+
+.PARAMETER CouplingFailed
+Specifies to return information about Agents only that could not be successfully coupled with a Controller.
+This indicates an error status.
+
+.PARAMETER Enabled
+Specifies to return information about enabled Agents only. 
+
+.PARAMETER Compact
+Specifies to return a smaller set of information items about Agents.
 
 .PARAMETER Display
 Optionally specifies formatted output to be displayed.
 
 .EXAMPLE
-Get-JobSchedulerAgentStatus -Display
+Get-JS7AgentStatus -Display
 
 Displays summary information about all JS7 Agents configured for the current Controller.
 
 .EXAMPLE
-Get-JS7AgentStatus -Agents http://localhost:4445 -Display
+Get-JS7AgentStatus -Agent agent_001 -Display
 
-Returns summary information about the Agent. Formatted output is displayed.
+Returns summary information about the Agent with ID "agent_001". Formatted output is displayed.
 
 .EXAMPLE
-$status = Get-JS7AgentStatus -Agents http://localhost:4445
+$status = Get-JS7AgentStatus -Decoupled -CouplingFailed
 
-Returns a status information object.
+Returns summary information about Agents that currently are not coupled with a Controller.
 
 .LINK
 about_js7
@@ -41,7 +59,17 @@ about_js7
 param
 (
     [Parameter(Mandatory=$False,ValueFromPipeline=$True,ValueFromPipelinebyPropertyName=$True)]
-    [Uri[]] $Agents,
+    [string] $AgentId,
+    [Parameter(Mandatory=$False,ValueFromPipeline=$False,ValueFromPipelinebyPropertyName=$False)]
+    [switch] $Coupled,
+    [Parameter(Mandatory=$False,ValueFromPipeline=$False,ValueFromPipelinebyPropertyName=$False)]
+    [switch] $Decoupled,
+    [Parameter(Mandatory=$False,ValueFromPipeline=$False,ValueFromPipelinebyPropertyName=$False)]
+    [switch] $CouplingFailed,
+    [Parameter(Mandatory=$False,ValueFromPipeline=$False,ValueFromPipelinebyPropertyName=$False)]
+    [switch] $Enabled,
+    [Parameter(Mandatory=$False,ValueFromPipeline=$False,ValueFromPipelinebyPropertyName=$False)]
+    [switch] $Compact,
     [Parameter(Mandatory=$False,ValueFromPipeline=$False,ValueFromPipelinebyPropertyName=$False)]
     [switch] $Display
 )
@@ -50,14 +78,27 @@ param
         Approve-JS7Command $MyInvocation.MyCommand
         $stopWatch = Start-StopWatch
         
-        $allAgents = @()
+        $agentIds = @()
+        $states = @()
     }
 
     Process
     {
-        foreach( $agent in $Agents )
+        $agentIds += $AgentId
+        
+        if ( $Coupled )
         {
-            $allAgents += $agent
+            $states += 'COUPLED'
+        }
+
+        if ( $Decoupled )
+        {
+            $states += 'DECOUPLED'
+        }
+
+        if ( $CouplingFailed )
+        {
+            $states += 'COUPLINGFAILED'
         }
     }
     
@@ -65,19 +106,20 @@ param
     {    
         $body = New-Object PSObject
         Add-Member -Membertype NoteProperty -Name 'controllerId' -value $script:jsWebService.ControllerId -InputObject $body
-        
-        if ( $allAgents )
-        {
-            $objAgents = @()
-            foreach( $agent in ( $allAgents | Sort-Object | Get-Unique ) )
-            {
-                $objAgent = New-Object PSObject
-                Add-Member -Membertype NoteProperty -Name 'agent' -value $agent -InputObject $objAgent
-                $objAgents += $objAgent
-            }
 
-            Add-Member -Membertype NoteProperty -Name 'agents' -value $objAgents -InputObject $body
+        if ( $agentIds )
+        {
+            Add-Member -Membertype NoteProperty -Name 'agentIds' -value $agentIds -InputObject $body
         }
+        
+        if ( $states )
+        {
+            Add-Member -Membertype NoteProperty -Name 'states' -value $states -InputObject $body
+        }
+
+        Add-Member -Membertype NoteProperty -Name 'onlyEnabledAgents' -value ($Enabled -eq $True) -InputObject $body
+        Add-Member -Membertype NoteProperty -Name 'compact' -value ($Compact -eq $True) -InputObject $body
+
 
         [string] $requestBody = $body | ConvertTo-Json -Depth 100
         $response = Invoke-JS7WebRequest -Path '/agents' -Body $requestBody
@@ -89,48 +131,33 @@ param
             throw ( $response | Format-List -Force | Out-String )
         }    
 
-        [string] $requestBody = $body | ConvertTo-Json -Depth 100
-        $response = Invoke-JS7WebRequest -Path '/agents/p' -Body $requestBody
-    
-        if ( $response.StatusCode -eq 200 )
+        if ( !$Display )
         {
-            $permanentStatus = ( $response.Content | ConvertFrom-JSON ).agents
-        } else {
-            throw ( $response | Format-List -Force | Out-String )
-        }    
- 
-        $returnAgents = New-Object PSObject
-        Add-Member -Membertype NoteProperty -Name 'Volatile' -value $volatileStatus -InputObject $returnAgents
-        Add-Member -Membertype NoteProperty -Name 'Permanent' -value $permanentStatus -InputObject $returnAgents
-
-        if ( $Display )
-        {
-            for( $i=0; $i -lt $volatileStatus.count; $i++ )
+            $volatileStatus
+        } else {     
+            foreach( $agentStatus in $volatileStatus )
             {
                 $output = "
 ________________________________________________________________________
-JobScheduler Agent URL: $($permanentStatus[$i].url)
-................. host: $($permanentStatus[$i].host)
-................ state: $($volatileStatus[$i].state._text)
-........... started at: $($permanentStatus[$i].startedAt)
-........ running tasks: $($volatileStatus[$i].runningTasks)
-............. clusters: Agent is member in $($permanentStatus[$i].clusters.count) clusters:"
-
-                foreach( $item in $permanentStatus[$i].clusters )
-                {
-                    $output += "
-.......................: $($item)"
-                }
-                
-                $output += "
-.............. version: $($volatileStatus[$i].version)
-................... OS: $($permanentStatus[$i].os.name), $($permanentStatus[$i].os.architecture), $($permanentStatus[$i].os.distribution)
+JobScheduler Agent URL: $($agentStatus.url)
+................... ID: $($agentStatus.agentId)
+................. name: $($agentStatus.agentName)
+................ state: $($agentStatus.state._text)
+........ error message: $($agentStatus.errorMessage)
+........ running tasks: $($agentStatus.runningTasks)
+........ Controller ID: $($agentStatus.controllerId)
+... is cluster watcher: $($agentStatus.isClusterWatcher)
 ________________________________________________________________________
                     "
                 Write-Output $output
             }
+        }
+
+        if ( $volatileStatus.count )
+        {
+            Write-Verbose ".. $($MyInvocation.MyCommand.Name): $($volatileStatus.count) Agents found"
         } else {
-            return $returnAgents
+            Write-Verbose ".. $($MyInvocation.MyCommand.Name): no Agents found"
         }
 
         Log-StopWatch -CommandName $MyInvocation.MyCommand.Name -StopWatch $stopWatch

@@ -2,10 +2,10 @@ function Get-JS7AgentInstance
 {
 <#
 .SYNOPSIS
-Returns Agent instances assigned the JS7 Controller.
+Returns Agent instances assigned the current JS7 Controller.
 
 .DESCRIPTION
-Returns a list of Agent instances that are assigned a JS7 Controller.
+Returns a list of Agent instances that are assigned the current JS7 Controller.
 
 .PARAMETER Enabled
 Specifies to return only enabled Agents.
@@ -30,6 +30,12 @@ about_js7
 [cmdletbinding()]
 param
 (
+    [Parameter(Mandatory=$False,ValueFromPipeline=$True,ValueFromPipelinebyPropertyName=$True)]
+    [string] $AgentId,
+    [Parameter(Mandatory=$False,ValueFromPipeline=$True,ValueFromPipelinebyPropertyName=$True)]
+    [string] $AgentName,
+    [Parameter(Mandatory=$False,ValueFromPipeline=$True,ValueFromPipelinebyPropertyName=$True)]
+    [Uri] $AgentUrl,
     [Parameter(Mandatory=$False,ValueFromPipeline=$False,ValueFromPipelinebyPropertyName=$True)]
     [switch] $Enabled
 )
@@ -37,10 +43,28 @@ param
     {
         Approve-JS7Command $MyInvocation.MyCommand
         $stopWatch = Start-StopWatch
+        
+        $agentIds = @()
+        $agentNames = @()
+        $agentUrls = @()
     }
         
     Process
     {
+        if ( $AgentId )
+        {
+            $agentIds += $AgentId
+        }
+        
+        if ( $AgentName )
+        {
+            $agentNames += $AgentName
+        }
+        
+        if ( $AgentUrl )
+        {
+            $agentUrls += $AgentUrl
+        }
     }
     
     End
