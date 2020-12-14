@@ -6,7 +6,8 @@ Releases a configuration object such as a schedule
 
 .DESCRIPTION
 This cmdlet releases a configuration object for use with any JS7 Controller.
-Releasing includes to permanently delete previously removed objects from the inventory.
+
+Releasing can include to permanently delete previously removed objects from the inventory.
 
 .PARAMETER Path
 Specifies the folder, sub-folder and name of the object, e.g. a schedule path.
@@ -30,7 +31,7 @@ Without this switch objects are released for use with any JS7 Controller.
 Specifies a free text that indicates the reason for the current intervention, e.g. "business requirement", "maintenance window" etc.
 
 The Audit Comment is visible from the Audit Log view of JOC Cockpit.
-This parameter is not mandatory, however, JOC Cockpit can be configured to enforece Audit Log comments for any interventions.
+This parameter is not mandatory, however, JOC Cockpit can be configured to enforce Audit Log comments for any interventions.
 
 .PARAMETER AuditTimeSpent
 Specifies the duration in minutes that the current intervention required.

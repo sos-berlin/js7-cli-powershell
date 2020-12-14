@@ -28,7 +28,7 @@ One of the parameters -Folder, -WorkflowPath or -RegularExpression has to be spe
 Specifies that any sub-folders should be looked up. By default no sub-folders will be searched for workflows.
 
 .PARAMETER RegularExpression
-Limits result to workflow paths that correspond the given regular expression.
+Limits results to workflow paths that correspond to the given regular expression.
 
 One of the parameters -Folder, -WorkflowPath or -RegularExpression has to be specified.
 

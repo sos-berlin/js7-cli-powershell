@@ -68,7 +68,7 @@ e.g. "business requirement", "maintenance window" etc.
 
 The Audit Comment is visible from the Audit Log view of JOC Cockpit.
 This argument is not mandatory, however, JOC Cockpit can be configured 
-to enforece Audit Log comments for any interventions.
+to enforce Audit Log comments for any interventions.
 
 .PARAMETER AuditTimeSpent
 Specifies the duration in minutes that the current intervention required.

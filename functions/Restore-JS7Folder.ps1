@@ -8,8 +8,8 @@ Restores a removed folder from the JOC Cockpit inventory.
 This cmdlet restores a folder and its contents that have perviously been removed provided
 that the deletion of objects has not yet been committed with one of the cmdlets:
 
-* For deployable objects use of the cmdlet the Publish-JS7DeployableObject cmdlet with the -Delete switch commits permanent deletion.
-* For releasable objects use of the cmdlet the Publish-JS7ReleasableObject cmdlet with the -Delete switch commits permanent deletion.
+* For deployable objects use of the cmdlet the Publish-JS7DeployableItem cmdlet with the -Delete switch commits permanent deletion.
+* For releasable objects use of the cmdlet the Publish-JS7ReleasableItem cmdlet with the -Delete switch commits permanent deletion.
 
 .PARAMETER Path
 Specifies the folder and optionally sub-folders to be removed.
@@ -18,7 +18,7 @@ Specifies the folder and optionally sub-folders to be removed.
 Specifies a free text that indicates the reason for the current intervention, e.g. "business requirement", "maintenance window" etc.
 
 The Audit Comment is visible from the Audit Log view of JOC Cockpit.
-This parameter is not mandatory, however, JOC Cockpit can be configured to enforece Audit Log comments for any interventions.
+This parameter is not mandatory, however, JOC Cockpit can be configured to enforce Audit Log comments for any interventions.
 
 .PARAMETER AuditTimeSpent
 Specifies the duration in minutes that the current intervention required.

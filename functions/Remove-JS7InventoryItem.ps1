@@ -2,13 +2,13 @@ function Remove-JS7InventoryItem
 {
 <#
 .SYNOPSIS
-Removes an object such as a workflow from the JOC Cockpit inventory.
+Removes objects such as workflows, schedules etc. from the JOC Cockpit inventory.
 
 .DESCRIPTION
-This cmdlet removes an object such as a workflow form the JOC Cockpit inventory.
+This cmdlet removes objects such as a workflows, schedules etc. from the JOC Cockpit inventory.
 
 Consider to commit removals by deploying or releasing the object, 
-see the Publish-JS7DeployableObject and  Publish-JS7ReleasableObject cmdlets.
+see the Publish-JS7DeployableItem and  Publish-JS7ReleasableItem cmdlets.
 
 .PARAMETER Path
 Specifies the folder and sub-folders of the object.
@@ -28,7 +28,7 @@ Specifies the object type which is one of:
 Specifies a free text that indicates the reason for the current intervention, e.g. "business requirement", "maintenance window" etc.
 
 The Audit Comment is visible from the Audit Log view of JOC Cockpit.
-This parameter is not mandatory, however, JOC Cockpit can be configured to enforece Audit Log comments for any interventions.
+This parameter is not mandatory, however, JOC Cockpit can be configured to enforce Audit Log comments for any interventions.
 
 .PARAMETER AuditTimeSpent
 Specifies the duration in minutes that the current intervention required.

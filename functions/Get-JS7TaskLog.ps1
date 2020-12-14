@@ -2,10 +2,10 @@ function Get-JS7TaskLog
 {
 <#
 .SYNOPSIS
-Read the task log from the JS7 History
+Return the task log from the JS7 History
 
 .DESCRIPTION
-Reads a task log for a given task ID. This cmdlet is mostly used for pipelined input from the
+Returns a task log for a given task ID. This cmdlet is mostly used for pipelined input from the
 Get-JS7TaskHistory cmdlet that allows to search the execution history of tasks and
 that returns task IDs that are used by this cmdlet to retrieve the task's log output.
 

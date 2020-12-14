@@ -12,7 +12,7 @@ This cmdlet can only access Generic Credentials.
 The name of the target login informations in the Windows Credential Manager
 
 .EXAMPLE
-PS C:\>Get-JobSchedulerSystemCredentials 'localhost'
+Get-JS7SystemCredentials 'localhost'
 
 UserName                             Password
 --------                             --------
@@ -29,7 +29,7 @@ Forked from https://gist.github.com/toburger/2947424 which was adapted from
 http://stackoverflow.com/questions/7162604/get-cached-credentials-in-powershell-from-windows-7-credential-manager
 
 .LINK
-Set-JobSchedulerCredentials
+Set-JS7Credentials
 
 .ROLE
 Operations

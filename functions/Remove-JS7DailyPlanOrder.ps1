@@ -22,6 +22,24 @@ Consider that a UTC date has to be provided.
 
 Default: Current day as a UTC date
 
+.PARAMETER AuditComment
+Specifies a free text that indicates the reason for the current intervention, e.g. "business requirement", "maintenance window" etc.
+
+The Audit Comment is visible from the Audit Log view of JOC Cockpit.
+This parameter is not mandatory, however, JOC Cockpit can be configured to enforce Audit Log comments for any interventions.
+
+.PARAMETER AuditTimeSpent
+Specifies the duration in minutes that the current intervention required.
+
+This information is visible with the Audit Log view. It can be useful when integrated
+with a ticket system that logs the time spent on interventions with JobScheduler.
+
+.PARAMETER AuditTicketLink
+Specifies a URL to a ticket system that keeps track of any interventions performed for JobScheduler.
+
+This information is visible with the Audit Log view of JOC Cockpit. 
+It can be useful when integrated with a ticket system that logs interventions with JobScheduler.
+
 .OUTPUTS
 This cmdlet returns an array of daily plan orders.
 
@@ -59,7 +77,13 @@ param
     [Parameter(Mandatory=$False,ValueFromPipelinebyPropertyName=$True)]
     [string] $SchedulePath,
     [Parameter(Mandatory=$False,ValueFromPipelinebyPropertyName=$True)]
-    [DateTime] $DailyPlanDate = (Get-Date (Get-Date).ToUniversalTime() -Format 'yyyy-MM-dd')
+    [DateTime] $DailyPlanDate = (Get-Date (Get-Date).ToUniversalTime() -Format 'yyyy-MM-dd'),
+    [Parameter(Mandatory=$False,ValueFromPipeline=$False,ValueFromPipelinebyPropertyName=$True)]
+    [string] $AuditComment,
+    [Parameter(Mandatory=$False,ValueFromPipeline=$False,ValueFromPipelinebyPropertyName=$True)]
+    [int] $AuditTimeSpent,
+    [Parameter(Mandatory=$False,ValueFromPipeline=$False,ValueFromPipelinebyPropertyName=$True)]
+    [Uri] $AuditTicketLink  
 )
     Begin
     {

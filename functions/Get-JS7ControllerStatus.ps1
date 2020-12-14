@@ -2,10 +2,10 @@ function Get-JS7ControllerStatus
 {
 <#
 .SYNOPSIS
-Return status information, summary and history information from a JS7 Controller
+Return status information, optionally summary and history information for a JS7 Controller
 
 .DESCRIPTION
-Status information and summary information are returned from a JS7 Controller.
+Status information, optionally summary and history information are returned for a JS7 Controller.
 
 * Status information includes e.g. the start date and JS7 release
 * Summary information includes e.g. the number of running orders
@@ -215,35 +215,24 @@ ________________________________________________________________________"
                 throw ( $response | Format-List -Force | Out-String )
             }    
 
-            $response = Invoke-JS7WebRequest -Path '/jobs/overview/snapshot' -Body $requestBody
-    
-            if ( $response.StatusCode -eq 200 )
-            {
-                $jobSummary = ( $response.Content | ConvertFrom-JSON ).jobs
-            } else {
-                throw ( $response | Format-List -Force | Out-String )
-            }    
-
             if ( $Display )
             {
                 $output = "
 ________________________________________________________________________
 Order Summary
 ............. pending: $($orderSummary.pending)
+......... in progress: $($orderSummary.inProgress)
 ............. running: $($orderSummary.running)
 ........... suspended: $($orderSummary.suspended)
-.............. failed: $($orderSummary.failed)
+............. calling: $($orderSummary.calling)
 ............. waiting: $($orderSummary.waiting)
 ............. blocked: $($orderSummary.blocked)
-Task Summary
-............. pending: $($jobSummary.pending)
-............. running: $($jobSummary.running)
+.............. failed: $($orderSummary.failed)
 ________________________________________________________________________"
                 Write-Output $output
             }
             
             Add-Member -Membertype NoteProperty -Name 'OrderSummary' -value $orderSummary -InputObject $returnStatus
-            Add-Member -Membertype NoteProperty -Name 'JobSummary' -value $jobSummary -InputObject $returnStatus
         }
 
         if ( $History )

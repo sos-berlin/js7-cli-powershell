@@ -1,16 +1,15 @@
-function Restore-JS7ObjectItem
+function Restore-JS7InventoryItem
 {
 <#
 .SYNOPSIS
-Restores an object such as a workflow in the JOC Cockpit inventory.
+Restores objects such as workflows in the JOC Cockpit inventory
 
 .DESCRIPTION
-This cmdlet restores an object such as a workflow that have perviously been removed provided
-that the deletion of object has not yet been committed with one of the cmdlets:
+This cmdlet restores objects such as workflows that have perviously been removed provided
+that the deletion of the objects has not yet been committed with one of the cmdlets:
 
-* For deployable objects use of the cmdlet the Publish-JS7DeployableObject cmdlet with the -Delete switch commits permanent deletion.
-* For releasable objects use of the cmdlet the Publish-JS7ReleasableObject cmdlet with the -Delete switch commits permanent deletion.
-
+* For deployable objects use of the cmdlet the Publish-JS7DeployableItem cmdlet with the -Delete switch commits permanent deletion.
+* For releasable objects use of the cmdlet the Publish-JS7ReleasableOItem cmdlet with the -Delete switch commits permanent deletion.
 
 .PARAMETER Path
 Specifies the folder and sub-folders of the object.
@@ -30,7 +29,7 @@ Specifies the object type which is one of:
 Specifies a free text that indicates the reason for the current intervention, e.g. "business requirement", "maintenance window" etc.
 
 The Audit Comment is visible from the Audit Log view of JOC Cockpit.
-This parameter is not mandatory, however, JOC Cockpit can be configured to enforece Audit Log comments for any interventions.
+This parameter is not mandatory, however, JOC Cockpit can be configured to enforce Audit Log comments for any interventions.
 
 .PARAMETER AuditTimeSpent
 Specifies the duration in minutes that the current intervention required.
@@ -51,7 +50,7 @@ This cmdlet accepts pipelined objects that are e.g. returned from a Get-JS7Workf
 This cmdlet returns no output.
 
 .EXAMPLE
-Restore-JS7ObjectItem -Path /some_folder/sampleWorkflow -Type 'WORKFLOW'
+Restore-JS7InventoryItem -Path /some_folder/sampleWorkflow -Type 'WORKFLOW'
 
 Restores the indicated worfklow in the JOC Cockpit inventory.
 

@@ -47,12 +47,12 @@ Specifies a credentials object that is used for authentication with a proxy. See
 Either the parameter -ProxyUseDefaultCredentials or -ProxyCredentials can be used.
 
 .EXAMPLE
-Set-JobSchedulerCredentials -UseDefaultCredentials
+Set-JS7Credentials -UseDefaultCredentials
 
 The implicit Windows credentials are used for authentication. No password is used or stored in memory.
 
 .EXAMPLE
-Set-JobSchedulerCredentials -AskForCredentials
+Set-JS7Credentials -AskForCredentials
 
 Specifies that the user is prompted for account and password. The password is converted to a secure string
 and a credentials object is created for authentication.

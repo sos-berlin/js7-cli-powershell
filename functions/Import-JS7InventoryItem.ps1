@@ -1,32 +1,33 @@
-function Add-JS7InventoryItem
+function Import-JS7InventoryItem
 {
 <#
 .SYNOPSIS
-Add a configuration object such as a workflow from a JSON file to the JOC Cockpit inventory
+Import inventory objects, e.g. workflows, schedules etc. from a JOC Cockpit archive file
 
 .DESCRIPTION
-This cmdlet reads configuration objects from JSON files and stores them with JOC Cockpit.
-Consider that imported objects have to be deployed with the Deploy-JS7DeployableObject and Deploy-JS7ReleasableObject cmdlets.
+JOC Cockpit inventory items can be exported with the Export-JS7InventoryItem cmdlet. The archive file 
+created by the cmdlet can be imported by use of this cmdlet. This offers a mechanism to backup and to
+restore inventory data, e.g. in case of switching the DBMS for JOC Cockpit or when upgrading to newer
+JS7 releases.
 
-.PARAMETER Path
-Specifies the folder, sub-folder and name of the object to be added, e.g. a workflow path.
+.PARAMETER FilePath
+Specifies the path to the archive file that includes objects for import to the JOC Cockpit inventory.
 
-.PARAMETER Type
-Specifies the object type which is one of: 
+.PARAMETER ArchiveFormat
+Specifies the type of the archive file that will be imported: ZIP, TAR.GZ.
 
-* WORKFLOW
-* JOBCLASS
-* LOCK
-* JUNCTION
-* WORKINGDAYSCALENDAR
-* NONWORKINGDAYSCALENDAR
-* SCHEDULE
+.PARAMETER Folder
+Optionally specifies the folder in the JOC Cockpit inventory to which imported objects paths should be added. 
 
-.PARAMETER File
-Specifies the path to the JSON file that holds the configuration object.
+Without this parameter any folders as specified with the import file will be used. 
+New folders are automatically created and optionally existing folders will be overwritten.
 
-.PARAMETER DocPath
-Specifies the path to the documentation that is assigned the object.
+.PARAMETER Overwrite
+Specifies that existing objects in the JOC Cockpit inventory will be overwritten
+from objects with the same path in the archive file.
+
+Without this parameter objects from the import file are ignored if objects with the same path
+exist in the JOC Cockpit inventory.
 
 .PARAMETER AuditComment
 Specifies a free text that indicates the reason for the current intervention, e.g. "business requirement", "maintenance window" etc.
@@ -47,15 +48,25 @@ This information is visible with the Audit Log view of JOC Cockpit.
 It can be useful when integrated with a ticket system that logs interventions with JobScheduler.
 
 .INPUTS
-This cmdlet accepts pipelined objects that are e.g. returned from a Get-JS7Workflow cmdlet.
+This cmdlet accepts pipelined objects.
 
 .OUTPUTS
 This cmdlet returns no output.
 
 .EXAMPLE
-Add-JS7InventoryItem -Path /some/directory/sampleWorkflow -Type 'WORKFLOW' -File /tmp/workflow-174.json
+Import-JS7InventoryItem -FilePath /tmp/export.zip
 
-Read the worfklow configuration from the given file and store the workflow with the specified path.
+Imports any objects included with the import file ("export.zip"). Objects existing with the same path in 
+the JOC Cockpit inventory will not be overwritten.
+
+.EXAMPLE
+Import-JS7InventoryItem -Folder /some_folder -FilePath /tmp/export.tar.gz -ArchiveFormat TAR.GZ -Overwrite
+
+Imports any objects from the given import file. As a compressed tar file is used the respective archive format
+is specified. Objects are added to the path /some_folder such as e.g. an object /myPath/myWorkflow that will be added to
+the path /some_folder/myPath/myWorkflow.
+
+Any objects existing with the same path in the JOC Cockpit inventory will be overwritten.
 
 .LINK
 about_js7
@@ -65,35 +76,25 @@ about_js7
 param
 (
     [Parameter(Mandatory=$True,ValueFromPipeline=$False,ValueFromPipelinebyPropertyName=$True)]
-    [string] $Path,
-    [Parameter(Mandatory=$True,ValueFromPipeline=$False,ValueFromPipelinebyPropertyName=$True)]
-    [ValidateSet('WORKFLOW','JOBCLASS','LOCK','JUNCTION','WORKINGDAYSCALENDAR','NONWORKINGDAYSCALENDAR','ORDER')]
-    [string] $Type,
+    [string] $FilePath,
     [Parameter(Mandatory=$False,ValueFromPipeline=$False,ValueFromPipelinebyPropertyName=$True)]
-    [string] $File,
+    [ValidateSet('ZIP','TAR.GZ')]
+    [string] $ArchiveFormat = 'ZIP',
     [Parameter(Mandatory=$False,ValueFromPipeline=$False,ValueFromPipelinebyPropertyName=$True)]
-    [string] $DocPath,
+    [string] $Folder = '/',
+    [Parameter(Mandatory=$False,ValueFromPipeline=$False,ValueFromPipelinebyPropertyName=$True)]
+    [switch] $Overwrite,
     [Parameter(Mandatory=$False,ValueFromPipeline=$False,ValueFromPipelinebyPropertyName=$True)]
     [string] $AuditComment,
     [Parameter(Mandatory=$False,ValueFromPipeline=$False,ValueFromPipelinebyPropertyName=$True)]
     [int] $AuditTimeSpent,
     [Parameter(Mandatory=$False,ValueFromPipeline=$False,ValueFromPipelinebyPropertyName=$True)]
-    [Uri] $AuditTicketLink    
+    [Uri] $AuditTicketLink  
 )
 	Begin
 	{
 		Approve-JS7Command $MyInvocation.MyCommand
         $stopWatch = Start-StopWatch
-
-        if ( $Path.endsWith('/') )
-        {
-            throw "$($MyInvocation.MyCommand.Name): path has to include directory, sub-directory and object name"
-        }
-        
-        if ( !$File )
-        {
-            throw "$($MyInvocation.MyCommand.Name): parameter -File required for import"
-        }
 
         if ( !$AuditComment -and ( $AuditTimeSpent -or $AuditTicketLink ) )
         {
@@ -103,24 +104,16 @@ param
     
     Process
     {
-        if ( !(Test-Path -Path $File -ErrorAction Continue) )
-        {
-            throw "$($MyInvocation.MyCommand.Name): file not found or not accessible: $File"
-        }
+    }
 
+    End
+    {
         $body = New-Object PSObject
-        Add-Member -Membertype NoteProperty -Name 'path' -value $Path -InputObject $body
-        Add-Member -Membertype NoteProperty -Name 'objectType' -value $Type -InputObject $body
-        Add-Member -Membertype NoteProperty -Name 'valid' -value $False -InputObject $body
-        
-        $objConfiguration = Get-Content -Raw -Path $File | ConvertFrom-Json -Depth 100
-        Add-Member -Membertype NoteProperty -Name 'configuration' -value $objConfiguration -InputObject $body
-        
-        if ( $DocPath )
-        {
-            Add-Member -Membertype NoteProperty -Name 'docPath' -value $DocPath -InputObject $body
-        }
-    
+        Add-Member -Membertype NoteProperty -Name 'file' -value $FilePath -InputObject $body
+        Add-Member -Membertype NoteProperty -Name 'archiveFormat' -value $ArchiveFormat -InputObject $body
+        Add-Member -Membertype NoteProperty -Name 'folder' -value $Folder -InputObject $body
+        Add-Member -Membertype NoteProperty -Name 'overwrite' -value ($Overwrite -eq $True) -InputObject $body
+
         if ( $AuditComment -or $AuditTimeSpent -or $AuditTicketLink )
         {
             $objAuditLog = New-Object PSObject
@@ -138,28 +131,19 @@ param
 
             Add-Member -Membertype NoteProperty -Name 'auditLog' -value $objAuditLog -InputObject $body
         }
-    
+
+        $headers = @{ 'Encoding' = 'gzip, deflate'; 'Content-Type' = 'application/octet-stream' }       
+
         [string] $requestBody = $body | ConvertTo-Json -Depth 100
-        $response = Invoke-JS7WebRequest -Path '/inventory/store' -Body $requestBody
+        $response = Invoke-JS7WebRequest -Path '/inventory/import' -Body $requestBody -Headers $headers
         
-        if ( $response.StatusCode -eq 200 )
+        if ( $response.StatusCode -ne 200 )
         {
-            $requestResult = ( $response.Content | ConvertFrom-JSON )
-            
-            if ( !$requestResult.path )
-            {
-                throw ( $response | Format-List -Force | Out-String )
-            }
-        } else {
             throw ( $response | Format-List -Force | Out-String )
         }
-    
-        Write-Verbose ".. $($MyInvocation.MyCommand.Name): object imported: $Path"                
-    }
 
-    End
-    {
+        Write-Verbose ".. $($MyInvocation.MyCommand.Name): file imported: $FilePath"                
+
         Log-StopWatch -CommandName $MyInvocation.MyCommand.Name -StopWatch $stopWatch
-        Touch-JS7Session
     }
 }

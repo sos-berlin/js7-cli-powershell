@@ -14,6 +14,17 @@ This cmdlet exports inventory objects that are stored with JOC Cockpit.
 ** Inventory objects such as calendars and schedules are not deployed to a Controller but are used by JOC Cockpit.
 ** When exporting releasable objects then either a draft version can be used or the latest released version is requested by use of the -Released parameter.
 
+An export is performed either to backup deployable and releasable objects that later on can be imported (restored), 
+or to export objects for signing and later depeloyment with a JOC Cockpit operated in security level "high".
+
+The process to export for signigng includes the following steps:
+
+* export deployable objects to a compressed archive (.zip, .tar.gz),
+* unzip the archive to the local file system,
+* manually sign objects,
+* zip signed objects and signature files to a compressed archive,
+* import the archive and deploy the signed objects.
+
 .PARAMETER Path
 Specifies the path and name of an individual inventory object that should be exported, e.g. a workflow.
 
@@ -74,25 +85,37 @@ Specifies that only valid versions of inventory objects are eligible for export.
 inventory objects can be invalid, any deployed or relased versions of inventory objects are valid.
 Without this parameter draft versions can be exported that are in progress and therefore are not validated.
 
-.PARAMETER NoRemoved
+.PARAMETER WithoutRemoved
 Optionally specifies that no removed objects are added to the export. Such objects are marked for deletion, however,
 deletion has not yet been confirmed by a deploy/release operation that permanently erases objects.
 
-.PARAMETER FileType
-Specifies the type of the archive file that will be returned: .zip, .tar.gz or .gz.
+.PARAMETER ForSigning
+Specifies that deployable objects are exported for external signing and later import into a JOC Cockpit
+instance operated for security level "high". 
 
-If the -FilePath parameter is specified then the extension of the file name will be used for the file type.
+* The export file cannot include releasable objects as such objects are not subject to signing.
+* The export file must be created from the same JOC Cockpit instance to which it will be imported for deployment.
+* The process of export/signing/import must not exceed the max. idle time that is configured for a user's JOC Cockpit session.
+
+Without this parameter the export file is created for backup purposes and can include any deployable and releasable objects.
+
+.PARAMETER ControllerId
+Specifies the ID of the Controller to which objects should be deployed after external signing.
+This parameter is required if the -ForSigning parameter is used.
 
 .PARAMETER FilePath
-Specifies the path to the output file that the exported inventory objects are written to.
+Specifies the path to the archive file that the exported inventory objects are written to.
 
-If no output file is specified then an octet stream is returned by the cmdlet.
+If no file path is specified then an octet stream is returned by the cmdlet.
+
+.PARAMETER ArchiveFormat
+Specifies the type of the archive file that will be returned: ZIP, TAR.GZ.
 
 .PARAMETER AuditComment
 Specifies a free text that indicates the reason for the current intervention, e.g. "business requirement", "maintenance window" etc.
 
 The Audit Comment is visible from the Audit Log view of JOC Cockpit.
-This parameter is not mandatory, however, JOC Cockpit can be configured to enforece Audit Log comments for any interventions.
+This parameter is not mandatory, however, JOC Cockpit can be configured to enforce Audit Log comments for any interventions.
 
 .PARAMETER AuditTimeSpent
 Specifies the duration in minutes that the current intervention required.
@@ -115,22 +138,25 @@ This cmdlet returns an octet-stream that can be piped to an output file, e.g. wi
 .EXAMPLE
 Export-JS7InventoryItem | Out-File /tmp/export.zip
 
-Exports all inventory objects to a zipped file. This includes deployable and releasable inventory objects.
+Exports all inventory objects to a zipped octet-stream that is written to a file. 
+This includes deployable and releasable inventory objects.
 By default draft versions are used instead of deployed or released versions.
 If no draft version exists then the latest deployed or released version is used.
 
 .EXAMPLE
-Export-JS7InventoryItem -Folder /some_folder -File /tmp/export.zip
+Export-JS7InventoryItem -Folder /some_folder -FilePath /tmp/export.tar.gz -ArchiveFormat TAR.GZ
 
-Exports any objects from the given folder to a zipped file.
-
-.EXAMPLE
-Export-JS7InventoryItem -Folder /some_folder -Deployable -File /tmp/export.zip
-
-Exports deployable objects only from the given folder to a zipped file.
+Exports any objects from the given folder to a compressed tar file.
 
 .EXAMPLE
-Export-JS7InventoryItem -Path /some_folder/some_workflow -Type WORKFLOW -File /tmp/export.zip
+Export-JS7InventoryItem -Folder /some_folder -Deployable -FilePath /tmp/export.zip -ForSigning
+
+Exports deployable objects only from the given folder to a zipped file that is used for signing.
+After signing and adding the signature files to the export archive then this archive can be imported
+and deployed in a JOC Cockpit instance operated for security level "high".
+
+.EXAMPLE
+Export-JS7InventoryItem -Path /some_folder/some_workflow -Type WORKFLOW -FilePath /tmp/export.zip
 
 Exports the specified workflow from the indcated path to a zipped file. 
 Use of the -Path parameter requires to specify the -Type parameter for the object type.
@@ -139,7 +165,7 @@ Depending on availability the draft version or the latest deployed version of th
 If a draft version is available then it is eligible for export independent from the fact that the draft is valid or invalid.
 
 .EXAMPLE
-Export-JS7InventoryItem -Path /some_folder/some_workflow -Type WORKFLOW -Valid -File /tmp/export.zip
+Export-JS7InventoryItem -Path /some_folder/some_workflow -Type WORKFLOW -Valid -FilePath /tmp/export.zip
 
 Exports the specified workflow from the indcated path to a zipped file. 
 Use of the -Path parameter requires to specify the -Type parameter for the object type.
@@ -180,16 +206,16 @@ param
     [Parameter(Mandatory=$False,ValueFromPipeline=$False,ValueFromPipelinebyPropertyName=$True)]
     [switch] $Valid,
     [Parameter(Mandatory=$False,ValueFromPipeline=$False,ValueFromPipelinebyPropertyName=$True)]
-    [switch] $NoRemoved,
+    [switch] $WithoutRemoved,
     [Parameter(Mandatory=$False,ValueFromPipeline=$False,ValueFromPipelinebyPropertyName=$True)]
     [switch] $ForSigning,
     [Parameter(Mandatory=$False,ValueFromPipeline=$False,ValueFromPipelinebyPropertyName=$True)]
     [string] $ControllerId,
     [Parameter(Mandatory=$False,ValueFromPipeline=$False,ValueFromPipelinebyPropertyName=$True)]
-    [ValidateSet('.zip','.tar.gz','.gz')]
-    [string] $FileType = '.zip',
-    [Parameter(Mandatory=$False,ValueFromPipeline=$False,ValueFromPipelinebyPropertyName=$True)]
     [string] $FilePath,
+    [Parameter(Mandatory=$False,ValueFromPipeline=$False,ValueFromPipelinebyPropertyName=$True)]
+    [ValidateSet('ZIP','TAR.GZ')]
+    [string] $ArchiveFormat = 'ZIP',
     [Parameter(Mandatory=$False,ValueFromPipeline=$False,ValueFromPipelinebyPropertyName=$True)]
     [string] $AuditComment,
     [Parameter(Mandatory=$False,ValueFromPipeline=$False,ValueFromPipelinebyPropertyName=$True)]
@@ -217,11 +243,6 @@ param
             throw "$($MyInvocation.MyCommand.Name): if parameter -ForSigning is used then the -ControllerId parameter has to be specified."
         }
 
-        if ( $FilePath -and !$FilePath.endsWith('.zip') -and !$FilePath.endsWith('.tar.gz') -and !$FilePath.endsWith('.gz') )
-        {
-            throw "$($MyInvocation.MyCommand.Name): unsupported extension with -FilePath parameter specified, use .zip, .tar.gz or .gz."
-        }
-
         if ( !$AuditComment -and ( $AuditTimeSpent -or $AuditTicketLink ) )
         {
             throw "$($MyInvocation.MyCommand.Name): Audit Log comment required, use parameter -AuditComment if one of the parameters -AuditTimeSpent or -AuditTicketLink is used"
@@ -230,6 +251,8 @@ param
         $deployableTypes = @('WORKFLOW','JOBCLASS','LOCK','JUNCTION')
         $releasableTypes = @('WORKINGDAYSCALENDAR','NONWORKINGDAYSCALENDAR','SCHEDULE')
         $exportObjects = @()
+        $deployablesObj = $null
+        $releasablesObj = $null
     }
     
     Process
@@ -239,15 +262,15 @@ param
             $Recursive = $True
         }
         
-        if ( $FilePath )
-        {
-            $FileType = [System.IO.Path]::GetExtension($FilePath)
-        }
-        
         if ( !$Deployable -and !$Releasable )
         {
             $Deployable = $True
             $Releasable = $True
+        }
+        
+        if ( $ForSigning )
+        {
+            $WithoutRemoved = $True
         }
         
         if ( $Deployable )
@@ -314,7 +337,7 @@ param
                 Add-Member -Membertype NoteProperty -Name 'recursive' -value ($Recursive -eq $True) -InputObject $body                                 
                 Add-Member -Membertype NoteProperty -Name 'onlyValidObjects' -value ($Valid -eq $True) -InputObject $body                    
                 Add-Member -Membertype NoteProperty -Name 'withVersions' -value ($Deployable -eq $True) -InputObject $body
-                Add-Member -Membertype NoteProperty -Name 'withoutRemovedObjects' -value ($NoRemoved -eq $True) -InputObject $body
+                Add-Member -Membertype NoteProperty -Name 'withoutRemovedObjects' -value ($WithoutRemoved -eq $True) -InputObject $body
                 
                 [string] $requestBody = $body | ConvertTo-Json -Depth 100
                 $response = Invoke-JS7WebRequest -Path '/inventory/deployables' -Body $requestBody
@@ -406,6 +429,7 @@ param
                 Add-Member -Membertype NoteProperty -Name 'folder' -value $Folder -InputObject $body
                 Add-Member -Membertype NoteProperty -Name 'recursive' -value ($Recursive -eq $True) -InputObject $body                                    
                 Add-Member -Membertype NoteProperty -Name 'onlyValidObjects' -value ($Valid -eq $True) -InputObject $body                    
+                Add-Member -Membertype NoteProperty -Name 'withoutRemovedObjects' -value ($WithoutRemoved -eq $True) -InputObject $body
                 
                 [string] $requestBody = $body | ConvertTo-Json -Depth 100
                 $response = Invoke-JS7WebRequest -Path '/inventory/releasables' -Body $requestBody
@@ -442,12 +466,20 @@ param
         {
             $body = New-Object PSObject
             Add-Member -Membertype NoteProperty -Name 'forSigning' -value ($ForSigning -eq $True) -InputObject $body
-            
-            if ( $ForSigning )
+
+            $exportFile = New-Object PSObject
+            Add-Member -Membertype NoteProperty -Name 'archiveFormat' -value "$ArchiveFormat" -InputObject $exportFile
+
+            if ( $FilePath )
             {
-                Add-Member -Membertype NoteProperty -Name 'controllerId' -value $ControllerId -InputObject $body
+                Add-Member -Membertype NoteProperty -Name 'exportFile' -value "$([System.IO.Path]::GetFileName($FilePath))" -InputObject $exportFile
+            } else {
+                Add-Member -Membertype NoteProperty -Name 'exportFile' -value "joc-export$($ArchiveFormat)" -InputObject $exportFile
             }
-            
+
+            Add-Member -Membertype NoteProperty -Name 'exportFile' -value $exportFile -InputObject $body
+
+
             $deployableDraftConfigurations = @()
             $deployableDeployedConfigurations = @()
             $releasableDraftConfigurations = @()
@@ -530,7 +562,35 @@ param
                 
                 Add-Member -Membertype NoteProperty -Name 'releasables' -value $releasablesObj -InputObject $body
             }
-            
+
+
+            if ( $forSigningObj )
+            {
+                $forSigningObj = New-Object PSObject
+                Add-Member -Membertype NoteProperty -Name 'controllerId' -value $ControllerId -InputObject $forSigningObj
+
+                if ( $deployablesObj )
+                {
+                    Add-Member -Membertype NoteProperty -Name 'deployables' -value $deployablesObj -InputObject $forSigningObj
+                }
+
+                Add-Member -Membertype NoteProperty -Name 'forSigning' -value $forSigningObj -InputObject $body
+            } else {
+                $forBackupObj = New-Object PSObject
+
+                if ( $deployablesObj )
+                {
+                    Add-Member -Membertype NoteProperty -Name 'deployables' -value $deployablesObj -InputObject $forBackupObj                    
+                }
+
+                if ( $rleasablesObj )
+                {
+                    Add-Member -Membertype NoteProperty -Name 'deployables' -value $releasablesObj -InputObject $forBackupObj                    
+                }
+
+                Add-Member -Membertype NoteProperty -Name 'forBackup' -value $forBackupObj -InputObject $body
+            }
+
             if ( $AuditComment -or $AuditTimeSpent -or $AuditTicketLink )
             {
                 $objAuditLog = New-Object PSObject
@@ -548,15 +608,8 @@ param
     
                 Add-Member -Membertype NoteProperty -Name 'auditLog' -value $objAuditLog -InputObject $body
             }
-       
-            if ( $FilePath )
-            {
-                $filename = "$([System.IO.Path]::GetFileName($FilePath))"
-            } else {
-                $filename = "joc-export$($FileType)"
-            }
 
-            $headers = @{'Accept' = 'application/octet-stream'; 'Accept-Encoding' = 'gzip, deflate'; 'Filename' = $filename }       
+            $headers = @{'Accept' = 'application/octet-stream'; 'Accept-Encoding' = 'gzip, deflate' }       
 
             [string] $requestBody = $body | ConvertTo-Json -Depth 100
             $response = Invoke-JS7WebRequest -Path '/inventory/export' -Body $requestBody -Headers $headers

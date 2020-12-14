@@ -12,8 +12,8 @@ Deployment includes that objects such as workflows are digitally signed and forw
 Depending on the security level JOC Cockpit is operated for signging is available with a general certificate, 
 with a user based certificate or by external signing.
 
-Deployment includes to permanently delete previously removed objects from Controllers and from the inventory.
-Therefore, if a deployable object is removed, e.g. with the Remove-JS7Object cmdlet, then this removal has to 
+Deployment can include to permanently delete previously removed objects from Controllers and from the inventory.
+Therefore, if a deployable object is removed, e.g. with the Remove-JS7InventoryItem cmdlet, then this removal has to 
 be committed using this cmdlet for deployment.
 
 .PARAMETER Path
@@ -43,7 +43,7 @@ are published for use with a Controller.
 Specifies a free text that indicates the reason for the current intervention, e.g. "business requirement", "maintenance window" etc.
 
 The Audit Comment is visible from the Audit Log view of JOC Cockpit.
-This parameter is not mandatory, however, JOC Cockpit can be configured to enforece Audit Log comments for any interventions.
+This parameter is not mandatory, however, JOC Cockpit can be configured to enforce Audit Log comments for any interventions.
 
 .PARAMETER AuditTimeSpent
 Specifies the duration in minutes that the current intervention required.

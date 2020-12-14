@@ -9,13 +9,13 @@ During switchover the active JOC Cockpit instance becomes passive and vice versa
 
 .PARAMETER MemberId
 Specifies the identification of the passive JOC Cockpit cluster member that should become active.
-This information is provided with the Get-JS7JOCCluster cmdlet that returns an array of passive cluster members.
+This information is provided with the Get-JS7JOCInstance cmdlet that returns an array of passive cluster members.
 
 .PARAMETER AuditComment
 Specifies a free text that indicates the reason for the current intervention, e.g. "business requirement", "maintenance window" etc.
 
 The Audit Comment is visible from the Audit Log view of JOC Cockpit.
-This parameter is not mandatory, however, JOC Cockpit can be configured to enforece Audit Log comments for any interventions.
+This parameter is not mandatory, however, JOC Cockpit can be configured to enforce Audit Log comments for any interventions.
 
 .PARAMETER AuditTimeSpent
 Specifies the duration in minutes that the current intervention required.

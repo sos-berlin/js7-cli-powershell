@@ -2,16 +2,17 @@ function Resume-JS7Order
 {
 <#
 .SYNOPSIS
-Resumes a number of orders in the JS7 Controller
+Resumes suspended orders in a JS7 Controller
 
 .DESCRIPTION
-This cmdlet resumes orders in a JS7 Controller.
+This cmdlet resumes orders that are suspended in a JS7 Controller.
 
 .PARAMETER OrderId
 Specifies the identifier of an order.
 
 .PARAMETER Position
-Specifies the position of an order in the workflow.
+Specifies the position in the workflow for which the order should be resumed,
+i.e. the order will continue to execute with the instruction indicated by the position.
 
 .PARAMETER Arguments
 Specifies the arguments for the order. Arguments are created from a hashmap,
@@ -24,7 +25,7 @@ $orderArgs = @{ 'arg1' = 'value1'; 'arg2' = 'value2' }
 Specifies a free text that indicates the reason for the current intervention, e.g. "business requirement", "maintenance window" etc.
 
 The Audit Comment is visible from the Audit Log view of JOC Cockpit.
-This parameter is not mandatory, however, JOC Cockpit can be configured to enforece Audit Log comments for any interventions.
+This parameter is not mandatory, however, JOC Cockpit can be configured to enforce Audit Log comments for any interventions.
 
 .PARAMETER AuditTimeSpent
 Specifies the duration in minutes that the current intervention required.

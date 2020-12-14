@@ -2,10 +2,11 @@ function Add-JS7SigningKey
 {
 <#
 .SYNOPSIS
-Adds a key pair to the current account
+Adds a key pair for signing of deployable objects such as workflows to the current account
 
 .DESCRIPTION
-Adds a key pair of private key and public key/certificate to the current account.
+Adds a key pair of private key and public key/certificate that can be used to sign deployable objects
+such as workflows to the current account.
 
 JS7 supports the following key types: PGP, RSA and ECDSA.
 
@@ -39,7 +40,7 @@ The certificate string is expected to include any newline characters required fo
 Specifies a free text that indicates the reason for the current intervention, e.g. "business requirement", "maintenance window" etc.
 
 The Audit Comment is visible from the Audit Log view of JOC Cockpit.
-This parameter is not mandatory, however, JOC Cockpit can be configured to enforece Audit Log comments for any interventions.
+This parameter is not mandatory, however, JOC Cockpit can be configured to enforce Audit Log comments for any interventions.
 
 .PARAMETER AuditTimeSpent
 Specifies the duration in minutes that the current intervention required.

@@ -2,13 +2,13 @@ function Stop-JS7Order
 {
 <#
 .SYNOPSIS
-Cancels and removes an order in the JS7 Controller
+Cancels an order in the JS7 Controller
 
 .DESCRIPTION
-Orders are cancelled and removed. Orders are selected for removal
+Orders are cancelled and removed by
 
-* by a pipelined object, e.g. the output of the Get-JS7Order cmdlet
-* by specifying an individual order with the -OrderId parameter.
+* a pipelined object, e.g. the output of the Get-JS7Order cmdlet
+* specifying an individual order with the -OrderId parameter.
 
 .PARAMETER OrderId
 Specifies the identifier of an order.
@@ -20,7 +20,7 @@ Specifies if the running task for the indicated order should be sent a SIGTERM s
 Specifies a free text that indicates the reason for the current intervention, e.g. "business requirement", "maintenance window" etc.
 
 The Audit Comment is visible from the Audit Log view of JOC Cockpit.
-This parameter is not mandatory, however, JOC Cockpit can be configured to enforece Audit Log comments for any interventions.
+This parameter is not mandatory, however, JOC Cockpit can be configured to enforce Audit Log comments for any interventions.
 
 .PARAMETER AuditTimeSpent
 Specifies the duration in minutes that the current intervention required.

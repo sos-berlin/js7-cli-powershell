@@ -8,7 +8,7 @@ Rename a folder in the JOC Cockpit inventory
 This cmdlet renames a folder in the JOC Cockpit inventory.
 
 .PARAMETER Path
-Specifies the folder - optionally including sub-folders - that should be rename
+Specifies the folder - optionally including sub-folders - that should be renamed.
 
 .PARAMETER Name
 Specifies the new folder name.
@@ -17,7 +17,7 @@ Specifies the new folder name.
 Specifies a free text that indicates the reason for the current intervention, e.g. "business requirement", "maintenance window" etc.
 
 The Audit Comment is visible from the Audit Log view of JOC Cockpit.
-This parameter is not mandatory, however, JOC Cockpit can be configured to enforece Audit Log comments for any interventions.
+This parameter is not mandatory, however, JOC Cockpit can be configured to enforce Audit Log comments for any interventions.
 
 .PARAMETER AuditTimeSpent
 Specifies the duration in minutes that the current intervention required.
