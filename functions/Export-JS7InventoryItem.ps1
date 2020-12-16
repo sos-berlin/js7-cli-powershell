@@ -14,7 +14,7 @@ This cmdlet exports inventory objects that are stored with JOC Cockpit.
 ** Inventory objects such as calendars and schedules are not deployed to a Controller but are used by JOC Cockpit.
 ** When exporting releasable objects then either a draft version can be used or the latest released version is requested by use of the -Released parameter.
 
-An export is performed either to backup deployable and releasable objects that later on can be imported (restored), 
+An export is performed either to backup deployable and releasable objects that later on can be imported, 
 or to export objects for signing and later depeloyment with a JOC Cockpit operated in security level "high".
 
 The process to export for signigng includes the following steps:
@@ -40,6 +40,8 @@ Optionally restricts the object type to export which is one of:
 ** WORKINGDAYSCALENDAR
 ** NONWORKINGDAYSCALENDAR
 ** SCHEDULE
+* Any Object Types
+** FOLDER
 
 The -Type parameter can be used to restrict either deployable or releasable object types to be exported.
 Without specifying this parameter objects of any type within the areas of releasable or deployable objects are exported
@@ -108,8 +110,8 @@ Specifies the path to the archive file that the exported inventory objects are w
 
 If no file path is specified then an octet stream is returned by the cmdlet.
 
-.PARAMETER ArchiveFormat
-Specifies the type of the archive file that will be returned: ZIP, TAR.GZ.
+.PARAMETER Format
+Specifies the type of the archive file that will be returned: ZIP, TAR_GZ.
 
 .PARAMETER AuditComment
 Specifies a free text that indicates the reason for the current intervention, e.g. "business requirement", "maintenance window" etc.
@@ -189,7 +191,7 @@ param
     [Parameter(Mandatory=$False,ValueFromPipeline=$False,ValueFromPipelinebyPropertyName=$True)]
     [string] $Path,
     [Parameter(Mandatory=$False,ValueFromPipeline=$False,ValueFromPipelinebyPropertyName=$True)]
-    [ValidateSet('WORKFLOW','JOBCLASS','LOCK','JUNCTION','WORKINGDAYSCALENDAR','NONWORKINGDAYSCALENDAR','SCHEDULE')]
+    [ValidateSet('FOLDER','WORKFLOW','JOBCLASS','LOCK','JUNCTION','WORKINGDAYSCALENDAR','NONWORKINGDAYSCALENDAR','SCHEDULE')]
     [string[]] $Type,
     [Parameter(Mandatory=$False,ValueFromPipeline=$False,ValueFromPipelinebyPropertyName=$True)]
     [string] $Folder = '/',
@@ -215,7 +217,7 @@ param
     [string] $FilePath,
     [Parameter(Mandatory=$False,ValueFromPipeline=$False,ValueFromPipelinebyPropertyName=$True)]
     [ValidateSet('ZIP','TAR.GZ')]
-    [string] $ArchiveFormat = 'ZIP',
+    [string] $Format = 'ZIP',
     [Parameter(Mandatory=$False,ValueFromPipeline=$False,ValueFromPipelinebyPropertyName=$True)]
     [string] $AuditComment,
     [Parameter(Mandatory=$False,ValueFromPipeline=$False,ValueFromPipelinebyPropertyName=$True)]
@@ -248,8 +250,9 @@ param
             throw "$($MyInvocation.MyCommand.Name): Audit Log comment required, use parameter -AuditComment if one of the parameters -AuditTimeSpent or -AuditTicketLink is used"
         }
         
-        $deployableTypes = @('WORKFLOW','JOBCLASS','LOCK','JUNCTION')
-        $releasableTypes = @('WORKINGDAYSCALENDAR','NONWORKINGDAYSCALENDAR','SCHEDULE')
+        $formats = @{ 'ZIP' = 'zip'; 'TAR_GZ' = 'tar.gz' }
+        $deployableTypes = @('FOLDER','WORKFLOW','JOBCLASS','LOCK','JUNCTION')
+        $releasableTypes = @('FOLDER','WORKINGDAYSCALENDAR','NONWORKINGDAYSCALENDAR','SCHEDULE')
         $exportObjects = @()
         $deployablesObj = $null
         $releasablesObj = $null
@@ -465,16 +468,15 @@ param
         if ( $exportObjects.count )
         {
             $body = New-Object PSObject
-            Add-Member -Membertype NoteProperty -Name 'forSigning' -value ($ForSigning -eq $True) -InputObject $body
 
             $exportFile = New-Object PSObject
-            Add-Member -Membertype NoteProperty -Name 'archiveFormat' -value "$ArchiveFormat" -InputObject $exportFile
+            Add-Member -Membertype NoteProperty -Name 'format' -value "$Format" -InputObject $exportFile
 
             if ( $FilePath )
             {
-                Add-Member -Membertype NoteProperty -Name 'exportFile' -value "$([System.IO.Path]::GetFileName($FilePath))" -InputObject $exportFile
+                Add-Member -Membertype NoteProperty -Name 'filename' -value "$([System.IO.Path]::GetFileName($FilePath))" -InputObject $exportFile
             } else {
-                Add-Member -Membertype NoteProperty -Name 'exportFile' -value "joc-export$($ArchiveFormat)" -InputObject $exportFile
+                Add-Member -Membertype NoteProperty -Name 'filename' -value "joc-export.$($formats.Item($Format))" -InputObject $exportFile
             }
 
             Add-Member -Membertype NoteProperty -Name 'exportFile' -value $exportFile -InputObject $body
@@ -541,26 +543,22 @@ param
                 {
                     Add-Member -Membertype NoteProperty -Name 'draftConfigurations' -value $deployableDraftConfigurations -InputObject $deployablesObj
                 }
-                
-                Add-Member -Membertype NoteProperty -Name 'deployables' -value $deployablesObj -InputObject $body
             }
 
             
             if ( $releasableReleasedConfigurations.count -or $releasableDraftConfigurations.count )
             {                
                 $releasablesObj = New-Object PSObject
-
-                if ( $releasableReleasedConfigurations.count )
-                {
-                    Add-Member -Membertype NoteProperty -Name 'deployConfigurations' -value $releasableReleasedConfigurations -InputObject $releasablesObj
-                }
                 
                 if ( $releasableDraftConfigurations.count )
                 {
                     Add-Member -Membertype NoteProperty -Name 'draftConfigurations' -value $releasableDraftConfigurations -InputObject $releasablesObj
                 }
-                
-                Add-Member -Membertype NoteProperty -Name 'releasables' -value $releasablesObj -InputObject $body
+
+                if ( $releasableReleasedConfigurations.count )
+                {
+                    Add-Member -Membertype NoteProperty -Name 'releasedConfigurations' -value $releasableReleasedConfigurations -InputObject $releasablesObj
+                }
             }
 
 
@@ -583,9 +581,9 @@ param
                     Add-Member -Membertype NoteProperty -Name 'deployables' -value $deployablesObj -InputObject $forBackupObj                    
                 }
 
-                if ( $rleasablesObj )
+                if ( $releasablesObj )
                 {
-                    Add-Member -Membertype NoteProperty -Name 'deployables' -value $releasablesObj -InputObject $forBackupObj                    
+                    Add-Member -Membertype NoteProperty -Name 'releasables' -value $releasablesObj -InputObject $forBackupObj                    
                 }
 
                 Add-Member -Membertype NoteProperty -Name 'forBackup' -value $forBackupObj -InputObject $body

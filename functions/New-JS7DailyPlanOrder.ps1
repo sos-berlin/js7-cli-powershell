@@ -2,11 +2,20 @@ function New-JS7DailyPlanOrder
 {
 <#
 .SYNOPSIS
-Create the daily plan orders for a JS7 Controller
+Create the daily plan orders for a number of JS7 Controllers
 
 .DESCRIPTION
-Creates daily plan orders for a JS7 Controller. Orders are submitted to any
+Creates daily plan orders for a number of JS7 Controllers. Orders can be submitted to any
 JS7 Controllers that are deployed the respective workflows.
+
+.PARAMETER DailyPlanDate
+Specifies the date for which daily plan orders should be created.
+Consider that a UTC date has to be provided.
+
+Default: current day as a UTC date
+
+.PARAMETER WorkflowPath
+Optionally specifies the path and name of a workflow for which daily plan orders should be created.
 
 .PARAMETER SchedulePath
 Optionally specifies the path and name of a schedule for which daily plan orders should be created.
@@ -23,12 +32,6 @@ Specifies the Controller to which daily plan orders are submitted should the -Su
 
 Without this parameter daily plan orders are submitted to any Controllers that are deployed the
 workflows that are indicated with the respective schedules.
-
-.PARAMETER DailyPlanDate
-Specifies the date for which daily plan orders should be created.
-Consider that a UTC date has to be provided.
-
-Default: current day as a UTC date
 
 .PARAMETER Submit
 Specifies to immediately submit the daily plan orders to a JS7 Controller.
@@ -88,6 +91,10 @@ about_js7
 [cmdletbinding()]
 param
 (
+    [Parameter(Mandatory=$True,ValueFromPipelinebyPropertyName=$True)]
+    [DateTime] $DailyPlanDate = (Get-Date (Get-Date).ToUniversalTime() -Format 'yyyy-MM-dd'),
+    [Parameter(Mandatory=$False,ValueFromPipelinebyPropertyName=$True)]
+    [string] $WorkflowPath,
     [Parameter(Mandatory=$False,ValueFromPipelinebyPropertyName=$True)]
     [string] $SchedulePath,
     [Parameter(Mandatory=$False,ValueFromPipelinebyPropertyName=$True)]
@@ -96,8 +103,6 @@ param
     [switch] $Recursive,
     [Parameter(Mandatory=$False,ValueFromPipelinebyPropertyName=$True)]
     [string] $ControllerId,
-    [Parameter(Mandatory=$False,ValueFromPipelinebyPropertyName=$True)]
-    [DateTime] $DailyPlanDate = (Get-Date (Get-Date).ToUniversalTime() -Format 'yyyy-MM-dd'),
     [Parameter(Mandatory=$False,ValueFromPipelinebyPropertyName=$True)]
     [switch] $Submit,
     [Parameter(Mandatory=$False,ValueFromPipelinebyPropertyName=$True)]
@@ -120,6 +125,7 @@ param
         }
 
         $folders = @()
+        $workflowPaths = @()
         $schedulePaths = @()
         $controllerIds = @()
     }
@@ -127,11 +133,6 @@ param
     Process
     {
         Write-Debug ".. $($MyInvocation.MyCommand.Name): parameter Folder=$Folder, WorkflowPath=$WorkflowPath, SchedulePath=$SchedulePath"
-
-        if ( !$DailyPlanDate )
-        {
-            throw "$($MyInvocation.MyCommand.Name): daily plan date is required, use parameter -DailyPlanDate"
-        }
 
         if ( $Folder -and $Folder -ne '/' )
         { 
@@ -146,6 +147,21 @@ param
             }
         }
 
+        if ( !$WorkflowPath -and !$SchedulePath -and $Folder -eq '/' -and !$Recursive )
+        {
+            $Recursive = $True
+        }
+
+        if ( $WorkflowPath )
+        {
+            $workflowPaths += $WorkflowPath
+        }
+        
+        if ( $SchedulePath )
+        {
+            $schedulePaths += $SchedulePath
+        }
+        
         if ( $Folder )
         {
             $objFolder = New-Object PSObject
@@ -153,16 +169,6 @@ param
             Add-Member -Membertype NoteProperty -Name 'recursive' -value ($Recursive -eq $True) -InputObject $objFolder
             
             $folders += $objFolder
-        }
-
-        if ( $SchedulePath )
-        {
-            $schedulePaths += $SchedulePath
-        }
-        
-        if ( !$ControllerId )
-        {
-            $ControllerId = $script:jsWebService.ControllerId
         }
 
         if ( $ControllerId )
@@ -173,30 +179,38 @@ param
 
     End
     {
-        if ( $folders.count -or $schedulePaths.count -or $controllerIds.count )
+        if ( $folders -or $schedulePaths -or $controllerIds )
         {
             $body = New-Object PSObject
-            
-            # TODO: enable Controllers
-            Add-Member -Membertype NoteProperty -Name 'controllerId' -value $ControllerId -InputObject $body
+            Add-Member -Membertype NoteProperty -Name 'controllerId' -value $script:jsWebService.ControllerId -InputObject $body
             Add-Member -Membertype NoteProperty -Name 'dailyPlanDate' -value (Get-Date $DailyPlanDate -Format 'yyyy-MM-dd') -InputObject $body
-    
-            if ( $schedulePaths.count )
+
+
+            $selector = New-Object PSObject
+
+            if ( $workflowPaths )
             {
-                Add-Member -Membertype NoteProperty -Name 'schedules' -value $schedulePaths -InputObject $body
+                Add-Member -Membertype NoteProperty -Name 'workflowPaths' -value $workflowPaths -InputObject $selector                
             }
 
-            # TODO: enable folders
-            #if ( $folderPaths.count )
-            #{
-            #    Add-Member -Membertype NoteProperty -Name 'folders' -value $folders -InputObject $body
-            #}
+            if ( $schedulePaths )
+            {
+                Add-Member -Membertype NoteProperty -Name 'schedulePaths' -value $schedulePaths -InputObject $selector
+            }
+
+            if ( $folders )
+            {
+                Add-Member -Membertype NoteProperty -Name 'folders' -value $folders -InputObject $selector
+            }
             
-            if ( $Folder )
-            {
-                Add-Member -Membertype NoteProperty -Name 'scheduleFolder' -value $Folder -InputObject $body                
-            }
+            Add-Member -Membertype NoteProperty -Name 'selector' -value $selector -InputObject $body
 
+            
+            if ( $controllerIds )
+            {
+                Add-Member -Membertype NoteProperty -Name 'controllerIds' -value $controllerIds -InputObject $body
+            }
+            
             Add-Member -Membertype NoteProperty -Name 'withSubmit' -value ($Submit -eq $True) -InputObject $body
             Add-Member -Membertype NoteProperty -Name 'overwrite' -value ($Overwrite -eq $True) -InputObject $body
 

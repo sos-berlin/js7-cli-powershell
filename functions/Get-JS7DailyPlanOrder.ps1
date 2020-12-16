@@ -44,8 +44,6 @@ Specifies a relative date starting from which daily plan orders should be return
 * +1y, +2y: one year later, two years later
 
 Optionally a time offset can be specified, e.g. -1d+02:00, as otherwise midnight UTC is assumed.
-Alternatively a timezone offset can be added, e.g. by using -1d+TZ, that is calculated by the cmdlet
-for the timezone that is specified with the -Timezone parameter.
 
 This parameter takes precedence over the -DateFrom parameter.
 
@@ -62,10 +60,8 @@ Specifies a relative date until which daily plan orders should be returned, e.g.
 * +1y, +2y: one year later, two years later
 
 Optionally a time offset can be specified, e.g. -1d+02:00, as otherwise midnight UTC is assumed.
-Alternatively a timezone offset can be added, e.g. by using -1d+TZ, that is calculated by the cmdlet
-for the timezone that is specified with the -Timezone parameter.
 
-This parameter takes precedence over the -DateFrom parameter.
+This parameter takes precedence over the -DateTo parameter.
 
 .PARAMETER Timezone
 Specifies the timezone to which dates should be converted in the daily plan information.
@@ -141,6 +137,8 @@ about_js7
 param
 (
     [Parameter(Mandatory=$False,ValueFromPipelinebyPropertyName=$True)]
+    [string] $OrderId,
+    [Parameter(Mandatory=$False,ValueFromPipelinebyPropertyName=$True)]
     [string] $WorkflowPath,
     [Parameter(Mandatory=$False,ValueFromPipelinebyPropertyName=$True)]
     [string] $SchedulePath,
@@ -149,6 +147,8 @@ param
     [Parameter(Mandatory=$False,ValueFromPipeline=$False,ValueFromPipelinebyPropertyName=$True)]
     [switch] $Recursive,
     [Parameter(Mandatory=$False,ValueFromPipelinebyPropertyName=$True)]
+    [string] $ControllerId,
+    [Parameter(Mandatory=$False,ValueFromPipelinebyPropertyName=$True)]
     [DateTime] $DateFrom = (Get-Date (Get-Date).ToUniversalTime() -Format 'yyyy-MM-dd'),
     [Parameter(Mandatory=$False,ValueFromPipelinebyPropertyName=$True)]
     [DateTime] $DateTo,
@@ -156,26 +156,35 @@ param
     [string] $RelativeDateFrom,
     [Parameter(Mandatory=$False,ValueFromPipelinebyPropertyName=$True)]
     [string] $RelativeDateTo,
+    [Parameter(Mandatory=$False,ValueFromPipelinebyPropertyName=$True)]
     [TimeZoneInfo] $Timezone = (Get-Timezone -Id 'UTC'),
     [Parameter(Mandatory=$False,ValueFromPipelinebyPropertyName=$True)]
     [switch] $Late,
     [Parameter(Mandatory=$False,ValueFromPipelinebyPropertyName=$True)]
-    [switch] $Successful,
+    [switch] $Planned,
     [Parameter(Mandatory=$False,ValueFromPipelinebyPropertyName=$True)]
-    [switch] $Failed,
+    [switch] $Pending,
     [Parameter(Mandatory=$False,ValueFromPipelinebyPropertyName=$True)]
     [switch] $InProgress,
     [Parameter(Mandatory=$False,ValueFromPipelinebyPropertyName=$True)]
-    [switch] $Planned
+    [switch] $Running,
+    [Parameter(Mandatory=$False,ValueFromPipelinebyPropertyName=$True)]
+    [switch] $Blocked,
+    [Parameter(Mandatory=$False,ValueFromPipelinebyPropertyName=$True)]
+    [switch] $Finished,
+    [Parameter(Mandatory=$False,ValueFromPipelinebyPropertyName=$True)]
+    [switch] $Failed
 )
     Begin
     {
         Approve-JS7Command $MyInvocation.MyCommand
         $stopWatch = Start-StopWatch
 
+        $orderIds = @()
         $workflowPaths = @()
         $schedulePaths = @()
         $folders = @()
+        $controllerIds = @()
         $states = @()
         $returnDailyPlanItems = @()        
     }
@@ -201,14 +210,14 @@ param
             $Recursive = $True
         }
 
-        if ( $Successful )
+        if ( $Planned )
         {
-            $states += 'SUCCESSFUL'
+            $states += 'PLANNED'
         }
 
-        if ( $Failed )
+        if ( $Pending )
         {
-            $states += 'FAILED'
+            $states += 'PENDING'
         }
 
         if ( $InProgress )
@@ -216,25 +225,52 @@ param
             $states += 'INPROGRESS'
         }
 
-        if ( $Planned )
+        if ( $Running )
         {
-            $states += 'PLANNED'
+            $states += 'RUNNING'
         }
 
+        if ( $Blocked )
+        {
+            $states += 'BLOCKED'
+        }
+
+        if ( $Finished )
+        {
+            $states += 'FINISHED'
+        }
+
+        if ( $Failed )
+        {
+            $states += 'FAILED'
+        }
+
+        if ( $OrderId )
+        {
+            $orderIds += $OrderId
+        }
 
         if ( $WorkflowPath )
         {
-            $workflowPaths = @( $WorkflowPath )
+            $workflowPaths += $WorkflowPath
         }
 
         if ( $SchedulePath )
         {
-            $schedulePaths = @( $SchedulePath )
+            $schedulePaths += $SchedulePath
         }
 
         if ( $Folder -ne '/' )
         {
-            $folders += $Folder        
+            $objFolder = New-Object PSObject
+            Add-Member -Membertype NoteProperty -Name 'folder' -value $Folder -InputObject $objFoldere
+            Add-Member -Membertype NoteProperty -Name 'recursive' -value ($Recursive -eq $True) -InputObject $objFolder
+            $folders += $objFolder        
+        }
+
+        if ( $ControllerId )
+        {
+            $controllerIds += $ControllerId
         }
     }
 
@@ -296,42 +332,50 @@ param
         {
             $body = New-Object PSObject
             Add-Member -Membertype NoteProperty -Name 'controllerId' -value $script:jsWebService.ControllerId -InputObject $body
-            Add-Member -Membertype NoteProperty -Name 'dailyPlanDate' -value (Get-Date $day -Format 'yyyy-MM-dd') -InputObject $body
+
+            $filter = New-Object PSObject
+            Add-Member -Membertype NoteProperty -Name 'dailyPlanDate' -value (Get-Date $day -Format 'yyyy-MM-dd') -InputObject $filter
     
-            if ( $states )
+            if ( $orderIds )
             {
-                Add-Member -Membertype NoteProperty -Name 'states' -value $states -InputObject $body
-            }
-    
-            if ( $Late )
-            {
-                Add-Member -Membertype NoteProperty -Name 'late' -value ( $Late -eq $True ) -InputObject $body
-            }
-            
-            if ( $folders )
-            {
-                $objFolders = @()
-                foreach( $folder in $folders )
-                {
-                    $objFolder = New-Object PSObject
-                    Add-Member -Membertype NoteProperty -Name 'folder' -value $folder -InputObject $objFolder
-                    Add-Member -Membertype NoteProperty -Name 'recursive' -value ($Recursive -eq $True) -InputObject $objFolder
-                    $objFolders += $objFolder
-                }
-                
-                Add-Member -Membertype NoteProperty -Name 'folders' -value $objFolders -InputObject $body            
+                Add-Member -Membertype NoteProperty -Name 'orderIds' -value $orderIds -InputObject $filter            
             }
     
             if ( $workflowPaths )
             {
-                Add-Member -Membertype NoteProperty -Name 'workflow' -value $workflowPaths[0] -InputObject $body
+                Add-Member -Membertype NoteProperty -Name 'workflowPaths' -value $workflowPaths -InputObject $filter
             }
     
             if ( $schedulePaths )
             {
-                Add-Member -Membertype NoteProperty -Name 'schedules' -value $schedulePaths -InputObject $body
+                Add-Member -Membertype NoteProperty -Name 'schedulePaths' -value $schedulePaths -InputObject $filter
             }
     
+            if ( $folders )
+            {
+                Add-Member -Membertype NoteProperty -Name 'folders' -value $folders -InputObject $filter            
+            }
+    
+            if ( $controllerIds )
+            {
+                Add-Member -Membertype NoteProperty -Name 'controllerIds' -value $controllerIds -InputObject $filter
+            }
+    
+            if ( $states )
+            {
+                Add-Member -Membertype NoteProperty -Name 'states' -value $states -InputObject $filter
+            }
+    
+            if ( $Late )
+            {
+                Add-Member -Membertype NoteProperty -Name 'late' -value ( $Late -eq $True ) -InputObject $filter
+            }
+
+            if ( $filter )
+            {
+               Add-Member -Membertype NoteProperty -Name 'filter' -value $filter -InputObject $body
+            }
+            
             [string] $requestBody = $body | ConvertTo-Json -Depth 100
             $response = Invoke-JS7WebRequest -Path '/daily_plan/orders' -Body $requestBody
             

@@ -1,50 +1,50 @@
-function Remove-JS7DailyPlanOrder
+function Stop-JS7DailyPlanOrder
 {
 <#
 .SYNOPSIS
-Removes daily plan orders from a number of JS7 Controllers
+Cancels daily plan orders from a number of JS7 Controllers
 
 .DESCRIPTION
-Removes daily plan orders from a number of JS7 Controllers.
+Cancels daily plan orders from a number of JS7 Controllers.
 
 .PARAMETER OrderId
-Optionally specifies the order ID of the daily plan order that should be removed.
+Optionally specifies the order ID of the daily plan order that should be cancelled.
 
 .PARAMETER WorkflowPath
-Optionally specifies the path and name of a workflow for which daily plan orders should be removed.
+Optionally specifies the path and name of a workflow for which daily plan orders should be cancelled.
 
 .PARAMETER SchedulePath
-Optionally specifies the path and name of a schedule for which daily plan orders should be removed.
+Optionally specifies the path and name of a schedule for which daily plan orders should be cancelled.
 
 .PARAMETER Folder
-Optionally specifies the folder with workflows for which daily plan orders should be removed.
+Optionally specifies the folder with workflows for which daily plan orders should be cancelled.
 
 .PARAMETER Recursive
 When used with the -Folder parameter then any sub-folders of the specified folder will be looked up.
 
 .PARAMETER ControllerId
-Specifies the Controller to which daily plan orders have been submitted and should be removed.
+Specifies the Controller to which daily plan orders have been submitted and should be cancelled.
 
-Without this parameter daily plan orders are removed from any Controllers that are deployed the
+Without this parameter daily plan orders are cancelled from any Controllers that are deployed the
 workflows that are indicated with the respective parameters.
 
 .PARAMETER Late
-Specifies that daily plan orders are removed that are late or that started later than expected.
+Specifies that daily plan orders are cancelled that are late or that started later than expected.
 
 .PARAMETER DateFrom
-Optionally specifies the date starting from which daily plan orders should be removed.
+Optionally specifies the date starting from which daily plan orders should be cancelled.
 Consider that a UTC date has to be provided.
 
 Default: Begin of the current day as a UTC date
 
 .PARAMETER DateTo
-Optionally specifies the date until which daily plan orders should be removed.
+Optionally specifies the date until which daily plan orders should be cancelled.
 Consider that a UTC date has to be provided.
 
 Default: End of the current day as a UTC date
 
 .PARAMETER RelativeDateFrom
-Specifies a relative date starting from which daily plan orders should be removed, e.g. 
+Specifies a relative date starting from which daily plan orders should be cancelled, e.g. 
 
 * -1d, -2d: one day ago, two days ago
 * +1d, +2d: one day later, two days later
@@ -60,7 +60,7 @@ Optionally a time offset can be specified, e.g. -1d+02:00, as otherwise midnight
 This parameter takes precedence over the -DateFrom parameter.
 
 .PARAMETER RelativeDateTo
-Specifies a relative date until which daily plan orders should be removed, e.g. 
+Specifies a relative date until which daily plan orders should be cancelled, e.g. 
 
 * -1d, -2d: one day ago, two days ago
 * +1d, +2d: one day later, two days later
@@ -94,27 +94,27 @@ This information is visible with the Audit Log view of JOC Cockpit.
 It can be useful when integrated with a ticket system that logs interventions with JobScheduler.
 
 .OUTPUTS
-This cmdlet returns an array of daily plan orders.
+This cmdlet returns no output.
 
 .EXAMPLE
-Remove-JS7DailyPlanOrder -DateFrom "2020-12-31"
+Stop-JS7DailyPlanOrder -DateFrom "2020-12-31"
 
-Removes any daily plan orders for the given date.
-
-.EXAMPLE
-Remove-JS7DailyPlanOrder -DateTo (Get-Date).AddDays(3)
-
-Removes any daily plan orders starting from today until a date three days from now.
+Cancels any daily plan orders for the given date.
 
 .EXAMPLE
-Remove-JS7DailyPlanOrder -OrderId "#2020-11-19#P0000000498-orderSampleWorfklow2a"
+Stop-JS7DailyPlanOrder -DateTo (Get-Date).AddDays(3)
 
-Removes the order with the given order ID from the daily plan.
+Cancels any daily plan orders starting from today until a date three days from now.
 
 .EXAMPLE
-Remove-JS7DailyPlanOrder -WorkflowPath /some_folder/some_workflow
+Stop-JS7DailyPlanOrder -OrderId "#2020-11-19#P0000000498-orderSampleWorfklow2a"
 
-Removes the daily plan orders for the indicated workflow in today's daily plan.
+Cancels the order with the given order ID from the daily plan.
+
+.EXAMPLE
+Stop-JS7DailyPlanOrder -WorkflowPath /some_folder/some_workflow
+
+Cancels the daily plan orders for the indicated workflow in today's daily plan.
 
 .LINK
 about_js7
@@ -145,6 +145,18 @@ param
     [string] $RelativeDateFrom,
     [Parameter(Mandatory=$False,ValueFromPipelinebyPropertyName=$True)]
     [string] $RelativeDateTo,
+    [Parameter(Mandatory=$False,ValueFromPipelinebyPropertyName=$True)]
+    [switch] $Pending,
+    [Parameter(Mandatory=$False,ValueFromPipelinebyPropertyName=$True)]
+    [switch] $InProgress,
+    [Parameter(Mandatory=$False,ValueFromPipelinebyPropertyName=$True)]
+    [switch] $Running,
+    [Parameter(Mandatory=$False,ValueFromPipelinebyPropertyName=$True)]
+    [switch] $Blocked,
+    [Parameter(Mandatory=$False,ValueFromPipelinebyPropertyName=$True)]
+    [switch] $Finished,
+    [Parameter(Mandatory=$False,ValueFromPipelinebyPropertyName=$True)]
+    [switch] $Failed,
     [Parameter(Mandatory=$False,ValueFromPipeline=$False,ValueFromPipelinebyPropertyName=$True)]
     [string] $AuditComment,
     [Parameter(Mandatory=$False,ValueFromPipeline=$False,ValueFromPipelinebyPropertyName=$True)]
@@ -162,6 +174,7 @@ param
         $schedulePaths = @()
         $folders = @()
         $controllerIds = @()
+        $states = @()
     }
 
     Process
@@ -212,6 +225,36 @@ param
         if ( $ControllerId )
         {
             $controllerIds += $ControllerId
+        }
+
+        if ( $Pending )
+        {
+            $states += 'PENDING'
+        }
+
+        if ( $InProgress )
+        {
+            $states += 'INPROGRESS'
+        }
+
+        if ( $Running )
+        {
+            $states += 'RUNNING'
+        }
+
+        if ( $Blocked )
+        {
+            $states += 'BLOCKED'
+        }
+
+        if ( $Finished )
+        {
+            $states += 'FINISHED'
+        }
+
+        if ( $Failed )
+        {
+            $states += 'FAILED'
         }
     }
 
@@ -297,13 +340,18 @@ param
                 Add-Member -Membertype NoteProperty -Name 'late' -value ( $Late -eq $True ) -InputObject $filter
             }
 
+            if ( $states )
+            {
+                Add-Member -Membertype NoteProperty -Name 'states' -value $states -InputObject $filter
+            }
+
             if ( $filter )
             {
                Add-Member -Membertype NoteProperty -Name 'filter' -value $filter -InputObject $body
             }
     
             [string] $requestBody = $body | ConvertTo-Json -Depth 100
-            $response = Invoke-JS7WebRequest -Path '/daily_plan/orders/delete' -Body $requestBody
+            $response = Invoke-JS7WebRequest -Path '/daily_plan/orders/cancel' -Body $requestBody
             
             if ( $response.StatusCode -eq 200 )
             {
@@ -322,9 +370,9 @@ param
         
         if ( $loops )
         {
-            Write-Verbose ".. $($MyInvocation.MyCommand.Name): Daily Plan orders removed"
+            Write-Verbose ".. $($MyInvocation.MyCommand.Name): Daily Plan orders cancelled"
         } else {
-            Write-Verbose ".. $($MyInvocation.MyCommand.Name): no Daily Plan orders removed"
+            Write-Verbose ".. $($MyInvocation.MyCommand.Name): no Daily Plan orders cancelled"
         }
         
         Log-StopWatch -CommandName $MyInvocation.MyCommand.Name -StopWatch $stopWatch
