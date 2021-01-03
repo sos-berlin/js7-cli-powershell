@@ -99,10 +99,16 @@ param
     [string[]] $Type,
     [Parameter(Mandatory=$False,ValueFromPipeline=$False,ValueFromPipelinebyPropertyName=$True)]
     [string] $Folder = '/',
+    [Parameter(Mandatory=$False,ValueFromPipeline=$False,ValueFromPipelinebyPropertyName=$True)]
+    [switch] $Recursive,
     [Parameter(Mandatory=$True,ValueFromPipeline=$False,ValueFromPipelinebyPropertyName=$True)]
-    [string[]] $ControllerId,
+    [string] $ControllerId,
     [Parameter(Mandatory=$False,ValueFromPipeline=$False,ValueFromPipelinebyPropertyName=$True)]
     [switch] $Delete,
+    [Parameter(Mandatory=$False,ValueFromPipeline=$False,ValueFromPipelinebyPropertyName=$True)]
+    [switch] $WithoutDraft,
+    [Parameter(Mandatory=$False,ValueFromPipeline=$False,ValueFromPipelinebyPropertyName=$True)]
+    [switch] $Deployed,
     [Parameter(Mandatory=$False,ValueFromPipeline=$False,ValueFromPipelinebyPropertyName=$True)]
     [string] $AuditComment,
     [Parameter(Mandatory=$False,ValueFromPipeline=$False,ValueFromPipelinebyPropertyName=$True)]
@@ -120,7 +126,7 @@ param
             throw "$($MyInvocation.MyCommand.Name): Audit Log comment required, use parameter -AuditComment if one of the parameters -AuditTimeSpent or -AuditTicketLink is used"
         }
 
-        $controllers = @()
+        $controllerIds = @()
         $storeObjects = @()
         $deleteObjects = @()
 
@@ -148,7 +154,12 @@ param
         {
             throw "$($MyInvocation.MyCommand.Name): one of the parameters -Path or -Folder has to be used"
         }
-        
+
+        if ( $Folder -eq '/' -and !$Path -and !$Recursive )
+        {
+            $Recursive = $True
+        }
+
         if ( $Type )
         {
             foreach( $typeItem in $Type )
@@ -180,7 +191,7 @@ param
                 Add-Member -Membertype NoteProperty -Name 'objectType' -value $Type[0] -InputObject $body
                 Add-Member -Membertype NoteProperty -Name 'path' -value $Path -InputObject $body
                 Add-Member -Membertype NoteProperty -Name 'onlyValidObjects' -value $False -InputObject $body
-                Add-Member -Membertype NoteProperty -Name 'withVersions' -value $False -InputObject $body
+                Add-Member -Membertype NoteProperty -Name 'withoutDeployed' -value $False -InputObject $body
                 
                 [string] $requestBody = $body | ConvertTo-Json -Depth 100
                 $response = Invoke-JS7WebRequest -Path '/inventory/deployable' -Body $requestBody
@@ -207,7 +218,7 @@ param
         } else {
             $body = New-Object PSObject
             Add-Member -Membertype NoteProperty -Name 'folder' -value $Folder -InputObject $body
-            Add-Member -Membertype NoteProperty -Name 'recursive' -value $True -InputObject $body                                    
+            Add-Member -Membertype NoteProperty -Name 'recursive' -value ($Recursive -eq $True) -InputObject $body                                    
             Add-Member -Membertype NoteProperty -Name 'objectTypes' -value $Type -InputObject $body
             Add-Member -Membertype NoteProperty -Name 'onlyValidObjects' -value $False -InputObject $body                    
             Add-Member -Membertype NoteProperty -Name 'withVersions' -value $False -InputObject $body
@@ -244,7 +255,12 @@ param
             {
                 $deleteObjects += @{ 'path' = "$($Folder)"; 'type' = 'FOLDER'; 'valid' = $True; 'deployed' = $True }                
             }
-        }    
+        }
+        
+        if ( $ControllerId )
+        {
+            $controllerIds += $ControllerId
+        }
     }
 
     End
@@ -252,17 +268,7 @@ param
         if ( $storeObjects.count -or $deleteObjects.count )
         {
             $body = New-Object PSObject
-
-            $controllers = @()
-            foreach( $controller in $ControllerId )
-            {
-                $controllerObject = New-Object PSObject
-                Add-Member -Membertype NoteProperty -Name 'controllerId' -value $controller -InputObject $controllerObject
-                $controllers += $controllerObject
-            }
-
-            Add-Member -Membertype NoteProperty -Name 'controllerIds' -value $controllers -InputObject $body
-
+            Add-Member -Membertype NoteProperty -Name 'controllerIds' -value $controllerIds -InputObject $body
         
             $draftConfigurations = @()
             $deployConfigurations = @()
@@ -281,7 +287,7 @@ param
                     # Add-Member -Membertype NoteProperty -Name 'commitId' -value $object.commitId -InputObject $deployConfiguration
 
                     $deployConfigurationItem = New-Object PSObject
-                    Add-Member -Membertype NoteProperty -Name 'deployConfiguration' -value $deployConfiguration -InputObject $deployConfigurationItem
+                    Add-Member -Membertype NoteProperty -Name 'configuration' -value $deployConfiguration -InputObject $deployConfigurationItem
 
                     $deployConfigurations += $deployConfigurationItem
                 } else {
@@ -290,7 +296,7 @@ param
                     Add-Member -Membertype NoteProperty -Name 'objectType' -value $object.type -InputObject $draftConfiguration
 
                     $draftConfigurationItem = New-Object PSObject
-                    Add-Member -Membertype NoteProperty -Name 'draftConfiguration' -value $draftConfiguration -InputObject $draftConfigurationItem
+                    Add-Member -Membertype NoteProperty -Name 'configuration' -value $draftConfiguration -InputObject $draftConfigurationItem
 
                     $draftConfigurations += $draftConfigurationItem
                 }
@@ -324,7 +330,7 @@ param
                     Add-Member -Membertype NoteProperty -Name 'objectType' -value $object.type -InputObject $deployConfiguration
 
                     $deployConfigurationItem = New-Object PSObject
-                    Add-Member -Membertype NoteProperty -Name 'deployConfiguration' -value $deployConfiguration -InputObject $deployConfigurationItem
+                    Add-Member -Membertype NoteProperty -Name 'configuration' -value $deployConfiguration -InputObject $deployConfigurationItem
 
                     $deployConfigurations += $deployConfigurationItem
                 }

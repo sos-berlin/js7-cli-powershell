@@ -152,6 +152,7 @@ param
                 Add-Member -Membertype NoteProperty -Name 'objectType' -value $Type[0] -InputObject $body
                 Add-Member -Membertype NoteProperty -Name 'path' -value $Path -InputObject $body
                 Add-Member -Membertype NoteProperty -Name 'onlyValidObjects' -value $True -InputObject $body
+                Add-Member -Membertype NoteProperty -Name 'withoutReleased' -value $True -InputObject $body
                 
                 [string] $requestBody = $body | ConvertTo-Json -Depth 100
                 $response = Invoke-JS7WebRequest -Path '/inventory/releasable' -Body $requestBody
@@ -181,6 +182,7 @@ param
             Add-Member -Membertype NoteProperty -Name 'recursive' -value $True -InputObject $body                                    
             Add-Member -Membertype NoteProperty -Name 'objectTypes' -value $Type -InputObject $body
             Add-Member -Membertype NoteProperty -Name 'onlyValidObjects' -value $True -InputObject $body                    
+            Add-Member -Membertype NoteProperty -Name 'withoutReleased' -value $True -InputObject $body
             
             [string] $requestBody = $body | ConvertTo-Json -Depth 100
             $response = Invoke-JS7WebRequest -Path '/inventory/releasables' -Body $requestBody
@@ -231,8 +233,11 @@ param
                 Add-Member -Membertype NoteProperty -Name 'path' -value $object.path -InputObject $storeObject
                 $objects += $storeObject
             }
-    
-            Add-Member -Membertype NoteProperty -Name 'update' -value $objects -InputObject $body
+
+            if ( $objects )
+            {
+                Add-Member -Membertype NoteProperty -Name 'update' -value $objects -InputObject $body
+            }
 
 
             $objects = @()
@@ -244,7 +249,10 @@ param
                 $objects += $deleteObject
             }
     
-            Add-Member -Membertype NoteProperty -Name 'delete' -value $objects -InputObject $body
+            if ( $objects )
+            {
+                Add-Member -Membertype NoteProperty -Name 'delete' -value $objects -InputObject $body
+            }
 
 
             if ( $AuditComment -or $AuditTimeSpent -or $AuditTicketLink )

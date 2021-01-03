@@ -445,7 +445,7 @@ function Touch-JS7Session()
     } catch {}    
 }
 
-function Invoke-JS7WebRequest( [string] $Path, [string] $Body, [string] $ContentType='application/json', [hashtable] $Headers=@{'Accept' = 'application/json'} )
+function Invoke-JS7WebRequest( [string] $Path, [object] $Body, [string] $Method='POST', [string] $ContentType='application/json', [hashtable] $Headers=@{'Accept' = 'application/json'}, [string] $InFile, [boolean] $Verbose )
 {
     if ( $script:jsWebService.Url.UserInfo )
     {
@@ -455,12 +455,20 @@ function Invoke-JS7WebRequest( [string] $Path, [string] $Body, [string] $Content
     }
 
     $requestParams = @{}
-    $requestParams.Add( 'Verbose', $false )
+    $requestParams.Add( 'Verbose', $Verbose )
     $requestParams.Add( 'Uri', $requestUrl )
-    $requestParams.Add( 'Method', 'POST' )
-    $requestParams.Add( 'ContentType', $ContentType )
+    $requestParams.Add( 'Method', $Method )
+    
+    if ( $ContentType )
+    {
+        $requestParams.Add( 'ContentType', $ContentType )
+    }
 
-    $Headers.Add( 'Content-Type', $ContentType )
+    if ( $ContentType -and !$Headers.Item( 'Content-Type' ) )
+    {
+        $Headers.Add( 'Content-Type', $ContentType )
+    }
+
     $Headers.Add( 'X-Access-Token', $script:jsWebService.AccessToken )
     $requestParams.Add( 'Headers', $Headers )
     
@@ -495,6 +503,11 @@ function Invoke-JS7WebRequest( [string] $Path, [string] $Body, [string] $Content
         $requestParams.Add( 'Body', $Body )
     }
 
+    if ( $InFile )
+    {
+        $requestParams.Add( 'InFile', $InFile )
+    }
+
     try 
     {
         Write-Debug ".. $($MyInvocation.MyCommand.Name): sending request to JS7 Web Service $($requestUrl)"
@@ -507,6 +520,8 @@ function Invoke-JS7WebRequest( [string] $Path, [string] $Body, [string] $Content
                 $requestParams.Item($_).Keys | % {
                     Write-Debug "...... Header: $_ : $($requestParams.Item($item).Item($_))"
                 }
+            } elseif ( $_ -eq 'Body' ) {
+                Write-Debug ( $_ | Format-List -Force | Out-String )
             } else {
                 Write-Debug "...... Argument: $_  $($requestParams.Item($_))"
             }

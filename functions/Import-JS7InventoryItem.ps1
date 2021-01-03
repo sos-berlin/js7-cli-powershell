@@ -10,13 +10,15 @@ created by the cmdlet can be imported by use of this cmdlet. This offers a mecha
 restore inventory data, e.g. in case of switching the DBMS for JOC Cockpit or when upgrading to newer
 JS7 releases.
 
+Consider that this cmdlet requires PowerShell version 6.0 or newer.
+
 .PARAMETER FilePath
 Specifies the path to the archive file that includes objects for import to the JOC Cockpit inventory.
 
-.PARAMETER ArchiveFormat
+.PARAMETER Format
 Specifies the type of the archive file that will be imported: ZIP, TAR.GZ.
 
-.PARAMETER Folder
+.PARAMETER TargetFolder
 Optionally specifies the folder in the JOC Cockpit inventory to which imported objects paths should be added. 
 
 Without this parameter any folders as specified with the import file will be used. 
@@ -56,14 +58,14 @@ This cmdlet returns no output.
 .EXAMPLE
 Import-JS7InventoryItem -FilePath /tmp/export.zip
 
-Imports any objects included with the import file ("export.zip"). Objects existing with the same path in 
+Imports any objects included with the import file "export.zip". Objects existing with the same path in 
 the JOC Cockpit inventory will not be overwritten.
 
 .EXAMPLE
-Import-JS7InventoryItem -Folder /some_folder -FilePath /tmp/export.tar.gz -ArchiveFormat TAR.GZ -Overwrite
+Import-JS7InventoryItem -Folder /some_folder -FilePath /tmp/export.tar.gz -Format TAR.GZ -Overwrite
 
 Imports any objects from the given import file. As a compressed tar file is used the respective archive format
-is specified. Objects are added to the path /some_folder such as e.g. an object /myPath/myWorkflow that will be added to
+is specified. Objects are added to the path /some_folder such as e.g. an object /myPath/myWorkflow will be added to
 the path /some_folder/myPath/myWorkflow.
 
 Any objects existing with the same path in the JOC Cockpit inventory will be overwritten.
@@ -79,9 +81,9 @@ param
     [string] $FilePath,
     [Parameter(Mandatory=$False,ValueFromPipeline=$False,ValueFromPipelinebyPropertyName=$True)]
     [ValidateSet('ZIP','TAR.GZ')]
-    [string] $ArchiveFormat = 'ZIP',
+    [string] $Format = 'ZIP',
     [Parameter(Mandatory=$False,ValueFromPipeline=$False,ValueFromPipelinebyPropertyName=$True)]
-    [string] $Folder = '/',
+    [string] $TargetFolder = '/',
     [Parameter(Mandatory=$False,ValueFromPipeline=$False,ValueFromPipelinebyPropertyName=$True)]
     [switch] $Overwrite,
     [Parameter(Mandatory=$False,ValueFromPipeline=$False,ValueFromPipelinebyPropertyName=$True)]
@@ -100,50 +102,92 @@ param
         {
             throw "$($MyInvocation.MyCommand.Name): Audit Log comment required, use parameter -AuditComment if one of the parameters -AuditTimeSpent or -AuditTicketLink is used"
         }
+        
+        if ( !(isPowerShellVersion 6) )
+        {
+            throw "$($MyInvocation.MyCommand.Name): Cmdlet not supported for PowerShell versions older that 6.0"
+        }
     }
-    
+
     Process
     {
+        try
+        {
+            # see https://get-powershellblog.blogspot.com/2017/09/multipartform-data-support-for-invoke.html
+            # requires PowerShell > 0, version before 6.0 do not support MultipartFormDataContent in a POST bodys
+            $multipartContent = [System.Net.Http.MultipartFormDataContent]::new()
+            
+            $multipartFile = $FilePath
+            $fileStream = [System.IO.FileStream]::new($multipartFile, [System.IO.FileMode]::Open)
+            $fileHeader = [System.Net.Http.Headers.ContentDispositionHeaderValue]::new("form-data")
+            $fileHeader.Name = 'file'
+            $fileHeader.FileName = [System.IO.Path]::GetFileName( $FilePath )
+            $fileContent = [System.Net.Http.StreamContent]::new( $fileStream )
+            $fileContent.Headers.ContentDisposition = $fileHeader
+            $fileContent.Headers.ContentType = [System.Net.Http.Headers.MediaTypeHeaderValue]::Parse("application/octet-stream")
+            $multipartContent.Add( $fileContent )
+            
+            $stringHeader = [System.Net.Http.Headers.ContentDispositionHeaderValue]::new("form-data")
+            $stringHeader.Name = "format"
+            $stringContent = [System.Net.Http.StringContent]::new( $Format )
+            $stringContent.Headers.ContentDisposition = $stringHeader
+            $multipartContent.Add( $stringContent )
+            
+            $stringHeader = [System.Net.Http.Headers.ContentDispositionHeaderValue]::new("form-data")
+            $stringHeader.Name = "targetFolder"
+            $stringContent = [System.Net.Http.StringContent]::new( $TargetFolder )
+            $stringContent.Headers.ContentDisposition = $stringHeader
+            $multipartContent.Add( $stringContent )
+            
+            $stringHeader = [System.Net.Http.Headers.ContentDispositionHeaderValue]::new("form-data")
+            $stringHeader.Name = "overwrite"
+            $StringContent = [System.Net.Http.StringContent]::new( ($Overwrite -eq $True) )
+            $stringContent.Headers.ContentDisposition = $stringHeader
+            $multipartContent.Add( $stringContent )
+
+            if ( $AuditComment -or $AuditTimeSpent -or $AuditTicketLink )
+            {
+                $stringHeader = [System.Net.Http.Headers.ContentDispositionHeaderValue]::new("form-data")
+                $stringHeader.Name = "comment"
+                $stringContent = [System.Net.Http.StringContent]::new( $AuditComment )
+                $stringContent.Headers.ContentDisposition = $stringHeader
+                $multipartContent.Add( $stringContent )
+
+                $stringHeader = [System.Net.Http.Headers.ContentDispositionHeaderValue]::new("form-data")
+                $stringHeader.Name = "timeSpent"
+                $stringContent = [System.Net.Http.StringContent]::new( $AuditComment )
+                $stringContent.Headers.ContentDisposition = $stringHeader
+                $multipartContent.Add( $stringContent )
+
+                $stringHeader = [System.Net.Http.Headers.ContentDispositionHeaderValue]::new("form-data")
+                $stringHeader.Name = "ticketLink"
+                $stringContent = [System.Net.Http.StringContent]::new( $AuditComment )
+                $stringContent.Headers.ContentDisposition = $stringHeader
+                $multipartContent.Add( $stringContent )
+            }
+
+            $response = Invoke-JS7WebRequest -Path '/inventory/import' -Body $multipartContent -Method 'POST' -ContentType $Null
+
+            if ( $response.StatusCode -ne 200 )
+            {
+                throw ( $response | Format-List -Force | Out-String )
+            }
+            
+            Write-Verbose ".. $($MyInvocation.MyCommand.Name): file imported: $FilePath"                
+        } catch {            
+            $message = $_.Exception | Format-List -Force | Out-String
+            throw $message
+        } finally {
+            if ( $fileStream )
+            {
+                $fileStream.Close()
+                $fileStream.Dispose()
+            }
+        }
     }
 
     End
     {
-        $body = New-Object PSObject
-        Add-Member -Membertype NoteProperty -Name 'file' -value $FilePath -InputObject $body
-        Add-Member -Membertype NoteProperty -Name 'archiveFormat' -value $ArchiveFormat -InputObject $body
-        Add-Member -Membertype NoteProperty -Name 'folder' -value $Folder -InputObject $body
-        Add-Member -Membertype NoteProperty -Name 'overwrite' -value ($Overwrite -eq $True) -InputObject $body
-
-        if ( $AuditComment -or $AuditTimeSpent -or $AuditTicketLink )
-        {
-            $objAuditLog = New-Object PSObject
-            Add-Member -Membertype NoteProperty -Name 'comment' -value $AuditComment -InputObject $objAuditLog
-
-            if ( $AuditTimeSpent )
-            {
-                Add-Member -Membertype NoteProperty -Name 'timeSpent' -value $AuditTimeSpent -InputObject $objAuditLog
-            }
-
-            if ( $AuditTicketLink )
-            {
-                Add-Member -Membertype NoteProperty -Name 'ticketLink' -value $AuditTicketLink -InputObject $objAuditLog
-            }
-
-            Add-Member -Membertype NoteProperty -Name 'auditLog' -value $objAuditLog -InputObject $body
-        }
-
-        $headers = @{ 'Encoding' = 'gzip, deflate'; 'Content-Type' = 'application/octet-stream' }       
-
-        [string] $requestBody = $body | ConvertTo-Json -Depth 100
-        $response = Invoke-JS7WebRequest -Path '/inventory/import' -Body $requestBody -Headers $headers
-        
-        if ( $response.StatusCode -ne 200 )
-        {
-            throw ( $response | Format-List -Force | Out-String )
-        }
-
-        Write-Verbose ".. $($MyInvocation.MyCommand.Name): file imported: $FilePath"                
-
         Log-StopWatch -CommandName $MyInvocation.MyCommand.Name -StopWatch $stopWatch
     }
 }
