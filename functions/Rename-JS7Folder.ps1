@@ -10,8 +10,11 @@ This cmdlet renames a folder in the JOC Cockpit inventory.
 .PARAMETER Path
 Specifies the folder - optionally including sub-folders - that should be renamed.
 
-.PARAMETER Name
-Specifies the new folder name.
+.PARAMETER NewPath
+Specifies the new folder path and name. Absolute and relative paths can be specified.
+
+.PARAMETER Overwrite
+Specifies that an existing path that is the target of the rename operation will be overwritten.
 
 .PARAMETER AuditComment
 Specifies a free text that indicates the reason for the current intervention, e.g. "business requirement", "maintenance window" etc.
@@ -52,13 +55,15 @@ param
     [Parameter(Mandatory=$True,ValueFromPipeline=$False,ValueFromPipelinebyPropertyName=$True)]
     [string] $Path,
     [Parameter(Mandatory=$True,ValueFromPipeline=$False,ValueFromPipelinebyPropertyName=$True)]
-    [string] $Name,
+    [string] $NewPath,
+    [Parameter(Mandatory=$False,ValueFromPipeline=$False,ValueFromPipelinebyPropertyName=$True)]
+    [switch] $Overwrite,
     [Parameter(Mandatory=$False,ValueFromPipeline=$False,ValueFromPipelinebyPropertyName=$True)]
     [string] $AuditComment,
     [Parameter(Mandatory=$False,ValueFromPipeline=$False,ValueFromPipelinebyPropertyName=$True)]
     [int] $AuditTimeSpent,
     [Parameter(Mandatory=$False,ValueFromPipeline=$False,ValueFromPipelinebyPropertyName=$True)]
-    [Uri] $AuditTicketLink    
+    [Uri] $AuditTicketLink
 )
 	Begin
 	{
@@ -81,7 +86,8 @@ param
         $body = New-Object PSObject
         Add-Member -Membertype NoteProperty -Name 'path' -value $Path -InputObject $body
         Add-Member -Membertype NoteProperty -Name 'objectType' -value 'FOLDER' -InputObject $body
-        Add-Member -Membertype NoteProperty -Name 'name' -value $Name -InputObject $body
+        Add-Member -Membertype NoteProperty -Name 'newPath' -value $NewPath -InputObject $body
+        Add-Member -Membertype NoteProperty -Name 'overwrite' -value ($Overwrite -eq $True) -InputObject $body
             
         [string] $requestBody = $body | ConvertTo-Json -Depth 100
         $response = Invoke-JS7WebRequest -Path '/inventory/rename' -Body $requestBody

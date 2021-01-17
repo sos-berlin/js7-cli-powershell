@@ -21,8 +21,11 @@ Specifies the object type which is one of:
 * NONWORKINGDAYSCALENDAR
 * SCHEDULE
 
-.PARAMETER Name
-Specifies the new name of the object, e.g. the name of a workflow.
+.PARAMETER NewPath
+Specifies the new path of the object, e.g. the path and name of a workflow. Absolute and relative paths can be specified.
+
+.PARAMETER Overwrite
+Specifies that an existing path that is the target of the rename operation will be overwritten.
 
 .PARAMETER AuditComment
 Specifies a free text that indicates the reason for the current intervention, e.g. "business requirement", "maintenance window" etc.
@@ -66,7 +69,9 @@ param
     [ValidateSet('WORKFLOW','JOBCLASS','LOCK','JUNCTION','WORKINGDAYSCALENDAR','NONWORKINGDAYSCALENDAR','SCHEDULE')]
     [string] $Type,
     [Parameter(Mandatory=$True,ValueFromPipeline=$False,ValueFromPipelinebyPropertyName=$True)]
-    [string] $Name,
+    [string] $NewPath,
+    [Parameter(Mandatory=$False,ValueFromPipeline=$False,ValueFromPipelinebyPropertyName=$True)]
+    [switch] $Overwrite,
     [Parameter(Mandatory=$False,ValueFromPipeline=$False,ValueFromPipelinebyPropertyName=$True)]
     [string] $AuditComment,
     [Parameter(Mandatory=$False,ValueFromPipeline=$False,ValueFromPipelinebyPropertyName=$True)]
@@ -100,8 +105,9 @@ param
         $body = New-Object PSObject
         Add-Member -Membertype NoteProperty -Name 'path' -value $Path -InputObject $body
         Add-Member -Membertype NoteProperty -Name 'objectType' -value $Type -InputObject $body
-        Add-Member -Membertype NoteProperty -Name 'name' -value $Name -InputObject $body
-            
+        Add-Member -Membertype NoteProperty -Name 'newPath' -value $NewPath -InputObject $body
+        Add-Member -Membertype NoteProperty -Name 'overwrite' -value ($Overwrite -eq $True) -InputObject $body
+
         [string] $requestBody = $body | ConvertTo-Json -Depth 100
         $response = Invoke-JS7WebRequest -Path '/inventory/rename' -Body $requestBody
         
