@@ -22,8 +22,10 @@ Specifies the object type which is one of:
 * NONWORKINGDAYSCALENDAR
 * SCHEDULE
 
-.PARAMETER File
-Specifies the path to the JSON file that holds the configuration object.
+.PARAMETER Item
+Specifies the PowerShell object that represents the JSON item to be added. Consider to create a PowerShell object from JSON like this:
+
+   '{ "limit": 1 }' | ConvertFrom-Json
 
 .PARAMETER DocPath
 Specifies the path to the documentation that is assigned the object.
@@ -53,7 +55,7 @@ This cmdlet accepts pipelined objects that are e.g. returned from a Get-JS7Workf
 This cmdlet returns no output.
 
 .EXAMPLE
-Add-JS7InventoryItem -Path /some/directory/sampleWorkflow -Type 'WORKFLOW' -File /tmp/workflow-174.json
+Add-JS7InventoryItem -Path /some/directory/sampleLock -Type 'LOCK' -Item ( '{ "limit": 1 }' | ConvertFrom-Json ) 
 
 Read the worfklow configuration from the given file and store the workflow with the specified path.
 
@@ -69,8 +71,8 @@ param
     [Parameter(Mandatory=$True,ValueFromPipeline=$False,ValueFromPipelinebyPropertyName=$True)]
     [ValidateSet('WORKFLOW','JOBCLASS','LOCK','JUNCTION','WORKINGDAYSCALENDAR','NONWORKINGDAYSCALENDAR','ORDER')]
     [string] $Type,
-    [Parameter(Mandatory=$False,ValueFromPipeline=$False,ValueFromPipelinebyPropertyName=$True)]
-    [string] $File,
+    [Parameter(Mandatory=$True,ValueFromPipeline=$False,ValueFromPipelinebyPropertyName=$True)]
+    [object] $Item,
     [Parameter(Mandatory=$False,ValueFromPipeline=$False,ValueFromPipelinebyPropertyName=$True)]
     [string] $DocPath,
     [Parameter(Mandatory=$False,ValueFromPipeline=$False,ValueFromPipelinebyPropertyName=$True)]
@@ -90,11 +92,6 @@ param
             throw "$($MyInvocation.MyCommand.Name): path has to include directory, sub-directory and object name"
         }
         
-        if ( !$File )
-        {
-            throw "$($MyInvocation.MyCommand.Name): parameter -File required for import"
-        }
-
         if ( !$AuditComment -and ( $AuditTimeSpent -or $AuditTicketLink ) )
         {
             throw "$($MyInvocation.MyCommand.Name): Audit Log comment required, use parameter -AuditComment if one of the parameters -AuditTimeSpent or -AuditTicketLink is used"
@@ -103,18 +100,12 @@ param
     
     Process
     {
-        if ( !(Test-Path -Path $File -ErrorAction Continue) )
-        {
-            throw "$($MyInvocation.MyCommand.Name): file not found or not accessible: $File"
-        }
-
         $body = New-Object PSObject
         Add-Member -Membertype NoteProperty -Name 'path' -value $Path -InputObject $body
         Add-Member -Membertype NoteProperty -Name 'objectType' -value $Type -InputObject $body
         Add-Member -Membertype NoteProperty -Name 'valid' -value $False -InputObject $body
         
-        $objConfiguration = Get-Content -Raw -Path $File | ConvertFrom-Json -Depth 100
-        Add-Member -Membertype NoteProperty -Name 'configuration' -value $objConfiguration -InputObject $body
+        Add-Member -Membertype NoteProperty -Name 'configuration' -value $Item -InputObject $body
         
         if ( $DocPath )
         {

@@ -22,10 +22,17 @@ Specifies the path and name of a workflow for which an order should be added.
 
 .PARAMETER Arguments
 Specifies the arguments for the order. Arguments are created from a hashmap,
-i.e. a list of names and values.
+i.e. a list of names and values. Values have to be specified according to the 
+variables declaration of the workflow and include use of the data types:
+
+* string: $orderArgs = @{ 'arg1' = 'value1' }
+* number: $orderArgs = @{ 'arg2' = 3.14 }
+* boolean: $orderArgs = @{ 'arg3' = $true }
 
 Example:
-$orderArgs = @{ 'arg1' = 'value1'; 'arg2' = 'value2' }
+$orderArgs = @{ 'arg1' = 'value1'; 'arg2' = 3.14; 'arg3' = $true }
+
+Consider that a workflow can declare required variables that have to be added to an order.
 
 .PARAMETER At
 Specifies the point in time when the order should start. Values are added like this:
@@ -109,7 +116,7 @@ $orderId = Add-JS7Order -OrderName Test -WorkflowPath /sos/reporting/Reporting -
 Adds the indicated order for a later date that is specified for the "Europe/Berlin" time zone.
 
 .EXAMPLE
-$orderId = Add-JS7Order -WorkflowPath /sos/reporting/Reporting -At "now+3600" -Arguments @{'param1' = 'value1'; 'param2' = 'value2'}
+$orderId = Add-JS7Order -WorkflowPath /sos/reporting/Reporting -At "now+3600" -Arguments @{'param1' = 'value1'; 'param2' = 3.14; 'param3' = $true}
 
 Adds an order to the indicated workflow. The order will start one hour later and will use the
 arguments as specified by the -Arguments parameter.
@@ -256,11 +263,11 @@ param
             }
     
             [string] $requestBody = $body | ConvertTo-Json -Depth 100
-            $response = Invoke-JS7WebRequest '/orders/add' $requestBody
+            $response = Invoke-JS7WebRequest -Path '/orders/add' -Body $requestBody
 
             if ( $response.StatusCode -eq 200 )
             {
-                $responseOrderIds = ( $response.Content | ConvertFrom-JSON ).orderIds
+                $responseOrderIds = ( $response.Content | ConvertFrom-Json ).orderIds
                 
                 if ( !$responseOrderIds )
                 {
@@ -303,7 +310,7 @@ param
             }
     
             [string] $requestBody = $body | ConvertTo-Json -Depth 100
-            $response = Invoke-JS7WebRequest '/orders/add' $requestBody
+            $response = Invoke-JS7WebRequest -Path '/orders/add' -Body $requestBody
 
             if ( $response.StatusCode -eq 200 )
             {

@@ -475,6 +475,10 @@ function Invoke-JS7WebRequest( [string] $Path, [object] $Body, [string] $Method=
     if ( isPowerShellVersion 6 )
     {
         $requestParams.Add( 'AllowUnencryptedAuthentication', $true )
+    }
+        
+    if ( isPowerShellVersion 7 )
+    {
         $requestParams.Add( 'SkipHttpErrorCheck', $true )
     }
         
@@ -520,17 +524,27 @@ function Invoke-JS7WebRequest( [string] $Path, [object] $Body, [string] $Method=
                 $requestParams.Item($_).Keys | % {
                     Write-Debug "...... Header: $_ : $($requestParams.Item($item).Item($_))"
                 }
-            } elseif ( $_ -eq 'Body' ) {
-                Write-Debug ( $_ | Format-List -Force | Out-String )
             } else {
                 Write-Debug "...... Argument: $_  $($requestParams.Item($_))"
             }
         }
-        
-        $response = Invoke-WebRequest @requestParams
+
+        if ( isPowerShellVersion 7 )
+        {
+            $response = Invoke-WebRequest @requestParams
+        } else {
+            try
+            {
+                $response = Invoke-WebRequest @requestParams
+            } catch {
+                $response = $_.Exception.Response
+            }
+        }
 
         if ( $response -and $response.StatusCode -and $response.Content )
         {
+            $response
+        } elseif ( $response -and !(isPowerShellVersion 7) ) {
             $response
         } else {
             $message = $response | Format-List -Force | Out-String
