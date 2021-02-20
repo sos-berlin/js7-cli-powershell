@@ -494,12 +494,12 @@ function Invoke-JS7WebRequest( [string] $Path, [object] $Body, [string] $Method=
     
     if ( $script:jsWebService.SSLProtocol )
     {
-        $requestParams.Add( 'SSLProtocol', $script:jsWebService.SSLProtocol  )
+        $requestParams.Add( 'SSLProtocol', $script:jsWebService.SSLProtocol )
     }
 
     if ( $script:jsWebService.Certificate )
     {
-        $requestParams.Add( 'Certificate', $script:jsWebService.Certificate  )
+        $requestParams.Add( 'Certificate', $script:jsWebService.Certificate )
     }
 
     if ( $Body )
