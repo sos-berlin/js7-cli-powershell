@@ -94,7 +94,7 @@ param
     Begin
     {
         Approve-JS7Command $MyInvocation.MyCommand
-        $stopWatch = Start-StopWatch
+        $stopWatch = Start-JS7StopWatch
 
         if ( $WorkingDays -and $NonWorkingDays )
         {
@@ -106,11 +106,11 @@ param
         $folders = @()
         $type = $null
     }
-        
+
     Process
     {
         Write-Debug ".. $($MyInvocation.MyCommand.Name): parameter Folder=$Folder, CalendarPath=$CalendarPath"
-    
+
         if ( $CalendarPath.endsWith( '/') )
         {
             throw "$($MyInvocation.MyCommand.Name): the -CalendarPath parameter has to specify the folder and name of a calendar"
@@ -132,12 +132,12 @@ param
         }
 
         if ( $Folder -and $Folder -ne '/' )
-        { 
+        {
             if ( !$Folder.StartsWith( '/' ) )
             {
                 $Folder = '/' + $Folder
             }
-        
+
             if ( $Folder.EndsWith( '/' ) )
             {
                 $Folder = $Folder.Substring( 0, $Folder.Length-1 )
@@ -186,12 +186,12 @@ param
             {
                 Add-Member -Membertype NoteProperty -Name 'calendars' -value $calendarPaths -InputObject $body
             }
-    
+
             if ( $folders.count )
             {
-                Add-Member -Membertype NoteProperty -Name 'folders' -value $folders -InputObject $body    
+                Add-Member -Membertype NoteProperty -Name 'folders' -value $folders -InputObject $body
             }
-            
+
             if ( $type )
             {
                 Add-Member -Membertype NoteProperty -Name 'type' -value $type -InputObject $body
@@ -204,14 +204,14 @@ param
 
             [string] $requestBody = $body | ConvertTo-Json -Depth 100
             $response = Invoke-JS7WebRequest -Path '/calendars' -Body $requestBody
-        
+s
             if ( $response.StatusCode -eq 200 )
             {
                 $returnCalendars = ( $response.Content | ConvertFrom-JSON ).calendars
             } else {
                 throw ( $response | Format-List -Force | Out-String )
             }
-        
+
             $returnCalendars | Select-Object -Property `
                                @{name='calendarPath'; expression={$_.path}}, `
                                from, `
@@ -230,8 +230,8 @@ param
         } else {
             Write-Verbose ".. $($MyInvocation.MyCommand.Name): no calendars found"
         }
-        
-        Log-StopWatch -CommandName $MyInvocation.MyCommand.Name -StopWatch $stopWatch
-        Touch-JS7Session        
+
+        Trace-JS7StopWatch -CommandName $MyInvocation.MyCommand.Name -StopWatch $stopWatch
+        Update-JS7Session
     }
 }

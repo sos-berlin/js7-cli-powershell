@@ -9,7 +9,7 @@ Creates a temporary order for execution with the specified workflow.
 
 .PARAMETER OrderName
 Specifies the name of an order. The JOC Cockpit web service will consider the order name
-when creating unique order iDs from the pattern #<YYYY-MM-DD>#<qualifier><timestamp>-<order-name> 
+when creating unique order iDs from the pattern #<YYYY-MM-DD>#<qualifier><timestamp>-<order-name>
 such as with #2020-11-22#T072521128-Some_Order_Name.
 
 * YYYY-MM-DD: Date for which the order is scheduled
@@ -22,7 +22,7 @@ Specifies the path and name of a workflow for which an order should be added.
 
 .PARAMETER Arguments
 Specifies the arguments for the order. Arguments are created from a hashmap,
-i.e. a list of names and values. Values have to be specified according to the 
+i.e. a list of names and values. Values have to be specified according to the
 variables declaration of the workflow and include use of the data types:
 
 * string: $orderArgs = @{ 'arg1' = 'value1' }
@@ -49,32 +49,32 @@ Specifies the date when the order should start. The time zone is used from the d
 
 .PARAMETER Timezone
 Specifies the time zone to be considered for the start time that is indicated with the -At parameter.
-Without this parameter the time zone of the JS7 Controller is assumed. 
+Without this parameter the time zone of the JS7 Controller is assumed.
 
-This parameter should be used if the JS7 Controller runs in a time zone different from the environment 
+This parameter should be used if the JS7 Controller runs in a time zone different from the environment
 that makes use of this cmdlet.
 
 Find the list of time zone names from https://en.wikipedia.org/wiki/List_of_tz_database_time_zones
 
-.PARAMETER StartPosition
-Specifies that the order should enter the workflow at the workflow node that
-is assigend the specified position.
-
-.PARAMETER EndPosition
-Specifies that the order should leave the workflow at the workflow node that
-is assigend the specified position.
-
+# .PARAMETER StartPosition
+# Specifies that the order should enter the workflow at the workflow node that
+# is assigend the specified position.
+#
+# .PARAMETER EndPosition
+# Specifies that the order should leave the workflow at the workflow node that
+# is assigend the specified position.
+#
 .PARAMETER RunningNumber
 This parameter is implicitely used when pipelining input to the cmdlet as e.g. with
 
     1..10 | Add-JS7Order -WorkflowPath /some_path/some_workflow
 
 .PARAMETER AuditComment
-Specifies a free text that indicates the reason for the current intervention, 
+Specifies a free text that indicates the reason for the current intervention,
 e.g. "business requirement", "maintenance window" etc.
 
 The Audit Comment is visible from the Audit Log view of JOC Cockpit.
-This argument is not mandatory, however, JOC Cockpit can be configured 
+This argument is not mandatory, however, JOC Cockpit can be configured
 to enforce Audit Log comments for any interventions.
 
 .PARAMETER AuditTimeSpent
@@ -86,7 +86,7 @@ with a ticket system that logs the time spent on interventions with JS7.
 .PARAMETER AuditTicketLink
 Specifies a URL to a ticket system that keeps track of any interventions performed for JobScheduler.
 
-This information is visible with the Audit Log view of JOC Cockpit. 
+This information is visible with the Audit Log view of JOC Cockpit.
 It can be useful when integrated with a ticket system that logs interventions with JobScheduler.
 
 .INPUTS
@@ -140,10 +140,10 @@ param
     [DateTime] $AtDate,
     [Parameter(Mandatory=$False,ValueFromPipeline=$False,ValueFromPipelinebyPropertyName=$True)]
     [string] $Timezone,
-    [Parameter(Mandatory=$False,ValueFromPipeline=$False,ValueFromPipelinebyPropertyName=$True)]
-    [string] $State,
-    [Parameter(Mandatory=$False,ValueFromPipeline=$False,ValueFromPipelinebyPropertyName=$True)]
-    [string] $EndState,
+#   [Parameter(Mandatory=$False,ValueFromPipeline=$False,ValueFromPipelinebyPropertyName=$True)]
+#   [string] $StartPosition,
+#   [Parameter(Mandatory=$False,ValueFromPipeline=$False,ValueFromPipelinebyPropertyName=$True)]
+#   [string] $EndPosition,
     [Parameter(Mandatory=$False,ValueFromPipeline=$False,ValueFromPipelinebyPropertyName=$True)]
     [int] $BatchSize = 100,
     [Parameter(Mandatory=$False,ValueFromPipeline=$True,ValueFromPipelinebyPropertyName=$True)]
@@ -158,7 +158,7 @@ param
     Begin
     {
         Approve-JS7Command $MyInvocation.MyCommand
-        $stopWatch = Start-StopWatch
+        $stopWatch = Start-JS7StopWatch
 
         if ( $At -and $AtDate )
         {
@@ -174,7 +174,7 @@ param
         $scheduledFor = $null;
         $returnOrderIds = @()
     }
-    
+
     Process
     {
         if ( $AtDate -ge (Get-Date) )
@@ -237,38 +237,38 @@ param
         }
 
         $objOrders += $objOrder
-        
+
         if ( $objOrders.count -ge $BatchSize )
         {
             $body = New-Object PSObject
             Add-Member -Membertype NoteProperty -Name 'controllerId' -value $script:jsWebService.ControllerId -InputObject $body
             Add-Member -Membertype NoteProperty -Name 'orders' -value $objOrders -InputObject $body
-    
+
             if ( $AuditComment -or $AuditTimeSpent -or $AuditTicketLink )
             {
                 $objAuditLog = New-Object PSObject
                 Add-Member -Membertype NoteProperty -Name 'comment' -value $AuditComment -InputObject $objAuditLog
-    
+
                 if ( $AuditTimeSpent )
                 {
                     Add-Member -Membertype NoteProperty -Name 'timeSpent' -value $AuditTimeSpent -InputObject $objAuditLog
                 }
-    
+
                 if ( $AuditTicketLink )
                 {
                     Add-Member -Membertype NoteProperty -Name 'ticketLink' -value $AuditTicketLink -InputObject $objAuditLog
                 }
-    
+
                 Add-Member -Membertype NoteProperty -Name 'auditLog' -value $objAuditLog -InputObject $body
             }
-    
+
             [string] $requestBody = $body | ConvertTo-Json -Depth 100
             $response = Invoke-JS7WebRequest -Path '/orders/add' -Body $requestBody
 
             if ( $response.StatusCode -eq 200 )
             {
                 $responseOrderIds = ( $response.Content | ConvertFrom-Json ).orderIds
-                
+
                 if ( !$responseOrderIds )
                 {
                     throw "could not add orders: $($requestResult.message)"
@@ -279,8 +279,10 @@ param
 
             $returnOrderIds += $responseOrderIds
             $objOrders = @()
-            Write-Verbose ".. $($MyInvocation.MyCommand.Name): $($returnOrderIds.count) orders added"                
-        }        
+            Write-Verbose ".. $($MyInvocation.MyCommand.Name): $($returnOrderIds.count) orders added"
+        }
+
+        Write-Debug ".. $($MyInvocation.MyCommand.Name): running number for order: $RunningNumber"
     }
 
     End
@@ -290,47 +292,47 @@ param
             $body = New-Object PSObject
             Add-Member -Membertype NoteProperty -Name 'controllerId' -value $script:jsWebService.ControllerId -InputObject $body
             Add-Member -Membertype NoteProperty -Name 'orders' -value $objOrders -InputObject $body
-    
+
             if ( $AuditComment -or $AuditTimeSpent -or $AuditTicketLink )
             {
                 $objAuditLog = New-Object PSObject
                 Add-Member -Membertype NoteProperty -Name 'comment' -value $AuditComment -InputObject $objAuditLog
-    
+
                 if ( $AuditTimeSpent )
                 {
                     Add-Member -Membertype NoteProperty -Name 'timeSpent' -value $AuditTimeSpent -InputObject $objAuditLog
                 }
-    
+
                 if ( $AuditTicketLink )
                 {
                     Add-Member -Membertype NoteProperty -Name 'ticketLink' -value $AuditTicketLink -InputObject $objAuditLog
                 }
-    
+
                 Add-Member -Membertype NoteProperty -Name 'auditLog' -value $objAuditLog -InputObject $body
             }
-    
+
             [string] $requestBody = $body | ConvertTo-Json -Depth 100
             $response = Invoke-JS7WebRequest -Path '/orders/add' -Body $requestBody
 
             if ( $response.StatusCode -eq 200 )
             {
                 $responseOrderIds = ( $response.Content | ConvertFrom-JSON ).orderIds
-                
+
                 if ( !$responseOrderIds )
                 {
-                    throw "could not add orders: $($requestResult.message)"
+                    throw "could not add orders: $($response.message)"
                 }
             } else {
                 throw ( $response | Format-List -Force | Out-String )
             }
 
-            $returnOrderIds += $responseOrderIds            
-            Write-Verbose ".. $($MyInvocation.MyCommand.Name): $($returnOrderIds.count) orders added"                
+            $returnOrderIds += $responseOrderIds
+            Write-Verbose ".. $($MyInvocation.MyCommand.Name): $($returnOrderIds.count) orders added"
         }
 
         $returnOrderIds
 
-        Log-StopWatch -CommandName $MyInvocation.MyCommand.Name -StopWatch $stopWatch
-        Touch-JS7Session
+        Trace-JS7StopWatch -CommandName $MyInvocation.MyCommand.Name -StopWatch $stopWatch
+        Update-JS7Session
     }
 }

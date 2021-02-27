@@ -5,7 +5,7 @@ function Import-JS7InventoryItem
 Import inventory objects, e.g. workflows, schedules etc. from a JOC Cockpit archive file
 
 .DESCRIPTION
-JOC Cockpit inventory items can be exported with the Export-JS7InventoryItem cmdlet. The archive file 
+JOC Cockpit inventory items can be exported with the Export-JS7InventoryItem cmdlet. The archive file
 created by the cmdlet can be imported by use of this cmdlet. This offers a mechanism to backup and to
 restore inventory data, e.g. in case of switching the DBMS for JOC Cockpit or when upgrading to newer
 JS7 releases.
@@ -19,9 +19,9 @@ Specifies the path to the archive file that includes objects for import to the J
 Specifies the type of the archive file that will be imported: ZIP, TAR.GZ.
 
 .PARAMETER TargetFolder
-Optionally specifies the folder in the JOC Cockpit inventory to which imported objects paths should be added. 
+Optionally specifies the folder in the JOC Cockpit inventory to which imported objects paths should be added.
 
-Without this parameter any folders as specified with the import file will be used. 
+Without this parameter any folders as specified with the import file will be used.
 New folders are automatically created and optionally existing folders will be overwritten.
 
 .PARAMETER Overwrite
@@ -46,7 +46,7 @@ with a ticket system that logs the time spent on interventions with JobScheduler
 .PARAMETER AuditTicketLink
 Specifies a URL to a ticket system that keeps track of any interventions performed for JobScheduler.
 
-This information is visible with the Audit Log view of JOC Cockpit. 
+This information is visible with the Audit Log view of JOC Cockpit.
 It can be useful when integrated with a ticket system that logs interventions with JobScheduler.
 
 .INPUTS
@@ -58,7 +58,7 @@ This cmdlet returns no output.
 .EXAMPLE
 Import-JS7InventoryItem -FilePath /tmp/export.zip
 
-Imports any objects included with the import file "export.zip". Objects existing with the same path in 
+Imports any objects included with the import file "export.zip". Objects existing with the same path in
 the JOC Cockpit inventory will not be overwritten.
 
 .EXAMPLE
@@ -91,18 +91,18 @@ param
     [Parameter(Mandatory=$False,ValueFromPipeline=$False,ValueFromPipelinebyPropertyName=$True)]
     [int] $AuditTimeSpent,
     [Parameter(Mandatory=$False,ValueFromPipeline=$False,ValueFromPipelinebyPropertyName=$True)]
-    [Uri] $AuditTicketLink  
+    [Uri] $AuditTicketLink
 )
 	Begin
 	{
 		Approve-JS7Command $MyInvocation.MyCommand
-        $stopWatch = Start-StopWatch
+        $stopWatch = Start-JS7StopWatch
 
         if ( !$AuditComment -and ( $AuditTimeSpent -or $AuditTicketLink ) )
         {
             throw "$($MyInvocation.MyCommand.Name): Audit Log comment required, use parameter -AuditComment if one of the parameters -AuditTimeSpent or -AuditTicketLink is used"
         }
-        
+
         if ( !(isPowerShellVersion 6) )
         {
             throw "$($MyInvocation.MyCommand.Name): Cmdlet not supported for PowerShell versions older that 6.0"
@@ -116,7 +116,7 @@ param
             # see https://get-powershellblog.blogspot.com/2017/09/multipartform-data-support-for-invoke.html
             # requires PowerShell > 0, version before 6.0 do not support MultipartFormDataContent in a POST bodys
             $multipartContent = [System.Net.Http.MultipartFormDataContent]::new()
-            
+
             $multipartFile = $FilePath
             $fileStream = [System.IO.FileStream]::new($multipartFile, [System.IO.FileMode]::Open)
             $fileHeader = [System.Net.Http.Headers.ContentDispositionHeaderValue]::new("form-data")
@@ -126,19 +126,19 @@ param
             $fileContent.Headers.ContentDisposition = $fileHeader
             $fileContent.Headers.ContentType = [System.Net.Http.Headers.MediaTypeHeaderValue]::Parse("application/octet-stream")
             $multipartContent.Add( $fileContent )
-            
+
             $stringHeader = [System.Net.Http.Headers.ContentDispositionHeaderValue]::new("form-data")
             $stringHeader.Name = "format"
             $stringContent = [System.Net.Http.StringContent]::new( $Format )
             $stringContent.Headers.ContentDisposition = $stringHeader
             $multipartContent.Add( $stringContent )
-            
+
             $stringHeader = [System.Net.Http.Headers.ContentDispositionHeaderValue]::new("form-data")
             $stringHeader.Name = "targetFolder"
             $stringContent = [System.Net.Http.StringContent]::new( $TargetFolder )
             $stringContent.Headers.ContentDisposition = $stringHeader
             $multipartContent.Add( $stringContent )
-            
+
             $stringHeader = [System.Net.Http.Headers.ContentDispositionHeaderValue]::new("form-data")
             $stringHeader.Name = "overwrite"
             $StringContent = [System.Net.Http.StringContent]::new( ($Overwrite -eq $True) )
@@ -172,9 +172,9 @@ param
             {
                 throw ( $response | Format-List -Force | Out-String )
             }
-            
-            Write-Verbose ".. $($MyInvocation.MyCommand.Name): file imported: $FilePath"                
-        } catch {            
+
+            Write-Verbose ".. $($MyInvocation.MyCommand.Name): file imported: $FilePath"
+        } catch {
             $message = $_.Exception | Format-List -Force | Out-String
             throw $message
         } finally {
@@ -188,6 +188,6 @@ param
 
     End
     {
-        Log-StopWatch -CommandName $MyInvocation.MyCommand.Name -StopWatch $stopWatch
+        Trace-JS7StopWatch -CommandName $MyInvocation.MyCommand.Name -StopWatch $stopWatch
     }
 }

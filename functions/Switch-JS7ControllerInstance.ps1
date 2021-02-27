@@ -1,5 +1,5 @@
 function Switch-JS7ControllerInstance
-{ 
+{
 <#
 .SYNOPSIS
 Switches the roles of the active and passive JS7 Controller instances in a cluster
@@ -22,7 +22,7 @@ with a ticket system that logs the time spent on interventions with JobScheduler
 .PARAMETER AuditTicketLink
 Specifies a URL to a ticket system that keeps track of any interventions performed for JobScheduler.
 
-This information is visible with the Audit Log view of JOC Cockpit. 
+This information is visible with the Audit Log view of JOC Cockpit.
 It can be useful when integrated with a ticket system that logs interventions with JobScheduler.
 
 .EXAMPLE
@@ -47,7 +47,7 @@ param
     Begin
     {
         Approve-JS7Command $MyInvocation.MyCommand
-        $stopWatch = Start-StopWatch
+        $stopWatch = Start-JS7StopWatch
 
         if ( !$AuditComment -and ( $AuditTimeSpent -or $AuditTicketLink ) )
         {
@@ -80,11 +80,11 @@ param
 
         [string] $requestBody = $body | ConvertTo-Json -Depth 100
         $response = Invoke-JS7WebRequest -Path '/controller/cluster/switchover' -Body $requestBody
-                
+
         if ( $response.StatusCode -eq 200 )
         {
             $requestResult = ( $response.Content | ConvertFrom-JSON )
-            
+
             if ( !$requestResult.ok )
             {
                 throw ( $response | Format-List -Force | Out-String )
@@ -93,12 +93,12 @@ param
             Write-Verbose ".. $($MyInvocation.MyCommand.Name): command resource for JobScheduler Controller: $resource"
         } else {
             throw ( $response | Format-List -Force | Out-String )
-        }        
+        }
     }
 
     End
     {
-        Log-StopWatch -CommandName $MyInvocation.MyCommand.Name -StopWatch $stopWatch
-        Touch-JS7Session
+        Trace-JS7StopWatch -CommandName $MyInvocation.MyCommand.Name -StopWatch $stopWatch
+        Update-JS7Session
     }
 }

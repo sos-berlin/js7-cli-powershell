@@ -31,7 +31,7 @@ with a ticket system that logs the time spent on interventions with JobScheduler
 .PARAMETER AuditTicketLink
 Specifies a URL to a ticket system that keeps track of any interventions performed for JobScheduler.
 
-This information is visible with the Audit Log view of JOC Cockpit. 
+This information is visible with the Audit Log view of JOC Cockpit.
 It can be useful when integrated with a ticket system that logs interventions with JobScheduler.
 
 .INPUTS
@@ -59,7 +59,7 @@ Retrieves and cancels all orders from the indicated folder including any sub-fol
 about_js7
 
 #>
-[cmdletbinding()]
+[cmdletbinding(SupportsShouldProcess)]
 param
 (
     [Parameter(Mandatory=$True,ValueFromPipeline=$True,ValueFromPipelinebyPropertyName=$True)]
@@ -71,12 +71,12 @@ param
     [Parameter(Mandatory=$False,ValueFromPipeline=$False,ValueFromPipelinebyPropertyName=$True)]
     [int] $AuditTimeSpent,
     [Parameter(Mandatory=$False,ValueFromPipeline=$False,ValueFromPipelinebyPropertyName=$True)]
-    [Uri] $AuditTicketLink    
+    [Uri] $AuditTicketLink
 )
     Begin
     {
         Approve-JS7Command $MyInvocation.MyCommand
-        $stopWatch = Start-StopWatch
+        $stopWatch = Start-JS7StopWatch
 
         if ( !$AuditComment -and ( $AuditTimeSpent -or $AuditTicketLink ) )
         {
@@ -103,46 +103,49 @@ param
             {
                 Add-Member -Membertype NoteProperty -Name 'kill' -value $true -InputObject $body
             }
-    
+
             if ( $AuditComment -or $AuditTimeSpent -or $AuditTicketLink )
             {
                 $objAuditLog = New-Object PSObject
                 Add-Member -Membertype NoteProperty -Name 'comment' -value $AuditComment -InputObject $objAuditLog
-    
+
                 if ( $AuditTimeSpent )
                 {
                     Add-Member -Membertype NoteProperty -Name 'timeSpent' -value $AuditTimeSpent -InputObject $objAuditLog
                 }
-    
+
                 if ( $AuditTicketLink )
                 {
                     Add-Member -Membertype NoteProperty -Name 'ticketLink' -value $AuditTicketLink -InputObject $objAuditLog
                 }
-    
+
                 Add-Member -Membertype NoteProperty -Name 'auditLog' -value $objAuditLog -InputObject $body
             }
-    
-            [string] $requestBody = $body | ConvertTo-Json -Depth 100
-            $response = Invoke-JS7WebRequest -Path '/orders/cancel' -Body $requestBody
-            
-            if ( $response.StatusCode -eq 200 )
+
+            if ( $PSCmdlet.ShouldProcess( 'orders', '/orders/cancel' ) )
             {
-                $requestResult = ( $response.Content | ConvertFrom-Json )
-                
-                if ( !$requestResult.ok )
+                [string] $requestBody = $body | ConvertTo-Json -Depth 100
+                $response = Invoke-JS7WebRequest -Path '/orders/cancel' -Body $requestBody
+
+                if ( $response.StatusCode -eq 200 )
                 {
+                    $requestResult = ( $response.Content | ConvertFrom-Json )
+
+                    if ( !$requestResult.ok )
+                    {
+                        throw ( $response | Format-List -Force | Out-String )
+                    }
+                } else {
                     throw ( $response | Format-List -Force | Out-String )
                 }
-            } else {
-                throw ( $response | Format-List -Force | Out-String )
-            }        
 
-            Write-Verbose ".. $($MyInvocation.MyCommand.Name): $($orders.count) orders cancelled"                
+                Write-Verbose ".. $($MyInvocation.MyCommand.Name): $($orders.count) orders cancelled"
+            }
         } else {
-            Write-Verbose ".. $($MyInvocation.MyCommand.Name): no orders found"                
+            Write-Verbose ".. $($MyInvocation.MyCommand.Name): no orders found"
         }
-    
-        Log-StopWatch -CommandName $MyInvocation.MyCommand.Name -StopWatch $stopWatch
-        Touch-JS7Session
+
+        Trace-JS7StopWatch -CommandName $MyInvocation.MyCommand.Name -StopWatch $stopWatch
+        Update-JS7Session
     }
 }

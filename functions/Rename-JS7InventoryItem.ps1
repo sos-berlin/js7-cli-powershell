@@ -11,7 +11,7 @@ This cmdlet renames an object in the JOC Cockpit inventory.
 Specifies the folder, sub-folders and object name that should be renamed in the JOC Cockpit inventory.
 
 .PARAMETER Type
-Specifies the object type which is one of: 
+Specifies the object type which is one of:
 
 * WORKFLOW
 * JOBCLASS
@@ -42,7 +42,7 @@ with a ticket system that logs the time spent on interventions with JobScheduler
 .PARAMETER AuditTicketLink
 Specifies a URL to a ticket system that keeps track of any interventions performed for JobScheduler.
 
-This information is visible with the Audit Log view of JOC Cockpit. 
+This information is visible with the Audit Log view of JOC Cockpit.
 It can be useful when integrated with a ticket system that logs interventions with JobScheduler.
 
 .INPUTS
@@ -77,31 +77,31 @@ param
     [Parameter(Mandatory=$False,ValueFromPipeline=$False,ValueFromPipelinebyPropertyName=$True)]
     [int] $AuditTimeSpent,
     [Parameter(Mandatory=$False,ValueFromPipeline=$False,ValueFromPipelinebyPropertyName=$True)]
-    [Uri] $AuditTicketLink    
+    [Uri] $AuditTicketLink
 )
 	Begin
 	{
 		Approve-JS7Command $MyInvocation.MyCommand
-        $stopWatch = Start-StopWatch
+        $stopWatch = Start-JS7StopWatch
 
         if ( !$AuditComment -and ( $AuditTimeSpent -or $AuditTicketLink ) )
         {
             throw "$($MyInvocation.MyCommand.Name): Audit Log comment required, use parameter -AuditComment if one of the parameters -AuditTimeSpent or -AuditTicketLink is used"
         }
     }
-    
+
     Process
     {
         if ( $Path.endsWith('/') )
         {
             throw "$($MyInvocation.MyCommand.Name): path has to include folder, sub-folder and object name"
         }
-        
+
         if ( $Name.IndexOf( '/' ) -ge 0 )
         {
-            throw "$($MyInvocation.MyCommand.Name): object name cannot container a folder separator such as '/'"            
+            throw "$($MyInvocation.MyCommand.Name): object name cannot container a folder separator such as '/'"
         }
-        
+
         $body = New-Object PSObject
         Add-Member -Membertype NoteProperty -Name 'path' -value $Path -InputObject $body
         Add-Member -Membertype NoteProperty -Name 'objectType' -value $Type -InputObject $body
@@ -110,11 +110,11 @@ param
 
         [string] $requestBody = $body | ConvertTo-Json -Depth 100
         $response = Invoke-JS7WebRequest -Path '/inventory/rename' -Body $requestBody
-        
+
         if ( $response.StatusCode -eq 200 )
         {
             $requestResult = ( $response.Content | ConvertFrom-JSON )
-            
+
             if ( !$requestResult.ok )
             {
                 throw ( $response | Format-List -Force | Out-String )
@@ -122,13 +122,13 @@ param
         } else {
             throw ( $response | Format-List -Force | Out-String )
         }
-    
-        Write-Verbose ".. $($MyInvocation.MyCommand.Name): object renamed: $Name"                
+
+        Write-Verbose ".. $($MyInvocation.MyCommand.Name): object renamed: $Name"
     }
 
     End
     {
-        Log-StopWatch -CommandName $MyInvocation.MyCommand.Name -StopWatch $stopWatch
-        Touch-JS7Session
+        Trace-JS7StopWatch -CommandName $MyInvocation.MyCommand.Name -StopWatch $stopWatch
+        Update-JS7Session
     }
 }

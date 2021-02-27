@@ -13,18 +13,18 @@ Releasing can include to permanently delete previously removed objects from the 
 Specifies the folder, sub-folder and name of the object, e.g. a schedule path.
 
 .PARAMETER Type
-Specifies the object type which is one of: 
+Specifies the object type which is one of:
 
 * SCHEDULE
 * WORKINGDAYSCALENDAR
 * NONWORKINGDAYSCALENDAR
 
 .PARAMETER Folder
-Optionally specifies the folder for which included inventory objects should be published. 
+Optionally specifies the folder for which included inventory objects should be published.
 This parameter is used alternatively to the -Path parameter that specifies to publish an individual inventory object.
 
 .PARAMETER Delete
-Specifies the action to permanently delete previously removed objects. 
+Specifies the action to permanently delete previously removed objects.
 Without this switch objects are released for use with any JS7 Controller.
 
 .PARAMETER AuditComment
@@ -42,7 +42,7 @@ with a ticket system that logs the time spent on interventions with JobScheduler
 .PARAMETER AuditTicketLink
 Specifies a URL to a ticket system that keeps track of any interventions performed for JobScheduler.
 
-This information is visible with the Audit Log view of JOC Cockpit. 
+This information is visible with the Audit Log view of JOC Cockpit.
 It can be useful when integrated with a ticket system that logs interventions with JobScheduler.
 
 .INPUTS
@@ -81,36 +81,36 @@ param
     [Parameter(Mandatory=$False,ValueFromPipeline=$False,ValueFromPipelinebyPropertyName=$True)]
     [int] $AuditTimeSpent,
     [Parameter(Mandatory=$False,ValueFromPipeline=$False,ValueFromPipelinebyPropertyName=$True)]
-    [Uri] $AuditTicketLink    
+    [Uri] $AuditTicketLink
 )
 	Begin
 	{
 		Approve-JS7Command $MyInvocation.MyCommand
-        $stopWatch = Start-StopWatch
+        $stopWatch = Start-JS7StopWatch
 
         if ( !$AuditComment -and ( $AuditTimeSpent -or $AuditTicketLink ) )
         {
             throw "$($MyInvocation.MyCommand.Name): Audit Log comment required, use parameter -AuditComment if one of the parameters -AuditTimeSpent or -AuditTicketLink is used"
         }
-        
+
         $storeObjects = @()
         $deleteObjects = @()
-        
+
         $releasableTypes = @('FOLDER','SCHEDULE','WORKINGDAYSCALENDAR','NONWORKINGDAYSCALENDAR')
     }
-    
+
     Process
     {
         if ( $Path.endsWith('/') )
         {
             throw "$($MyInvocation.MyCommand.Name): path has to include folder, sub-folder and object name"
         }
-        
+
         if ( $Path -and !$Type )
         {
             throw "$($MyInvocation.MyCommand.Name): path requires to specify the object type, use -Type parameter"
         }
-        
+
         if ( $Path -and $Folder -and ($Folder -ne '/') )
         {
             throw "$($MyInvocation.MyCommand.Name): only one of the parameters -Path or -Folder can be used"
@@ -120,7 +120,7 @@ param
         {
             throw "$($MyInvocation.MyCommand.Name): one of the parameters -Path or -Folder has to be used"
         }
-        
+
         if ( $Type )
         {
             foreach( $typeItem in $Type )
@@ -146,21 +146,21 @@ param
                     $deleteObjects += @{ 'path' = $Path; 'type' = $Type[0]; 'valid' = $True; 'released' = $True }
                 } else {
                     $storeObjects += @{ 'path' = $Path; 'type' = $Type[0]; 'valid' = $True; 'released' = $True }
-                }                
+                }
             } else {
                 $body = New-Object PSObject
                 Add-Member -Membertype NoteProperty -Name 'objectType' -value $Type[0] -InputObject $body
                 Add-Member -Membertype NoteProperty -Name 'path' -value $Path -InputObject $body
                 Add-Member -Membertype NoteProperty -Name 'onlyValidObjects' -value $True -InputObject $body
                 Add-Member -Membertype NoteProperty -Name 'withoutReleased' -value $True -InputObject $body
-                
+
                 [string] $requestBody = $body | ConvertTo-Json -Depth 100
                 $response = Invoke-JS7WebRequest -Path '/inventory/releasable' -Body $requestBody
-        
+
                 if ( $response.StatusCode -eq 200 )
                 {
                     $releasableObject = ( $response.Content | ConvertFrom-JSON ).releasable
-    
+
                     if ( !$releasableObject.id )
                     {
                         throw ( $response | Format-List -Force | Out-String )
@@ -168,7 +168,7 @@ param
                 } else {
                     throw ( $response | Format-List -Force | Out-String )
                 }
-        
+
                 if ( $Delete )
                 {
                     $deleteObjects += @{ 'path' = $Path; 'type' = $Type[0]; 'valid' = $releasableObject.valid; 'released' = $releasableObject.released }
@@ -179,11 +179,11 @@ param
         } else {
             $body = New-Object PSObject
             Add-Member -Membertype NoteProperty -Name 'folder' -value $Folder -InputObject $body
-            Add-Member -Membertype NoteProperty -Name 'recursive' -value $True -InputObject $body                                    
+            Add-Member -Membertype NoteProperty -Name 'recursive' -value $True -InputObject $body
             Add-Member -Membertype NoteProperty -Name 'objectTypes' -value $Type -InputObject $body
-            Add-Member -Membertype NoteProperty -Name 'onlyValidObjects' -value $True -InputObject $body                    
+            Add-Member -Membertype NoteProperty -Name 'onlyValidObjects' -value $True -InputObject $body
             Add-Member -Membertype NoteProperty -Name 'withoutReleased' -value $True -InputObject $body
-            
+
             [string] $requestBody = $body | ConvertTo-Json -Depth 100
             $response = Invoke-JS7WebRequest -Path '/inventory/releasables' -Body $requestBody
 
@@ -202,7 +202,7 @@ param
                     {
                         $releasableObject.folder += '/'
                     }
-                
+
                     if ( $Delete )
                     {
                         $deleteObjects += @{ 'path' = "$($releasableObject.folder)$($releasableObject.objectName)"; 'type' = $releasableObject.objectType; 'valid' = $releasableObject.valid; 'released' = $releasableObject.released }
@@ -211,11 +211,11 @@ param
                     }
                 }
             }
-            
+
             if ( $Type[0] -eq 'FOLDER' -and $Delete -and $Folder )
             {
-                $deleteObjects += @{ 'path' = "$($Folder)"; 'type' = 'FOLDER'; 'valid' = $True; 'released' = $True }                
-            }            
+                $deleteObjects += @{ 'path' = "$($Folder)"; 'type' = 'FOLDER'; 'valid' = $True; 'released' = $True }
+            }
         }
     }
 
@@ -224,7 +224,7 @@ param
         if ( $storeObjects.count -or $deleteObjects.count )
         {
             $body = New-Object PSObject
-            
+
             $objects = @()
             foreach( $object in $storeObjects )
             {
@@ -248,31 +248,30 @@ param
                 Add-Member -Membertype NoteProperty -Name 'path' -value $object.path -InputObject $deleteObject
                 $objects += $deleteObject
             }
-    
+
             if ( $objects )
             {
                 Add-Member -Membertype NoteProperty -Name 'delete' -value $objects -InputObject $body
             }
 
-
             if ( $AuditComment -or $AuditTimeSpent -or $AuditTicketLink )
             {
                 $objAuditLog = New-Object PSObject
                 Add-Member -Membertype NoteProperty -Name 'comment' -value $AuditComment -InputObject $objAuditLog
-    
+
                 if ( $AuditTimeSpent )
                 {
                     Add-Member -Membertype NoteProperty -Name 'timeSpent' -value $AuditTimeSpent -InputObject $objAuditLog
                 }
-    
+
                 if ( $AuditTicketLink )
                 {
                     Add-Member -Membertype NoteProperty -Name 'ticketLink' -value $AuditTicketLink -InputObject $objAuditLog
                 }
-    
+
                 Add-Member -Membertype NoteProperty -Name 'auditLog' -value $objAuditLog -InputObject $body
             }
-       
+
 
             [string] $requestBody = $body | ConvertTo-Json -Depth 100
             $response = Invoke-JS7WebRequest -Path '/inventory/release' -Body $requestBody
@@ -280,7 +279,7 @@ param
             if ( $response.StatusCode -eq 200 )
             {
                 $requestResult = ( $response.Content | ConvertFrom-JSON )
-                
+
                 if ( !$requestResult.ok )
                 {
                     throw ( $response | Format-List -Force | Out-String )
@@ -288,13 +287,13 @@ param
             } else {
                 throw ( $response | Format-List -Force | Out-String )
             }
-        
-            Write-Verbose ".. $($MyInvocation.MyCommand.Name): $($storeObjects.count+$deleteObjects.count) objects released"                
+
+            Write-Verbose ".. $($MyInvocation.MyCommand.Name): $($storeObjects.count+$deleteObjects.count) objects released"
         } else {
-            Write-Verbose ".. $($MyInvocation.MyCommand.Name): no objects released"                
+            Write-Verbose ".. $($MyInvocation.MyCommand.Name): no objects released"
         }
 
-        Log-StopWatch -CommandName $MyInvocation.MyCommand.Name -StopWatch $stopWatch
-        Touch-JS7Session
+        Trace-JS7StopWatch -CommandName $MyInvocation.MyCommand.Name -StopWatch $stopWatch
+        Update-JS7Session
     }
 }

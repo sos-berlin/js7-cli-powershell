@@ -64,8 +64,8 @@ $lastHistory = Get-JS7OrderHistory -RelativeDateFrom -8h | Sort-Object -Property
 # execute by interval
 Get-JS7OrderHistory -DateFrom $lastHistory[0].startTime | Tee-Object -Variable lastHistory | Get-JS7OrderLog | Select-Object @{name='path'; expression={ "/tmp/history/$(Get-Date $_.startTime -f 'yyyyMMdd-hhmmss')-$([io.path]::GetFileNameWithoutExtension($_.workflow))-$($_.orderId).log"}}, @{name='value'; expression={ $_.log }} | Set-Content
 
-Provides a mechanism to subsequently retrieve previous logs. Starting from initial execution of the Get-JS7OrderHistory cmdlet the resulting $lastHistory object is used for any subsequent calls. 
-Consider use of the Tee-Object cmdlet in the pipeline that updates the $lastHistory object that can be used for later executions of the same pipeline. 
+Provides a mechanism to subsequently retrieve previous logs. Starting from initial execution of the Get-JS7OrderHistory cmdlet the resulting $lastHistory object is used for any subsequent calls.
+Consider use of the Tee-Object cmdlet in the pipeline that updates the $lastHistory object that can be used for later executions of the same pipeline.
 The pipeline can e.g. be executed in a cyclic job.
 
 .LINK
@@ -97,27 +97,23 @@ param
     Begin
     {
         Approve-JS7Command $MyInvocation.MyCommand
-        $stopWatch = Start-StopWatch
-
-        $historyIds = @()
-        $historyItems = @()
-        $returnResults = @()
+        $stopWatch = Start-JS7StopWatch
     }
-    
+
     Process
     {
         $body = New-Object PSObject
         Add-Member -Membertype NoteProperty -Name 'controllerId' -value $script:jsWebService.ControllerId -InputObject $body
         Add-Member -Membertype NoteProperty -Name 'historyId' -value $HistoryId -InputObject $body
-    
+
         [string] $requestBody = $body | ConvertTo-Json -Depth 100
         $response = Invoke-JS7WebRequest -Path '/order/log/download' -Body $requestBody
-        
+
         if ( $response.StatusCode -ne 200 )
         {
             throw ( $response | Format-List -Force | Out-String )
         }
-    
+
         $objResult = New-Object PSObject
         Add-Member -Membertype NoteProperty -Name 'controllerId' -value $ControllerId -InputObject $objResult
         Add-Member -Membertype NoteProperty -Name 'historyId' -value $HistoryId -InputObject $objResult
@@ -129,13 +125,13 @@ param
         Add-Member -Membertype NoteProperty -Name 'startTime' -value $StartTime -InputObject $objResult
         Add-Member -Membertype NoteProperty -Name 'endTime' -value $EndTime -InputObject $objResult
         Add-Member -Membertype NoteProperty -Name 'log' -value ([System.Text.Encoding]::UTF8.GetString( $response.Content )) -InputObject $objResult
-    
+
         $objResult
     }
 
     End
     {
-        Log-StopWatch -CommandName $MyInvocation.MyCommand.Name -StopWatch $stopWatch
-        Touch-JS7Session
+        Trace-JS7StopWatch -CommandName $MyInvocation.MyCommand.Name -StopWatch $stopWatch
+        Update-JS7Session
     }
 }

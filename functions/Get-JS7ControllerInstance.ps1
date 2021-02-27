@@ -66,9 +66,9 @@ param
     Begin
     {
         Approve-JS7Command $MyInvocation.MyCommand
-        $stopWatch = Start-StopWatch
+        $stopWatch = Start-JS7StopWatch
     }
-        
+
     Process
     {
         Write-Debug ".. $($MyInvocation.MyCommand.Name): parameter Id=$Id"
@@ -89,24 +89,24 @@ param
 
         [string] $requestBody = $body | ConvertTo-Json -Depth 100
         $response = Invoke-JS7WebRequest -Path '/controller' -Body $requestBody
-    
+
         if ( $response.StatusCode -eq 200 )
         {
             $volatileStatus = ( $response.Content | ConvertFrom-JSON ).controller
         } else {
             throw ( $response | Format-List -Force | Out-String )
-        }    
+        }
 
         [string] $requestBody = $body | ConvertTo-Json -Depth 100
         $response = Invoke-JS7WebRequest -Path '/controllers/p' -Body $requestBody
-    
+
         if ( $response.StatusCode -eq 200 )
         {
             $clusterStatus = ( $response.Content | ConvertFrom-JSON ).Controllers
         } else {
             throw ( $response | Format-List -Force | Out-String )
-        }    
- 
+        }
+
         $returnControllerCluster = New-Object PSObject
 
         foreach( $clusterNodeInstance in $clusterStatus )
@@ -128,13 +128,13 @@ param
                 }
             }
         }
-        
+
         $returnControllerCluster
     }
 
     End
     {
-        Log-StopWatch -CommandName $MyInvocation.MyCommand.Name -StopWatch $stopWatch
-        Touch-JS7Session
+        Trace-JS7StopWatch -CommandName $MyInvocation.MyCommand.Name -StopWatch $stopWatch
+        Update-JS7Session
     }
 }

@@ -1,12 +1,12 @@
 function Restart-JS7JOCService
-{ 
+{
 <#
 .SYNOPSIS
 Restarts a JOC Cockpit background service in the current JOC Cockpit instance
 
 .DESCRIPTION
 A number of JOC Cockpit services such as the cluster service, history service and daily plan service are available
-with a currently active JOC Cockpit instance. Forcing a restart is an altenative to switching over to a standby 
+with a currently active JOC Cockpit instance. Forcing a restart is an altenative to switching over to a standby
 JOC Cockpit instances as e.g. offered with the Switch-JS7JOCInstance cmdlet.
 
 Consider that restart of a JOC Cockpit service can be performed when being connected to the
@@ -34,7 +34,7 @@ with a ticket system that logs the time spent on interventions with JobScheduler
 .PARAMETER AuditTicketLink
 Specifies a URL to a ticket system that keeps track of any interventions performed for JobScheduler.
 
-This information is visible with the Audit Log view of JOC Cockpit. 
+This information is visible with the Audit Log view of JOC Cockpit.
 It can be useful when integrated with a ticket system that logs interventions with JobScheduler.
 
 .EXAMPLE
@@ -47,10 +47,11 @@ and add the information to the history.
 about_js7
 
 #>
+[cmdletbinding(SupportsShouldProcess)]
 param
 (
     [Parameter(Mandatory=$True,ValueFromPipeline=$False,ValueFromPipelinebyPropertyName=$True)]
-    [ValidateSet('CLUSTER','HISTORY','DAILYPLAN')]
+    [ValidateSet('CLUSTER','HISTORY','DAILYPLAN','CLEANUP','RESTART')]
     [string] $Service,
     [Parameter(Mandatory=$False,ValueFromPipeline=$False,ValueFromPipelinebyPropertyName=$True)]
     [string] $AuditComment,
@@ -62,7 +63,7 @@ param
     Begin
     {
         Approve-JS7Command $MyInvocation.MyCommand
-        $stopWatch = Start-StopWatch
+        $stopWatch = Start-JS7StopWatch
 
         if ( !$AuditComment -and ( $AuditTimeSpent -or $AuditTicketLink ) )
         {
@@ -93,25 +94,28 @@ param
             Add-Member -Membertype NoteProperty -Name 'auditLog' -value $objAuditLog -InputObject $body
         }
 
-        [string] $requestBody = $body | ConvertTo-Json -Depth 100
-        $response = Invoke-JS7WebRequest -Path '/joc/cluster/restart' -Body $requestBody
-                
-        if ( $response.StatusCode -eq 200 )
+        if ( $PSCmdlet.ShouldProcess( $Service, '/joc/cluster/restart' ) )
         {
-            $requestResult = ( $response.Content | ConvertFrom-JSON )
-            
-            if ( !$requestResult.ok )
+            [string] $requestBody = $body | ConvertTo-Json -Depth 100
+            $response = Invoke-JS7WebRequest -Path '/joc/cluster/restart' -Body $requestBody
+
+            if ( $response.StatusCode -eq 200 )
             {
+                $requestResult = ( $response.Content | ConvertFrom-JSON )
+
+                if ( !$requestResult.ok )
+                {
+                    throw ( $response | Format-List -Force | Out-String )
+                }
+            } else {
                 throw ( $response | Format-List -Force | Out-String )
             }
-        } else {
-            throw ( $response | Format-List -Force | Out-String )
-        }        
+        }
     }
 
     End
     {
-        Log-StopWatch -CommandName $MyInvocation.MyCommand.Name -StopWatch $stopWatch
-        Touch-JS7Session
+        Trace-JS7StopWatch -CommandName $MyInvocation.MyCommand.Name -StopWatch $stopWatch
+        Update-JS7Session
     }
 }

@@ -5,14 +5,14 @@ function Restart-JS7ControllerInstance
 Restarts a JS7 Controller Instance
 
 .DESCRIPTION
-A JS7 Controller instance is restarted. In a JS7 cluster by default a fail-over 
+A JS7 Controller instance is restarted. In a JS7 cluster by default a fail-over
 to the passive cluster member is performed.
 
 .PARAMETER Url
 Optionally the Url of the Controller to be restarted can be specified.
 Without this parameter the active Controller will be restarted.
 Consider that restarting a passive Controller in a JS7 cluster cannot perform
-a fail-over as the current cluster member is passive. 
+a fail-over as the current cluster member is passive.
 
 .PARAMETER Action
 Restarting a Controller includes the following actions:
@@ -36,7 +36,7 @@ in a cluster. Instead, the restarted Controller will remain the active cluster m
 .PARAMETER Service
 Retarts the JS7 Windows service.
 
-Without this parameter being specified JS7 will be started in 
+Without this parameter being specified JS7 will be started in
 its respective operating mode, i.e. service mode or dialog mode.
 
 .PARAMETER AuditComment
@@ -54,7 +54,7 @@ with a ticket system that logs the time spent on interventions with JS7.
 .PARAMETER AuditTicketLink
 Specifies a URL to a ticket system that keeps track of any interventions performed for JS7.
 
-This information is visible with the Audit Log view of JOC Cockpit. 
+This information is visible with the Audit Log view of JOC Cockpit.
 It can be useful when integrated with a ticket system that logs interventions with JS7.
 
 .EXAMPLE
@@ -84,6 +84,7 @@ Retarts the JS7 Controller Windows service.
 about_js7
 
 #>
+[cmdletbinding(SupportsShouldProcess)]
 param
 (
     [Parameter(Mandatory=$False,ValueFromPipeline=$False,ValueFromPipelinebyPropertyName=$False)]
@@ -109,11 +110,14 @@ param
         if ( !$AuditComment -and ( $AuditTimeSpent -or $AuditTicketLink ) )
         {
             throw "$($MyInvocation.MyCommand.Name): Audit Log comment required, use parameter -AuditComment if one of the parameters -AuditTimeSpent or -AuditTicketLink is used"
-        }        
+        }
 	}
 
     Process
-    {        
-        Stop-JS7ControllerInstance -Url $Url -Action $Action -Restart -NoFailover:$NoFailover -Service:$Service -AuditComment $AuditComment -AuditTimeSpent $AuditTimeSpent -AuditTicketLink $AuditTicketLink
+    {
+        if ( $PSCmdlet.ShouldProcess( 'controller', 'Stop-JS7ControllerInstance' ) )
+        {
+            Stop-JS7ControllerInstance -Url $Url -Action $Action -Restart -NoFailover:$NoFailover -Service:$Service -AuditComment $AuditComment -AuditTimeSpent $AuditTimeSpent -AuditTicketLink $AuditTicketLink
+        }
     }
 }

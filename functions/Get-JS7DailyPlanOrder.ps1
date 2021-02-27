@@ -32,7 +32,7 @@ Consider that a UTC date has to be provided.
 Default: End of the current day as a UTC date
 
 .PARAMETER RelativeDateFrom
-Specifies a relative date starting from which daily plan orders should be returned, e.g. 
+Specifies a relative date starting from which daily plan orders should be returned, e.g.
 
 * -1d, -2d: one day ago, two days ago
 * +1d, +2d: one day later, two days later
@@ -48,7 +48,7 @@ Optionally a time offset can be specified, e.g. -1d+02:00, as otherwise midnight
 This parameter takes precedence over the -DateFrom parameter.
 
 .PARAMETER RelativeDateTo
-Specifies a relative date until which daily plan orders should be returned, e.g. 
+Specifies a relative date until which daily plan orders should be returned, e.g.
 
 * -1d, -2d: one day ago, two days ago
 * +1d, +2d: one day later, two days later
@@ -65,7 +65,7 @@ This parameter takes precedence over the -DateTo parameter.
 
 .PARAMETER Timezone
 Specifies the timezone to which dates should be converted in the daily plan information.
-A timezone can e.g. be specified like this: 
+A timezone can e.g. be specified like this:
 
   Get-JSDailyPlan -Timezone (Get-Timezone -Id 'GMT Standard Time')
 
@@ -178,7 +178,7 @@ param
     Begin
     {
         Approve-JS7Command $MyInvocation.MyCommand
-        $stopWatch = Start-StopWatch
+        $stopWatch = Start-JS7StopWatch
 
         $orderIds = @()
         $workflowPaths = @()
@@ -186,7 +186,7 @@ param
         $folders = @()
         $controllerIds = @()
         $states = @()
-        $returnDailyPlanItems = @()        
+        $returnDailyPlanItems = @()
     }
 
     Process
@@ -194,17 +194,17 @@ param
         Write-Debug ".. $($MyInvocation.MyCommand.Name): parameter Folder=$Folder, WorkflowPath=$WorkflowPath, SchedulePath=$SchedulePath"
 
         if ( $Folder -and $Folder -ne '/' )
-        { 
+        {
             if ( !$Folder.startsWith( '/' ) ) {
                 $Folder = '/' + $Folder
             }
-        
+
             if ( $Folder.endsWith( '/' ) )
             {
                 $Folder = $Folder.Substring( 0, $Folder.Length-1 )
             }
         }
-            
+
         if ( $Folder -eq '/' -and !$WorkflowPath -and !$SchedulePath -and !$Recursive )
         {
             $Recursive = $True
@@ -265,7 +265,7 @@ param
             $objFolder = New-Object PSObject
             Add-Member -Membertype NoteProperty -Name 'folder' -value $Folder -InputObject $objFoldere
             Add-Member -Membertype NoteProperty -Name 'recursive' -value ($Recursive -eq $True) -InputObject $objFolder
-            $folders += $objFolder        
+            $folders += $objFolder
         }
 
         if ( $ControllerId )
@@ -284,7 +284,7 @@ param
         {
             $timezoneOffsetHours += 1
         }
-                    
+
         [string] $timezoneOffset = "$($timezoneOffsetPrefix)$($timezoneOffsetHours.ToString().PadLeft( 2, '0' )):$($Timezone.BaseUtcOffset.Minutes.ToString().PadLeft( 2, '0' ))"
 
         if ( $RelativeDateFrom )
@@ -303,7 +303,7 @@ param
         } else {
             $dailyPlanDateFrom = Get-Date (Get-Date $DateFrom)
         }
-        
+
         if ( $RelativeDateTo )
         {
             $dateDirection = $RelativeDateTo[0]
@@ -322,50 +322,50 @@ param
             {
                 $DateTo = $dailyPlanDateFrom
             }
-            
+
             $dailyPlanDateTo = Get-Date (Get-Date $DateTo)
         }
 
         Write-Verbose ".. $($MyInvocation.MyCommand.Name): retrieving daily plan for date range $dailyPlanDateFrom - $dailyPlanDateTo"
 
-        for( $day=$dailyPlanDateFrom; $day -le $dailyPlanDateTo; $day=$day.AddDays(1) ) 
+        for( $day=$dailyPlanDateFrom; $day -le $dailyPlanDateTo; $day=$day.AddDays(1) )
         {
             $body = New-Object PSObject
             Add-Member -Membertype NoteProperty -Name 'controllerId' -value $script:jsWebService.ControllerId -InputObject $body
 
             $filter = New-Object PSObject
             Add-Member -Membertype NoteProperty -Name 'dailyPlanDate' -value (Get-Date $day -Format 'yyyy-MM-dd') -InputObject $filter
-    
+
             if ( $orderIds )
             {
-                Add-Member -Membertype NoteProperty -Name 'orderIds' -value $orderIds -InputObject $filter            
+                Add-Member -Membertype NoteProperty -Name 'orderIds' -value $orderIds -InputObject $filter
             }
-    
+
             if ( $workflowPaths )
             {
                 Add-Member -Membertype NoteProperty -Name 'workflowPaths' -value $workflowPaths -InputObject $filter
             }
-    
+
             if ( $schedulePaths )
             {
                 Add-Member -Membertype NoteProperty -Name 'schedulePaths' -value $schedulePaths -InputObject $filter
             }
-    
+
             if ( $folders )
             {
-                Add-Member -Membertype NoteProperty -Name 'folders' -value $folders -InputObject $filter            
+                Add-Member -Membertype NoteProperty -Name 'folders' -value $folders -InputObject $filter
             }
-    
+
             if ( $controllerIds )
             {
                 Add-Member -Membertype NoteProperty -Name 'controllerIds' -value $controllerIds -InputObject $filter
             }
-    
+
             if ( $states )
             {
                 Add-Member -Membertype NoteProperty -Name 'states' -value $states -InputObject $filter
             }
-    
+
             if ( $Late )
             {
                 Add-Member -Membertype NoteProperty -Name 'late' -value ( $Late -eq $True ) -InputObject $filter
@@ -375,17 +375,17 @@ param
             {
                Add-Member -Membertype NoteProperty -Name 'filter' -value $filter -InputObject $body
             }
-            
+
             [string] $requestBody = $body | ConvertTo-Json -Depth 100
             $response = Invoke-JS7WebRequest -Path '/daily_plan/orders' -Body $requestBody
-            
+
             if ( $response.StatusCode -eq 200 )
             {
                 $dailyPlanItems = ( $response.Content | ConvertFrom-JSON ).plannedOrderItems
             } else {
                 throw ( $response | Format-List -Force | Out-String )
             }
-            
+
             $returnDailyPlanItems += $dailyPlanItems
         }
 
@@ -415,8 +415,8 @@ param
         } else {
             Write-Verbose ".. $($MyInvocation.MyCommand.Name): no Daily Plan orders found"
         }
-        
-        Log-StopWatch -CommandName $MyInvocation.MyCommand.Name -StopWatch $stopWatch
-        Touch-JS7Session
+
+        Trace-JS7StopWatch -CommandName $MyInvocation.MyCommand.Name -StopWatch $stopWatch
+        Update-JS7Session
     }
 }

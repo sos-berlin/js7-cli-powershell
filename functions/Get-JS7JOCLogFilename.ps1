@@ -26,19 +26,19 @@ param
     Begin
     {
         Approve-JS7Command $MyInvocation.MyCommand
-        $stopWatch = Start-StopWatch
+        $stopWatch = Start-JS7StopWatch
     }
-    
+
     Process
     {
         $body = New-Object PSObject
-        
+
         [string] $requestBody = $body | ConvertTo-Json -Depth 100
         $response = Invoke-JS7WebRequest -Path '/joc/logs' -Body $requestBody
-            
+
         if ( $response.StatusCode -eq 200 )
         {
-            ( $response.Content | ConvertFrom-JSON ).filenames            
+            ( $response.Content | ConvertFrom-JSON ).filenames
         } else {
             throw ( $response | Format-List -Force | Out-String )
         }
@@ -46,7 +46,7 @@ param
 
     End
     {
-        Log-StopWatch -CommandName $MyInvocation.MyCommand.Name -StopWatch $stopWatch
-        Touch-JS7Session
+        Trace-JS7StopWatch -CommandName $MyInvocation.MyCommand.Name -StopWatch $stopWatch
+        Update-JS7Session
     }
 }

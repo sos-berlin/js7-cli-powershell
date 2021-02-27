@@ -8,7 +8,7 @@ Reassigns Agents to a JS7 Controller
 This cmdlet reassigns Agents to a JS7 Controller. Any Agents that previously have been
 added with the Set-JS7Agent cmdlet are assgined a Controller. This operation is not required
 for normal operation, however, if Controller's journal has to be dropped then the Controller
-will loose the information about assigned Agents. 
+will loose the information about assigned Agents.
 
 Use of this cmdlet restores the Agent assignment for the given Controller.
 
@@ -27,7 +27,7 @@ with a ticket system that logs the time spent on interventions with JobScheduler
 .PARAMETER AuditTicketLink
 Specifies a URL to a ticket system that keeps track of any interventions performed for JobScheduler.
 
-This information is visible with the Audit Log view of JOC Cockpit. 
+This information is visible with the Audit Log view of JOC Cockpit.
 It can be useful when integrated with a ticket system that logs interventions with JobScheduler.
 
 .INPUTS
@@ -53,19 +53,19 @@ param
     [Parameter(Mandatory=$False,ValueFromPipeline=$False,ValueFromPipelinebyPropertyName=$True)]
     [int] $AuditTimeSpent,
     [Parameter(Mandatory=$False,ValueFromPipeline=$False,ValueFromPipelinebyPropertyName=$True)]
-    [Uri] $AuditTicketLink    
+    [Uri] $AuditTicketLink
 )
 	Begin
 	{
 		Approve-JS7Command $MyInvocation.MyCommand
-        $stopWatch = Start-StopWatch
+        $stopWatch = Start-JS7StopWatch
 
         if ( !$AuditComment -and ( $AuditTimeSpent -or $AuditTicketLink ) )
         {
             throw "$($MyInvocation.MyCommand.Name): Audit Log comment required, use parameter -AuditComment if one of the parameters -AuditTimeSpent or -AuditTicketLink is used"
-        }        
+        }
     }
-    
+
     Process
     {
     }
@@ -74,7 +74,7 @@ param
     {
         $body = New-Object PSObject
         Add-Member -Membertype NoteProperty -Name 'controllerId' -value $script:jsWebService.ControllerId -InputObject $body
-        
+
         if ( $AuditComment -or $AuditTimeSpent -or $AuditTicketLink )
         {
             $objAuditLog = New-Object PSObject
@@ -92,14 +92,14 @@ param
 
             Add-Member -Membertype NoteProperty -Name 'auditLog' -value $objAuditLog -InputObject $body
         }
-    
+
         [string] $requestBody = $body | ConvertTo-Json -Depth 100
         $response = Invoke-JS7WebRequest -Path '/agents/reassign' -Body $requestBody
-        
+
         if ( $response.StatusCode -eq 200 )
         {
             $requestResult = ( $response.Content | ConvertFrom-JSON )
-            
+
             if ( !$requestResult.ok )
             {
                 throw ( $response | Format-List -Force | Out-String )
@@ -107,10 +107,10 @@ param
         } else {
             throw ( $response | Format-List -Force | Out-String )
         }
-    
-        Write-Verbose ".. $($MyInvocation.MyCommand.Name): Agents reassigned"                
 
-        Log-StopWatch -CommandName $MyInvocation.MyCommand.Name -StopWatch $stopWatch
-        Touch-JS7Session        
+        Write-Verbose ".. $($MyInvocation.MyCommand.Name): Agents reassigned"
+
+        Trace-JS7StopWatch -CommandName $MyInvocation.MyCommand.Name -StopWatch $stopWatch
+        Update-JS7Session
     }
 }

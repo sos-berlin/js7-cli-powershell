@@ -26,12 +26,12 @@ param
     Begin
     {
         Approve-JS7Command $MyInvocation.MyCommand
-        $stopWatch = Start-StopWatch
+        $stopWatch = Start-JS7StopWatch
     }
-        
+
     Process
     {
-        Write-Debug ".. $($MyInvocation.MyCommand.Name): parameter "    
+        Write-Debug ".. $($MyInvocation.MyCommand.Name):"
     }
 
     End
@@ -41,17 +41,17 @@ param
 
         [string] $requestBody = $body | ConvertTo-Json -Depth 100
         $response = Invoke-JS7WebRequest -Path '/inventory/statistics' -Body $requestBody
-    
+
         if ( $response.StatusCode -eq 200 )
         {
             $returnStatistics = ( $response.Content | ConvertFrom-JSON )
         } else {
             throw ( $response | Format-List -Force | Out-String )
         }
-    
+
         $returnStatistics
-        
-        Log-StopWatch -CommandName $MyInvocation.MyCommand.Name -StopWatch $stopWatch
-        Touch-JS7Session        
+
+        Trace-JS7StopWatch -CommandName $MyInvocation.MyCommand.Name -StopWatch $stopWatch
+        Update-JS7Session
     }
 }

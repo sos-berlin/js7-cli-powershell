@@ -1,5 +1,5 @@
 function Get-JS7JOCProperties
-{ 
+{
 <#
 .SYNOPSIS
 Returns JS7 properties
@@ -18,22 +18,21 @@ about_js7
 
 #>
 param
-(
-)
+()
     Begin
     {
         Approve-JS7Command $MyInvocation.MyCommand
-        $stopWatch = Start-StopWatch
+        $stopWatch = Start-JS7StopWatch
     }
 
     Process
-    {        
-        $response = Invoke-JS7WebRequest -Path '/joc/properties' 
-        
+    {
+        $response = Invoke-JS7WebRequest -Path '/joc/properties'
+
         if ( $response.StatusCode -eq 200 )
         {
             $requestResult = ( $response.Content | ConvertFrom-JSON )
-            
+
             if ( !$requestResult )
             {
                 throw ( $response | Format-List -Force | Out-String )
@@ -41,13 +40,13 @@ param
         } else {
             throw ( $response | Format-List -Force | Out-String )
         }
-        
+
         $requestResult
     }
 
     End
     {
-        Log-StopWatch -CommandName $MyInvocation.MyCommand.Name -StopWatch $stopWatch
-        Touch-JS7Session
+        Trace-JS7StopWatch -CommandName $MyInvocation.MyCommand.Name -StopWatch $stopWatch
+        Update-JS7Session
     }
 }

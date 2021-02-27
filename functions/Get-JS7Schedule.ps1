@@ -70,7 +70,7 @@ param
     Begin
     {
         Approve-JS7Command $MyInvocation.MyCommand
-        $stopWatch = Start-StopWatch
+        $stopWatch = Start-JS7StopWatch
 
         if ( $WorkingDays -and $NonWorkingDays )
         {
@@ -82,11 +82,11 @@ param
         $workflowPaths = @()
         $folders = @()
     }
-        
+
     Process
     {
         Write-Debug ".. $($MyInvocation.MyCommand.Name): parameter Folder=$Folder, SchedulePath=$SchedulePath"
-    
+
         if ( $SchedulePath.endsWith( '/') )
         {
             throw "$($MyInvocation.MyCommand.Name): the -SchedulePath parameter has to specify the folder and name of a schedule"
@@ -118,12 +118,12 @@ param
         }
 
         if ( $Folder -and $Folder -ne '/' )
-        { 
+        {
             if ( !$Folder.StartsWith( '/' ) )
             {
                 $Folder = '/' + $Folder
             }
-        
+
             if ( $Folder.EndsWith( '/' ) )
             {
                 $Folder = $Folder.Substring( 0, $Folder.Length-1 )
@@ -139,13 +139,13 @@ param
         {
             $SchedulePaths += $SchedulePath
         }
-        
+
         if ( $WorkflowPath )
         {
             $workflowPaths += $WorkflowPath
         }
-        
-        if ( $Folder ) 
+
+        if ( $Folder )
         {
             $objFolder = New-Object PSObject
             Add-Member -Membertype NoteProperty -Name 'folder' -value $Folder -InputObject $objFolder
@@ -165,27 +165,27 @@ param
             {
                 Add-Member -Membertype NoteProperty -Name 'schedulePaths' -value $schedulePaths -InputObject $body
             }
-    
+
             if ( $workflowPaths.count )
             {
                 Add-Member -Membertype NoteProperty -Name 'workflowPaths' -value $workflowPaths -InputObject $body
             }
-    
+
             if ( $folders.count )
             {
-                Add-Member -Membertype NoteProperty -Name 'folders' -value $folders -InputObject $body    
+                Add-Member -Membertype NoteProperty -Name 'folders' -value $folders -InputObject $body
             }
 
             [string] $requestBody = $body | ConvertTo-Json -Depth 100
             $response = Invoke-JS7WebRequest -Path '/schedules' -Body $requestBody
-        
+
             if ( $response.StatusCode -eq 200 )
             {
                 $returnSchedules = ( $response.Content | ConvertFrom-JSON ).schedules
             } else {
                 throw ( $response | Format-List -Force | Out-String )
             }
-        
+
             $returnSchedules
         }
 
@@ -195,8 +195,8 @@ param
         } else {
             Write-Verbose ".. $($MyInvocation.MyCommand.Name): no schedules found"
         }
-        
-        Log-StopWatch -CommandName $MyInvocation.MyCommand.Name -StopWatch $stopWatch
-        Touch-JS7Session        
+
+        Trace-JS7StopWatch -CommandName $MyInvocation.MyCommand.Name -StopWatch $stopWatch
+        Update-JS7Session
     }
 }

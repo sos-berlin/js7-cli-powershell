@@ -12,7 +12,7 @@ Consider that imported objects have to be deployed with the Deploy-JS7Deployable
 Specifies the folder, sub-folder and name of the object to be added, e.g. a workflow path.
 
 .PARAMETER Type
-Specifies the object type which is one of: 
+Specifies the object type which is one of:
 
 * WORKFLOW
 * JOBCLASS
@@ -45,7 +45,7 @@ with a ticket system that logs the time spent on interventions with JobScheduler
 .PARAMETER AuditTicketLink
 Specifies a URL to a ticket system that keeps track of any interventions performed for JobScheduler.
 
-This information is visible with the Audit Log view of JOC Cockpit. 
+This information is visible with the Audit Log view of JOC Cockpit.
 It can be useful when integrated with a ticket system that logs interventions with JobScheduler.
 
 .INPUTS
@@ -55,7 +55,7 @@ This cmdlet accepts pipelined objects that are e.g. returned from a Get-JS7Workf
 This cmdlet returns no output.
 
 .EXAMPLE
-Add-JS7InventoryItem -Path /some/directory/sampleLock -Type 'LOCK' -Item ( '{ "limit": 1 }' | ConvertFrom-Json ) 
+Add-JS7InventoryItem -Path /some/directory/sampleLock -Type 'LOCK' -Item ( '{ "limit": 1 }' | ConvertFrom-Json )
 
 Read the worfklow configuration from the given file and store the workflow with the specified path.
 
@@ -80,38 +80,38 @@ param
     [Parameter(Mandatory=$False,ValueFromPipeline=$False,ValueFromPipelinebyPropertyName=$True)]
     [int] $AuditTimeSpent,
     [Parameter(Mandatory=$False,ValueFromPipeline=$False,ValueFromPipelinebyPropertyName=$True)]
-    [Uri] $AuditTicketLink    
+    [Uri] $AuditTicketLink
 )
 	Begin
 	{
 		Approve-JS7Command $MyInvocation.MyCommand
-        $stopWatch = Start-StopWatch
+        $stopWatch = Start-JS7StopWatch
 
         if ( $Path.endsWith('/') )
         {
             throw "$($MyInvocation.MyCommand.Name): path has to include directory, sub-directory and object name"
         }
-        
+
         if ( !$AuditComment -and ( $AuditTimeSpent -or $AuditTicketLink ) )
         {
             throw "$($MyInvocation.MyCommand.Name): Audit Log comment required, use parameter -AuditComment if one of the parameters -AuditTimeSpent or -AuditTicketLink is used"
         }
     }
-    
+
     Process
     {
         $body = New-Object PSObject
         Add-Member -Membertype NoteProperty -Name 'path' -value $Path -InputObject $body
         Add-Member -Membertype NoteProperty -Name 'objectType' -value $Type -InputObject $body
         Add-Member -Membertype NoteProperty -Name 'valid' -value $False -InputObject $body
-        
+
         Add-Member -Membertype NoteProperty -Name 'configuration' -value $Item -InputObject $body
-        
+
         if ( $DocPath )
         {
             Add-Member -Membertype NoteProperty -Name 'docPath' -value $DocPath -InputObject $body
         }
-    
+
         if ( $AuditComment -or $AuditTimeSpent -or $AuditTicketLink )
         {
             $objAuditLog = New-Object PSObject
@@ -129,14 +129,14 @@ param
 
             Add-Member -Membertype NoteProperty -Name 'auditLog' -value $objAuditLog -InputObject $body
         }
-    
+
         [string] $requestBody = $body | ConvertTo-Json -Depth 100
         $response = Invoke-JS7WebRequest -Path '/inventory/store' -Body $requestBody
-        
+
         if ( $response.StatusCode -eq 200 )
         {
             $requestResult = ( $response.Content | ConvertFrom-JSON )
-            
+
             if ( !$requestResult.path )
             {
                 throw ( $response | Format-List -Force | Out-String )
@@ -144,13 +144,13 @@ param
         } else {
             throw ( $response | Format-List -Force | Out-String )
         }
-    
-        Write-Verbose ".. $($MyInvocation.MyCommand.Name): object imported: $Path"                
+
+        Write-Verbose ".. $($MyInvocation.MyCommand.Name): object imported: $Path"
     }
 
     End
     {
-        Log-StopWatch -CommandName $MyInvocation.MyCommand.Name -StopWatch $stopWatch
-        Touch-JS7Session
+        Trace-JS7StopWatch -CommandName $MyInvocation.MyCommand.Name -StopWatch $stopWatch
+        Update-JS7Session
     }
 }

@@ -5,7 +5,7 @@ function Get-JS7AuditLog
 Returns the Audit Log entries
 
 .DESCRIPTION
-Audit log information is returned from a JOC Cockpit instance. 
+Audit log information is returned from a JOC Cockpit instance.
 Audit log entries can be selected by workflow path, order ID, folder etc.
 
 The audit log information returned includes point in time, request, object etc.
@@ -23,7 +23,7 @@ Optionally specifies the path and name of a workflow for which audit log informa
 Optionally specifies the folder that includes workflows for which audit log entries should be returned.
 
 .PARAMETER Recursive
-Specifies that any sub-folders should be looked up when used with the -Folder parameter. 
+Specifies that any sub-folders should be looked up when used with the -Folder parameter.
 By default no sub-folders will be looked up for workflow paths.
 
 .PARAMETER RegularExpression
@@ -43,7 +43,7 @@ Consider that a UTC date has to be provided.
 Default: End of the current day as a UTC date
 
 .PARAMETER RelativeDateFrom
-Specifies a relative date starting from which audit log entries should be returned, e.g. 
+Specifies a relative date starting from which audit log entries should be returned, e.g.
 
 * -1s, -2s: one second ago, two seconds ago
 * -1m, -2m: one minute ago, two minutes ago
@@ -60,7 +60,7 @@ for the timezone that is specified with the -Timezone parameter.
 This parameter takes precedence over the -DateFrom parameter.
 
 .PARAMETER RelativeDateTo
-Specifies a relative date until which audit log entries should be returned, e.g. 
+Specifies a relative date until which audit log entries should be returned, e.g.
 
 * -1s, -2s: one second ago, two seconds ago
 * -1m, -2m: one minute ago, two minutes ago
@@ -78,7 +78,7 @@ This parameter takes precedence over the -DateFrom parameter.
 
 .PARAMETER Timezone
 Specifies the timezone to which dates should be converted from the history information.
-A timezone can e.g. be specified like this: 
+A timezone can e.g. be specified like this:
 
   Get-JS7OrderHistory -Timezone (Get-Timezone -Id 'GMT Standard Time')
 
@@ -190,31 +190,31 @@ param
     Begin
     {
         Approve-JS7Command $MyInvocation.MyCommand
-        $stopWatch = Start-StopWatch
+        $stopWatch = Start-JS7StopWatch
 
         $orders = @()
         $jobs = @()
         $calendarPaths = @()
         $folders = @()
     }
-        
+
     Process
     {
         Write-Debug ".. $($MyInvocation.MyCommand.Name): parameter Folder=$Folder, WorkflowPath=$WorkflowPath, OrderId=$OrderId, Job=$Job, CalendarPath=$CalendarPath"
 
         if ( $Folder -and $Folder -ne '/' )
-        { 
-            if ( !$Folder.StartsWith( '/' ) ) 
+        {
+            if ( !$Folder.StartsWith( '/' ) )
             {
                 $Folder = '/' + $Folder
             }
-        
+
             if ( $Folder.endsWith( '/' ) )
             {
                 $Folder = $Folder.Substring( 0, $Folder.Length-1 )
             }
         }
-    
+
         if ( $Folder -eq '/' -and !$WorkflowPath -and !$OrderId -and !$Recursive )
         {
             $Recursive = $True
@@ -223,12 +223,12 @@ param
         if ( $OrderId -or $WorkflowPath )
         {
             $objOrder = New-Object PSObject
-                        
+
             if ( $OrderId )
             {
                 Add-Member -Membertype NoteProperty -Name 'orderId' -value $OrderId -InputObject $objOrder
             }
-            
+
             if ( $WorkflowPath )
             {
                 Add-Member -Membertype NoteProperty -Name 'workflowPath' -value $WorkflowPath -InputObject $objOrder
@@ -237,12 +237,12 @@ param
             $orders += $objOrder
         } elseif ( $Job -or $WorkflowPath ) {
             $objJob = New-Object PSObject
-                        
+
             if ( $Job )
             {
                 Add-Member -Membertype NoteProperty -Name 'job' -value $Job -InputObject $objJob
             }
-            
+
             if ( $WorkflowPath )
             {
                 Add-Member -Membertype NoteProperty -Name 'workflowPath' -value $WorkflowPath -InputObject $obJob
@@ -259,7 +259,7 @@ param
             $folders += $objFolder
         }
     }
-    
+
     End
     {
         # PowerShell/.NET does not create date output in the target timezone but with the local timezone only, let's work around this:
@@ -270,7 +270,7 @@ param
         {
             $timezoneOffsetHours += 1
         }
-                    
+
         [string] $timezoneOffset = "$($timezoneOffsetPrefix)$($timezoneOffsetHours.ToString().PadLeft( 2, '0' )):$($Timezone.BaseUtcOffset.Minutes.ToString().PadLeft( 2, '0' ))"
 
         $body = New-Object PSObject
@@ -336,7 +336,7 @@ param
 
         [string] $requestBody = $body | ConvertTo-Json -Depth 100
         $response = Invoke-JS7WebRequest -Path '/audit_log' -Body $requestBody
-        
+
         if ( $response.StatusCode -eq 200 )
         {
             $returnAuditLogItems = ( $response.Content | ConvertFrom-JSON ).auditLog
@@ -347,7 +347,7 @@ param
         if ( $Timezone.Id -eq 'UTC' )
         {
             $returnAuditLogItems
-        } else {            
+        } else {
             $returnAuditLogItems | Select-Object -Property `
                                            account, `
                                            request, `
@@ -366,8 +366,8 @@ param
         } else {
             Write-Verbose ".. $($MyInvocation.MyCommand.Name): no audit log entries found"
         }
-        
-        Log-StopWatch -CommandName $MyInvocation.MyCommand.Name -StopWatch $stopWatch
-        Touch-JS7Session
+
+        Trace-JS7StopWatch -CommandName $MyInvocation.MyCommand.Name -StopWatch $stopWatch
+        Update-JS7Session
     }
 }

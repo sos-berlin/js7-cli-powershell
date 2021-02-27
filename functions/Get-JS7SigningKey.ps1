@@ -53,28 +53,27 @@ param
     Begin
     {
         Approve-JS7Command $MyInvocation.MyCommand
-        $stopWatch = Start-StopWatch
+        $stopWatch = Start-JS7StopWatch
 
         if ( !$AuditComment -and ( $AuditTimeSpent -or $AuditTicketLink ) )
         {
             throw "$($MyInvocation.MyCommand.Name): Audit Log comment required, use parameter -AuditComment if one of the parameters -AuditTimeSpent or -AuditTicketLink is used"
         }
     }
-        
+
     Process
     {
         Write-Debug ".. $($MyInvocation.MyCommand.Name): parameter"
 
-        [string] $requestBody = $body | ConvertTo-Json -Depth 100
         $response = Invoke-JS7WebRequest -Path '/profile/key'
-    
+
         if ( $response.StatusCode -eq 200 )
         {
             $returnKey = ( $response.Content | ConvertFrom-JSON )
         } else {
             throw ( $response | Format-List -Force | Out-String )
         }
-    
+
         $returnKey
 
         if ( $returnKey )
@@ -87,7 +86,7 @@ param
 
     End
     {
-        Log-StopWatch -CommandName $MyInvocation.MyCommand.Name -StopWatch $stopWatch
-        Touch-JS7Session        
+        Trace-JS7StopWatch -CommandName $MyInvocation.MyCommand.Name -StopWatch $stopWatch
+        Update-JS7Session
     }
 }

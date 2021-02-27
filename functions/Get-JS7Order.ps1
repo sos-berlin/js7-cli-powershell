@@ -22,7 +22,7 @@ Optionally specifies the path and name of a workflow for which orders should be 
 One of the parameters -Folder, -WorkflowPath or -OrderId has to be specified if no pipelined order objects are provided.
 
 .PARAMETER WorkflowVersionId
-Deployed workflows can be assigned a version identifier. This parameters allows to select 
+Deployed workflows can be assigned a version identifier. This parameters allows to select
 workflows that are assigned the specified version.
 
 .PARAMETER Folder
@@ -143,35 +143,35 @@ param
     Begin
     {
         Approve-JS7Command $MyInvocation.MyCommand
-        $stopWatch = Start-StopWatch
+        $stopWatch = Start-JS7StopWatch
 
         $returnOrders = @()
         $workflowIds = @()
         $folders = @()
         $states = @()
     }
-        
+
     Process
     {
         Write-Debug ".. $($MyInvocation.MyCommand.Name): parameter Folder=$Folder, WorkflowPath=$WorkflowPath, OrderId=$OrderId"
-    
+
         if ( !$Folder -and !$WorkflowPath -and !$OrderId -and !$RegularExpression)
         {
             throw "$($MyInvocation.MyCommand.Name): no folder, no workflow path, order id or regular expression is specified, use -Folder or -WorkflowPath or -OrderId or -RegularExpression"
         }
 
         if ( $Folder -and $Folder -ne '/' )
-        { 
+        {
             if ( !$Folder.StartsWith( '/' ) )
             {
                 $Folder = '/' + $Folder
             }
-        
+
             if ( $Folder.endsWith( '/' ) )
             {
                 $Folder = $Folder.Substring( 0, $Folder.Length-1 )
             }
-        }           
+        }
 
         if ( $Folder -eq '/' -and !$WorkflowPath -and !$OrderId -and !$Recursive )
         {
@@ -223,13 +223,13 @@ param
             {
                 Add-Member -Membertype NoteProperty -Name 'compact' -value $True -InputObject $body
             }
-            
-            Add-Member -Membertype NoteProperty -Name 'orderId' -value $orderId -InputObject $body            
-            Add-Member -Membertype NoteProperty -Name 'suppressNotExistException' -value $False -InputObject $body            
+
+            Add-Member -Membertype NoteProperty -Name 'orderId' -value $orderId -InputObject $body
+            Add-Member -Membertype NoteProperty -Name 'suppressNotExistException' -value $False -InputObject $body
 
             [string] $requestBody = $body | ConvertTo-Json -Depth 100
             $response = Invoke-JS7WebRequest -Path '/order' -Body $requestBody
-        
+
             if ( $response.StatusCode -eq 200 )
             {
                 $returnOrders = ( $response.Content | ConvertFrom-JSON )
@@ -238,12 +238,12 @@ param
             } else {
                 throw ( $response | Format-List -Force | Out-String )
             }
-        
+
             $returnOrders
         } elseif ( $WorkflowPath ) {
             $objWorkflow = New-Object PSObject
             Add-Member -Membertype NoteProperty -Name 'path' -value $WorkflowPath -InputObject $objWorkflow
-                
+
             if ( $WorkflowVersionId )
             {
                 Add-Member -Membertype NoteProperty -Name 'versionId' -value $WorkflowVersionId -InputObject $objWorkflow
@@ -275,13 +275,13 @@ param
             {
                 Add-Member -Membertype NoteProperty -Name 'workflowIds' -value $workflowIds -InputObject $body
             }
-    
+
             if ( $folders.count )
             {
                 Add-Member -Membertype NoteProperty -Name 'folders' -value $folders -InputObject $body
-                Add-Member -Membertype NoteProperty -Name 'recursive' -value ($Recursive -eq $True) -InputObject $body                
+                Add-Member -Membertype NoteProperty -Name 'recursive' -value ($Recursive -eq $True) -InputObject $body
             }
-            
+
             if ( $states.count )
             {
                 Add-Member -Membertype NoteProperty -Name 'states' -value $states -InputObject $body
@@ -294,7 +294,7 @@ param
 
             [string] $requestBody = $body | ConvertTo-Json -Depth 100
             $response = Invoke-JS7WebRequest -Path '/orders' -Body $requestBody
-        
+
             if ( $response.StatusCode -eq 200 )
             {
                 $returnOrders = ( $response.Content | ConvertFrom-JSON ).orders
@@ -303,7 +303,7 @@ param
             } else {
                 throw ( $response | Format-List -Force | Out-String )
             }
-        
+
             $returnOrders
         }
 
@@ -313,8 +313,8 @@ param
         } else {
             Write-Verbose ".. $($MyInvocation.MyCommand.Name): no orders found"
         }
-        
-        Log-StopWatch -CommandName $MyInvocation.MyCommand.Name -StopWatch $stopWatch
-        Touch-JS7Session
+
+        Trace-JS7StopWatch -CommandName $MyInvocation.MyCommand.Name -StopWatch $stopWatch
+        Update-JS7Session
     }
 }

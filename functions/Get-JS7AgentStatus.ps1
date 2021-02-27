@@ -28,7 +28,7 @@ Specifies to return information about Agents only that could not be successfully
 This indicates an error status.
 
 .PARAMETER Enabled
-Specifies to return information about enabled Agents only. 
+Specifies to return information about enabled Agents only.
 
 .PARAMETER Compact
 Specifies to return a smaller set of information items about Agents.
@@ -76,8 +76,8 @@ param
     Begin
     {
         Approve-JS7Command $MyInvocation.MyCommand
-        $stopWatch = Start-StopWatch
-        
+        $stopWatch = Start-JS7StopWatch
+
         $agentIds = @()
         $states = @()
     }
@@ -85,7 +85,7 @@ param
     Process
     {
         $agentIds += $AgentId
-        
+
         if ( $Coupled )
         {
             $states += 'COUPLED'
@@ -101,9 +101,9 @@ param
             $states += 'COUPLINGFAILED'
         }
     }
-    
+
     End
-    {    
+    {
         $body = New-Object PSObject
         Add-Member -Membertype NoteProperty -Name 'controllerId' -value $script:jsWebService.ControllerId -InputObject $body
 
@@ -111,7 +111,7 @@ param
         {
             Add-Member -Membertype NoteProperty -Name 'agentIds' -value $agentIds -InputObject $body
         }
-        
+
         if ( $states )
         {
             Add-Member -Membertype NoteProperty -Name 'states' -value $states -InputObject $body
@@ -123,18 +123,18 @@ param
 
         [string] $requestBody = $body | ConvertTo-Json -Depth 100
         $response = Invoke-JS7WebRequest -Path '/agents' -Body $requestBody
-    
+
         if ( $response.StatusCode -eq 200 )
         {
             $volatileStatus = ( $response.Content | ConvertFrom-JSON ).agents
         } else {
             throw ( $response | Format-List -Force | Out-String )
-        }    
+        }
 
         if ( !$Display )
         {
             $volatileStatus
-        } else {     
+        } else {
             foreach( $agentStatus in $volatileStatus )
             {
                 $output = "
@@ -160,7 +160,7 @@ ________________________________________________________________________
             Write-Verbose ".. $($MyInvocation.MyCommand.Name): no Agents found"
         }
 
-        Log-StopWatch -CommandName $MyInvocation.MyCommand.Name -StopWatch $stopWatch
-        Touch-JS7Session
+        Trace-JS7StopWatch -CommandName $MyInvocation.MyCommand.Name -StopWatch $stopWatch
+        Update-JS7Session
     }
 }

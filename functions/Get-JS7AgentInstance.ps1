@@ -42,31 +42,31 @@ param
     Begin
     {
         Approve-JS7Command $MyInvocation.MyCommand
-        $stopWatch = Start-StopWatch
-        
+        $stopWatch = Start-JS7StopWatch
+
         $agentIds = @()
         $agentNames = @()
         $agentUrls = @()
     }
-        
+
     Process
     {
         if ( $AgentId )
         {
             $agentIds += $AgentId
         }
-        
+
         if ( $AgentName )
         {
             $agentNames += $AgentName
         }
-        
+
         if ( $AgentUrl )
         {
             $agentUrls += $AgentUrl
         }
     }
-    
+
     End
     {
         $body = New-Object PSObject
@@ -75,24 +75,24 @@ param
 
         [string] $requestBody = $body | ConvertTo-Json -Depth 100
         $response = Invoke-JS7WebRequest -Path '/agents/p' -Body $requestBody
-    
+
         if ( $response.StatusCode -eq 200 )
         {
             $returnAgents = ( $response.Content | ConvertFrom-JSON ).agents
         } else {
             throw ( $response | Format-List -Force | Out-String )
-        }    
+        }
 
         $returnAgents
-        
+
         if ( $returnAgents.count )
         {
             Write-Verbose ".. $($MyInvocation.MyCommand.Name): $($returnAgents.count) Agents found"
         } else {
             Write-Verbose ".. $($MyInvocation.MyCommand.Name): no Agents found"
         }
-        
-        Log-StopWatch -CommandName $MyInvocation.MyCommand.Name -StopWatch $stopWatch
-        Touch-JS7Session        
+
+        Trace-JS7StopWatch -CommandName $MyInvocation.MyCommand.Name -StopWatch $stopWatch
+        Update-JS7Session
     }
 }

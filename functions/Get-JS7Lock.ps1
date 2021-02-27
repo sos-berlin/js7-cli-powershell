@@ -16,7 +16,7 @@ Optionally specifies the path and name of a lock that should be returned.
 One of the parameters -Folder or -LockPath has to be specified.
 
 .PARAMETER Folder
-Optionally specifies the folder for which locks should be returned. 
+Optionally specifies the folder for which locks should be returned.
 
 One of the parameters -Folder or -LockPath has to be specified.
 
@@ -59,23 +59,23 @@ param
     Begin
     {
         Approve-JS7Command $MyInvocation.MyCommand
-        $stopWatch = Start-StopWatch
+        $stopWatch = Start-JS7StopWatch
 
         $lockPaths = @()
         $folders = @()
     }
-        
+
     Process
     {
         Write-Debug ".. $($MyInvocation.MyCommand.Name): parameter Folder=$Folder, LockPath=$LockPath"
 
         if ( $Folder -and $Folder -ne '/' )
-        { 
+        {
             if ( !$Folder.StartsWith( '/' ) )
             {
                 $Folder = '/' + $Folder
             }
-        
+
             if ( $Folder.EndsWith( '/' ) )
             {
                 $Folder = $Folder.Substring( 0, $Folder.Length-1 )
@@ -91,7 +91,7 @@ param
         {
             $Recursive = $True
         }
-     
+
         if ( $LockPath )
         {
             $lockPaths += $LockPath
@@ -115,7 +115,7 @@ param
     {
         $body = New-Object PSObject
         Add-Member -Membertype NoteProperty -Name 'controllerId' -value $script:jsWebService.ControllerId -InputObject $body
-        
+
         if ( $lockPaths )
         {
             Add-Member -Membertype NoteProperty -Name 'lockPaths' -value $lockPaths -InputObject $body
@@ -128,16 +128,16 @@ param
 
         [string] $requestBody = $body | ConvertTo-Json -Depth 100
         $response = Invoke-JS7WebRequest -Path '/locks' -Body $requestBody
-        
+
         if ( $response.StatusCode -eq 200 )
         {
             $returnLocks += ( $response.Content | ConvertFrom-JSON ).locks
         } else {
             throw ( $response | Format-List -Force | Out-String )
-        }        
+        }
 
         $returnLocks
-    
+
         if ( $returnLocks.count )
         {
             Write-Verbose ".. $($MyInvocation.MyCommand.Name): $($returnLocks.count) locks found"
@@ -145,7 +145,7 @@ param
             Write-Verbose ".. $($MyInvocation.MyCommand.Name): no locks found"
         }
 
-        Log-StopWatch -CommandName $MyInvocation.MyCommand.Name -StopWatch $stopWatch
-        Touch-JS7Session
+        Trace-JS7StopWatch -CommandName $MyInvocation.MyCommand.Name -StopWatch $stopWatch
+        Update-JS7Session
     }
 }

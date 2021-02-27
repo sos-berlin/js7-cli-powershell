@@ -16,11 +16,11 @@ Optionally specifies the path and name of a workflow that should be returned.
 One of the parameters -Folder, -WorkflowPath or -RegularExpression has to be specified.
 
 .PARAMETER WorkflowVersionId
-Deployed workflows can be assigned a version identifier. This parameters allows to select 
+Deployed workflows can be assigned a version identifier. This parameters allows to select
 workflows that are assigned the specified version.
 
 .PARAMETER Folder
-Optionally specifies the folder for which workflows should be returned. 
+Optionally specifies the folder for which workflows should be returned.
 
 One of the parameters -Folder, -WorkflowPath or -RegularExpression has to be specified.
 
@@ -77,23 +77,23 @@ param
     Begin
     {
         Approve-JS7Command $MyInvocation.MyCommand
-        $stopWatch = Start-StopWatch
+        $stopWatch = Start-JS7StopWatch
 
         $workflowPaths = @()
         $folders = @()
     }
-        
+
     Process
     {
         Write-Debug ".. $($MyInvocation.MyCommand.Name): parameter Folder=$Folder, WorkflowPath=$WorkflowPath, RegularExpression=$RegularExpression"
 
         if ( $Folder -and $Folder -ne '/' )
-        { 
+        {
             if ( !$Folder.StartsWith( '/' ) )
             {
                 $Folder = '/' + $Folder
             }
-        
+
             if ( $Folder.EndsWith( '/' ) )
             {
                 $Folder = $Folder.Substring( 0, $Folder.Length-1 )
@@ -109,7 +109,7 @@ param
         {
             $Recursive = $True
         }
-     
+
         if ( $WorkflowPath )
         {
             $objWorkflow = New-Object PSObject
@@ -141,7 +141,7 @@ param
     {
         $body = New-Object PSObject
         Add-Member -Membertype NoteProperty -Name 'controllerId' -value $script:jsWebService.ControllerId -InputObject $body
-        
+
         if ( $Compact )
         {
             Add-Member -Membertype NoteProperty -Name 'compact' -value $true -InputObject $body
@@ -159,21 +159,21 @@ param
 
         if ( $RegularExpression )
         {
-            Add-Member -Membertype NoteProperty -Name 'regex' -value $RegularExpression -InputObject $body            
+            Add-Member -Membertype NoteProperty -Name 'regex' -value $RegularExpression -InputObject $body
         }
-        
+
         [string] $requestBody = $body | ConvertTo-Json -Depth 100
         $response = Invoke-JS7WebRequest -Path '/workflows' -Body $requestBody
-        
+
         if ( $response.StatusCode -eq 200 )
         {
             $returnWorkflows += ( $response.Content | ConvertFrom-JSON ).workflows
         } else {
             throw ( $response | Format-List -Force | Out-String )
-        }        
+        }
 
         $returnWorkflows
-    
+
         if ( $returnWorkflows.count )
         {
             Write-Verbose ".. $($MyInvocation.MyCommand.Name): $($returnWorkflows.count) workflows found"
@@ -181,7 +181,7 @@ param
             Write-Verbose ".. $($MyInvocation.MyCommand.Name): no workflows found"
         }
 
-        Log-StopWatch -CommandName $MyInvocation.MyCommand.Name -StopWatch $stopWatch
-        Touch-JS7Session
+        Trace-JS7StopWatch -CommandName $MyInvocation.MyCommand.Name -StopWatch $stopWatch
+        Update-JS7Session
     }
 }

@@ -39,7 +39,7 @@ with a ticket system that logs the time spent on interventions with JobScheduler
 .PARAMETER AuditTicketLink
 Specifies a URL to a ticket system that keeps track of any interventions performed for JobScheduler.
 
-This information is visible with the Audit Log view of JOC Cockpit. 
+This information is visible with the Audit Log view of JOC Cockpit.
 It can be useful when integrated with a ticket system that logs interventions with JobScheduler.
 
 .OUTPUTS
@@ -60,7 +60,7 @@ added by use of the Add-JS7SigningKey cmdlet.
 about_js7
 
 #>
-[cmdletbinding()]
+[cmdletbinding(SupportsShouldProcess)]
 param
 (
     [Parameter(Mandatory=$True,ValueFromPipelinebyPropertyName=$True)]
@@ -73,12 +73,12 @@ param
     [Parameter(Mandatory=$False,ValueFromPipeline=$False,ValueFromPipelinebyPropertyName=$True)]
     [int] $AuditTimeSpent,
     [Parameter(Mandatory=$False,ValueFromPipeline=$False,ValueFromPipelinebyPropertyName=$True)]
-    [Uri] $AuditTicketLink    
+    [Uri] $AuditTicketLink
 )
     Begin
     {
         Approve-JS7Command $MyInvocation.MyCommand
-        $stopWatch = Start-StopWatch
+        $stopWatch = Start-JS7StopWatch
 
         if ( !$AuditComment -and ( $AuditTimeSpent -or $AuditTicketLink ) )
         {
@@ -92,7 +92,7 @@ param
 
         $body = New-Object PSObject
         Add-Member -Membertype NoteProperty -Name 'keyAlgorithm' -value $KeyAlgorithm -InputObject $body
-        
+
         if ( $ValidUntil )
         {
             Add-Member -Membertype NoteProperty -Name 'validUntil' -value (Get-Date (Get-Date $ValidUntil).ToUniversalTime() -Format 'u').Replace(' ', 'T') -InputObject $body
@@ -115,18 +115,21 @@ param
 
             Add-Member -Membertype NoteProperty -Name 'auditLog' -value $objAuditLog -InputObject $body
         }
-    
-        [string] $requestBody = $body | ConvertTo-Json -Depth 100
-        $response = Invoke-JS7WebRequest -Path '/profile/key/generate' -Body $requestBody
-    
-        if ( $response.StatusCode -eq 200 )
+
+        if ( $PSCmdlet.ShouldProcess( 'key', '/profile/key/generate' ) )
         {
-            $returnKey = ( $response.Content | ConvertFrom-JSON )
-        } else {
-            throw ( $response | Format-List -Force | Out-String )
+            [string] $requestBody = $body | ConvertTo-Json -Depth 100
+            $response = Invoke-JS7WebRequest -Path '/profile/key/generate' -Body $requestBody
+
+            if ( $response.StatusCode -eq 200 )
+            {
+                $returnKey = ( $response.Content | ConvertFrom-JSON )
+            } else {
+                throw ( $response | Format-List -Force | Out-String )
+            }
+
+            $returnKey
         }
-    
-        $returnKey
 
         if ( $returnKey )
         {
@@ -138,7 +141,7 @@ param
 
     End
     {
-        Log-StopWatch -CommandName $MyInvocation.MyCommand.Name -StopWatch $stopWatch
-        Touch-JS7Session        
+        Trace-JS7StopWatch -CommandName $MyInvocation.MyCommand.Name -StopWatch $stopWatch
+        Update-JS7Session
     }
 }

@@ -5,7 +5,7 @@ function Get-JS7TaskHistory
 Returns the task execution history for jobs
 
 .DESCRIPTION
-History information is returned for jobs from a JS7 Controller. 
+History information is returned for jobs from a JS7 Controller.
 Task executions can be selected by job name, workflow, folder, history status etc.
 
 The history information retured includes start time, end time, return code etc.
@@ -13,16 +13,16 @@ The history information retured includes start time, end time, return code etc.
 .PARAMETER Job
 Optionally specifies the name of a job for which task execution results are reported.
 
-This parameter requires use of the -WorkflowPath parameter to specify the workflow 
+This parameter requires use of the -WorkflowPath parameter to specify the workflow
 that includes the job.
 
 .PARAMETER WorkflowPath
 Optionally specifies the path and name of a workflow that includes jobs
-for which the task history is reported. The task execution history optionally can futher 
+for which the task history is reported. The task execution history optionally can futher
 be limited by specifying the -Job parameter to limit results to a job in the given workflow.
 
 .PARAMETER OrderId
-Optionally specifies the identifier of an order to limit results to jobs that 
+Optionally specifies the identifier of an order to limit results to jobs that
 have been executed for the given order.
 
 .PARAMETER Position
@@ -33,7 +33,7 @@ correspond to the given position in a workflow. This parameter requires use of t
 Optionally specifies the folder that includes workflows for which the task history should be returned.
 
 .PARAMETER Recursive
-Specifies that any sub-folders should be looked up when used with the -Folder parameter. 
+Specifies that any sub-folders should be looked up when used with the -Folder parameter.
 By default no sub-folders will be looked up for jobs.
 
 .PARAMETER ExcludeJob
@@ -57,7 +57,7 @@ Consider that a UTC date has to be provided.
 Default: End of the current day as a UTC date
 
 .PARAMETER RelativeDateFrom
-Specifies a relative date starting from which history items should be returned, e.g. 
+Specifies a relative date starting from which history items should be returned, e.g.
 
 * -1s, -2s: one second ago, two seconds ago
 * -1m, -2m: one minute ago, two minutes ago
@@ -74,7 +74,7 @@ for the timezone that is specified with the -Timezone parameter.
 This parameter takes precedence over the -DateFrom parameter.
 
 .PARAMETER RelativeDateTo
-Specifies a relative date until which history items should be returned, e.g. 
+Specifies a relative date until which history items should be returned, e.g.
 
 * -1s, -2s: one second ago, two seconds ago
 * -1m, -2m: one minute ago, two minutes ago
@@ -92,7 +92,7 @@ This parameter takes precedence over the -DateFrom parameter.
 
 .PARAMETER Timezone
 Specifies the timezone to which dates should be converted in the history information.
-A timezone can e.g. be specified like this: 
+A timezone can e.g. be specified like this:
 
   Get-JSTaskHistory -Timezone (Get-Timezone -Id 'GMT Standard Time')
 
@@ -257,7 +257,7 @@ param
     Begin
     {
         Approve-JS7Command $MyInvocation.MyCommand
-        $stopWatch = Start-StopWatch
+        $stopWatch = Start-JS7StopWatch
 
         $jobs = @()
         $orders = @()
@@ -267,44 +267,44 @@ param
         $excludeJobs = @()
         $taskIds = @()
     }
-        
+
     Process
     {
         Write-Debug ".. $($MyInvocation.MyCommand.Name): parameter Folder=$Folder, WorkflowPath=$WorkflowPath Job=$Job"
-    
+
         if ( $Folder -and $Folder -ne '/' )
-        { 
+        {
             if ( !$Folder.StartsWith( '/' ) )
             {
                 $Folder = '/' + $Folder
             }
-        
+
             if ( $Folder.EndsWith( '/' ) )
             {
                 $Folder = $Folder.Substring( 0, $Folder.Length-1 )
             }
         }
-            
+
         if ( $Folder -eq '/' -and !$OrderId -and !$WorkflowPath -and !$Job -and !$Recursive )
         {
             $Recursive = $True
         }
-        
+
         if ( $NormalCriticality )
         {
             $criticalities += 'NORMAL'
         }
-        
+
         if ( $MinorCriticality )
         {
             $criticalities += 'MINOR'
         }
-        
+
         if ( $MajorCriticality )
         {
             $criticalities += 'MAJOR'
         }
-        
+
         if ( $Successful )
         {
             $historyStates += 'SUCCESSFUL'
@@ -324,17 +324,17 @@ param
         {
             $objOrder = New-Object PSObject
             Add-Member -Membertype NoteProperty -Name 'orderId' -value $OrderId -InputObject $objOrder
-            
+
             if ( $WorkflowPath )
             {
                 Add-Member -Membertype NoteProperty -Name 'workflowPath' -value $WorkflowPath -InputObject $objOrder
             }
-            
+
             if ( $Position )
             {
                 Add-Member -Membertype NoteProperty -Name 'position' -value $Position -InputObject $objOrder
             }
-            
+
             $orders += $objOrder
         }
 
@@ -344,7 +344,7 @@ param
 
             if ( $WorkflowPath )
             {
-                Add-Member -Membertype NoteProperty -Name 'workflowPath' -value $WorkflowPath -InputObject $objJob                
+                Add-Member -Membertype NoteProperty -Name 'workflowPath' -value $WorkflowPath -InputObject $objJob
             }
 
             $jobs += $objJob
@@ -357,13 +357,13 @@ param
             Add-Member -Membertype NoteProperty -Name 'recursive' -value ($Recursive -eq $true) -InputObject $objFolder
             $folders += $objFolder
         }
-        
+
         if ( $ExcludeJob )
         {
             foreach( $excludeJobItem in $ExcludeJob )
             {
                 $objExcludeJob = New-Object PSObject
-                
+
                 if ( $excludeJobItem.job )
                 {
                     Add-Member -Membertype NoteProperty -Name 'job' -value $excludeJobItem.job -InputObject $objExcludeJob
@@ -380,13 +380,13 @@ param
                 }
             }
         }
-        
+
         if ( $TaskId )
         {
             $taskIds += $TaskId
         }
     }
-    
+
     End
     {
         # PowerShell/.NET does not create date output in the target timezone but with the local timezone only, let's work around this:
@@ -397,7 +397,7 @@ param
         {
             $timezoneOffsetHours += 1
         }
-                    
+
         [string] $timezoneOffset = "$($timezoneOffsetPrefix)$($timezoneOffsetHours.ToString().PadLeft( 2, '0' )):$($Timezone.BaseUtcOffset.Minutes.ToString().PadLeft( 2, '0' ))"
 
         $body = New-Object PSObject
@@ -478,7 +478,7 @@ param
 
         [string] $requestBody = $body | ConvertTo-Json -Depth 100
         $response = Invoke-JS7WebRequest '/tasks/history' $requestBody
-        
+
         if ( $response.StatusCode -eq 200 )
         {
             $returnHistoryItems = ( $response.Content | ConvertFrom-JSON ).history
@@ -512,8 +512,8 @@ param
         } else {
             Write-Verbose ".. $($MyInvocation.MyCommand.Name): no history items found"
         }
-        
-        Log-StopWatch -CommandName $MyInvocation.MyCommand.Name -StopWatch $stopWatch
-        Touch-JS7Session
+
+        Trace-JS7StopWatch -CommandName $MyInvocation.MyCommand.Name -StopWatch $stopWatch
+        Update-JS7Session
     }
 }

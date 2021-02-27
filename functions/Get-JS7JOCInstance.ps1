@@ -23,27 +23,27 @@ param
     Begin
     {
         Approve-JS7Command $MyInvocation.MyCommand
-        $stopWatch = Start-StopWatch
+        $stopWatch = Start-JS7StopWatch
     }
 
     Process
-    {        
+    {
         $body = New-Object PSObject
         Add-Member -Membertype NoteProperty -Name 'controllerId' -value $script:jsWebService.ControllerId -InputObject $body
 
         [string] $requestBody = $body | ConvertTo-Json -Depth 100
         $response = Invoke-JS7WebRequest -Path '/controller/components' -Body $requestBody
-    
+
         if ( $response.StatusCode -eq 200 )
         {
             $requestResult = ( $response.Content | ConvertFrom-JSON ).jocs
         } else {
             throw ( $response | Format-List -Force | Out-String )
-        }    
+        }
 
         $returnJOCs = New-Object PSObject
         $returnPassiveJOCs = @()
-        
+
         foreach( $joc in $requestResult )
         {
             if ( $joc.clusterNodeState."_text" -eq 'active' )
@@ -53,18 +53,18 @@ param
                 $returnPassiveJOCs += $joc
             }
         }
-        
+
         if ( $returnPassiveJOCs )
         {
-            Add-Member -Membertype NoteProperty -Name 'passive' -value @( $returnPassiveJOCs ) -InputObject $returnJOCs            
+            Add-Member -Membertype NoteProperty -Name 'passive' -value @( $returnPassiveJOCs ) -InputObject $returnJOCs
         }
-        
+
         $returnJOCs
     }
 
     End
     {
-        Log-StopWatch -CommandName $MyInvocation.MyCommand.Name -StopWatch $stopWatch
-        Touch-JS7Session
+        Trace-JS7StopWatch -CommandName $MyInvocation.MyCommand.Name -StopWatch $stopWatch
+        Update-JS7Session
     }
 }

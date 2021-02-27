@@ -6,7 +6,7 @@ Sets credentials that are used to authenticate with requests to the JS7 Web Serv
 
 .DESCRIPTION
 Credentials are required to authenticate with the JS7 Web Service.
-Such credentials can be specified on-the-fly with the Connect-JS7 cmdlet or 
+Such credentials can be specified on-the-fly with the Connect-JS7 cmdlet or
 they can be specified with this cmdlet.
 
 .PARAMETER UseDefaultCredentials
@@ -72,7 +72,7 @@ Set-JS7Credentials -Credentials $credentials
 
 An individual credentials object is created that is assigned the -Credentials parameter.
 #>
-[cmdletbinding()]
+[cmdletbinding(SupportsShouldProcess)]
 param
 (
     [Parameter(Mandatory=$False,ValueFromPipeline=$False,ValueFromPipelinebyPropertyName=$True)]
@@ -88,7 +88,7 @@ param
     [Parameter(Mandatory=$False,ValueFromPipeline=$False,ValueFromPipelinebyPropertyName=$True)]
     [System.Management.Automation.PSCredential] $ProxyCredentials
 )
-    Process 
+    Process
     {
         if ( $UseDefaultCredentials -and $Credentials )
         {
@@ -99,66 +99,90 @@ param
         {
             throw "$($MyInvocation.MyCommand.Name): Use just one of the parameters -ProxyUseDefaultCredentials or -ProxyCredentials"
         }
-    
+
         if ( $UseDefaultCredentials )
         {
-            $script:jsOptionWebRequestUseDefaultCredentials = $UseDefaultCredentials
-            $script:jsWebServiceOptionWebRequestUseDefaultCredentials = $UseDefaultCredentials
+            if ( $PSCmdlet.ShouldProcess( 'credentials' ) )
+            {
+                $script:jsOptionWebRequestUseDefaultCredentials = $UseDefaultCredentials
+                $script:jsWebServiceOptionWebRequestUseDefaultCredentials = $UseDefaultCredentials
+            }
         } else {
-            $script:jsOptionWebRequestUseDefaultCredentials = $false
-            $script:jsWebServiceOptionWebRequestUseDefaultCredentials = $false
+            if ( $PSCmdlet.ShouldProcess( 'credentials' ) )
+            {
+                $script:jsOptionWebRequestUseDefaultCredentials = $false
+                $script:jsWebServiceOptionWebRequestUseDefaultCredentials = $false
+            }
         }
-        
+
         if ( $Credentials )
         {
-            $script:jsCredential = $Credentials
-            $script:jsWebServiceCredential = $Credentials
+            if ( $PSCmdlet.ShouldProcess( 'credentials' ) )
+            {
+                $script:jsCredential = $Credentials
+                $script:jsWebServiceCredential = $Credentials
+            }
         }
-    
+
         if ( $AskForCredentials )
         {
-            Write-Host '* ***************************************************** *'
-            Write-Host '* JS7 credentials for web access:                       *'
-            Write-Host '* enter account and password for authentication         *'
-            Write-Host '* ***************************************************** *'
+            Write-Output '* ***************************************************** *'
+            Write-Output '* JS7 credentials for web access:                       *'
+            Write-Output '* enter account and password for authentication         *'
+            Write-Output '* ***************************************************** *'
             $account = Read-Host 'Enter user account for JS7 web access: '
-            
+
             if ( $account )
             {
                 $password = Read-Host 'Enter password for JS7 web access: ' -AsSecureString
-                $script:jsCredential = New-Object -TypeName System.Management.Automation.PSCredential -ArgumentList $account, $password
-                $script:jsWebServiceCredential = $script:jsCredential
+                if ( $PSCmdlet.ShouldProcess( 'credentials' ) )
+                {
+                    $script:jsCredential = New-Object -TypeName System.Management.Automation.PSCredential -ArgumentList $account, $password
+                    $script:jsWebServiceCredential = $script:jsCredential
+                }
             }
         }
 
         if ( $ProxyUseDefaultCredentials )
         {
-            $script:jsOptionWebRequestProxyUseDefaultCredentials = $ProxyUseDefaultCredentials
-            $script:jsWebServiceOptionWebRequestProxyUseDefaultCredentials = $ProxyUseDefaultCredentials
+            if ( $PSCmdlet.ShouldProcess( 'credentials' ) )
+            {
+                $script:jsOptionWebRequestProxyUseDefaultCredentials = $ProxyUseDefaultCredentials
+                $script:jsWebServiceOptionWebRequestProxyUseDefaultCredentials = $ProxyUseDefaultCredentials
+            }
         } else {
-            $script:jsOptionWebRequestProxyUseDefaultCredentials = $false
-            $script:jsWebServiceOptionWebRequestProxyUseDefaultCredentials = $false
+            if ( $PSCmdlet.ShouldProcess( 'credentials' ) )
+            {
+                $script:jsOptionWebRequestProxyUseDefaultCredentials = $false
+                $script:jsWebServiceOptionWebRequestProxyUseDefaultCredentials = $false
+            }
         }
-        
+
         if ( $ProxyCredentials )
         {
-            $script:jsProxyCredential = $ProxyCredentials
-            $script:jsWebServiceProxyCredential = $ProxyCredentials
+            if ( $PSCmdlet.ShouldProcess( 'credentials' ) )
+            {
+                $script:jsProxyCredential = $ProxyCredentials
+                $script:jsWebServiceProxyCredential = $ProxyCredentials
+            }
         }
 
         if ( $ProxyAskForCredentials )
         {
-            Write-Host '* ***************************************************** *'
-            Write-Host '* JS7 credentials for proxy access:                     *'
-            Write-Host '* enter account and password for proxy authentication   *'
-            Write-Host '* ***************************************************** *'
+            Write-Output '* ***************************************************** *'
+            Write-Output '* JS7 credentials for proxy access:                     *'
+            Write-Output '* enter account and password for proxy authentication   *'
+            Write-Output '* ***************************************************** *'
             $proxyAccount = Read-Host 'Enter user account for JS7 proxy access: '
-            
+
             if ( $proxyAccount )
             {
                 $proxyPassword = Read-Host 'Enter password for JS7 proxy access: ' -AsSecureString
-                $script:jsProxyCredential = New-Object -TypeName System.Management.Automation.PSCredential -ArgumentList $proxyAccount, $proxyPassword
-                $script:jsWebServiceProxyCredential = $script:jsProxyCredentials
+                if ( $PSCmdlet.ShouldProcess( 'credentials' ) )
+                {
+                    $script:jsProxyCredential = New-Object -TypeName System.Management.Automation.PSCredential -ArgumentList $proxyAccount, $proxyPassword
+                    $script:jsWebServiceProxyCredential = $script:jsProxyCredentials
+                }
             }
         }
     }

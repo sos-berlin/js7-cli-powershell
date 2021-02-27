@@ -32,9 +32,9 @@ Specifies the date when the order should start. The time zone is used from the d
 
 .PARAMETER Timezone
 Specifies the time zone to be considered for the start time that is indicated with the -At argument.
-Without this argument the time zone of the JS7 Controller is assumed. 
+Without this argument the time zone of the JS7 Controller is assumed.
 
-This argument should be used if the JS7 Controller runs in a time zone different to the environment 
+This argument should be used if the JS7 Controller runs in a time zone different to the environment
 that makes use of this cmdlet.
 
 Find the list of time zone names from https://en.wikipedia.org/wiki/List_of_tz_database_time_zones
@@ -62,7 +62,7 @@ with a ticket system that logs the time spent on interventions with JobScheduler
 .PARAMETER AuditTicketLink
 Specifies a URL to a ticket system that keeps track of any interventions performed for JobScheduler.
 
-This information is visible with the Audit Log view of JOC Cockpit. 
+This information is visible with the Audit Log view of JOC Cockpit.
 It can be useful when integrated with a ticket system that logs interventions with JobScheduler.
 
 .INPUTS
@@ -96,7 +96,7 @@ arguments from the specified hashmap.
 about_js7
 
 #>
-[cmdletbinding()]
+[cmdletbinding(SupportsShouldProcess)]
 param
 (
     [Parameter(Mandatory=$True,ValueFromPipeline=$True,ValueFromPipelinebyPropertyName=$True)]
@@ -109,10 +109,10 @@ param
     [DateTime] $AtDate,
     [Parameter(Mandatory=$False,ValueFromPipeline=$False,ValueFromPipelinebyPropertyName=$True)]
     [string] $Timezone,
-    [Parameter(Mandatory=$False,ValueFromPipeline=$False,ValueFromPipelinebyPropertyName=$True)]
-    [string] $StartPosition,
-    [Parameter(Mandatory=$False,ValueFromPipeline=$False,ValueFromPipelinebyPropertyName=$True)]
-    [string] $EndPosition,
+#   [Parameter(Mandatory=$False,ValueFromPipeline=$False,ValueFromPipelinebyPropertyName=$True)]
+#   [string] $StartPosition,
+#   [Parameter(Mandatory=$False,ValueFromPipeline=$False,ValueFromPipelinebyPropertyName=$True)]
+#   [string] $EndPosition,
     [Parameter(Mandatory=$False,ValueFromPipeline=$False,ValueFromPipelinebyPropertyName=$True)]
     [string] $AuditComment,
     [Parameter(Mandatory=$False,ValueFromPipeline=$False,ValueFromPipelinebyPropertyName=$True)]
@@ -123,8 +123,8 @@ param
     Begin
     {
         Approve-JS7Command $MyInvocation.MyCommand
-        $stopWatch = Start-StopWatch
-        
+        $stopWatch = Start-JS7StopWatch
+
         if ( $At -and $AtDate )
         {
             throw "$($MyInvocation.MyCommand.Name): only one of the parameters -At or -AtDate can be used"
@@ -139,18 +139,18 @@ param
         $objOrders = @()
         $scheduledFor = $null;
     }
-    
+
     Process
     {
         $body = New-Object PSObject
         Add-Member -Membertype NoteProperty -Name 'controllerId' -value $script:jsWebService.ControllerId -InputObject $body
-        
-        Add-Member -Membertype NoteProperty -Name 'orderId' -value $OrderId -InputObject $body            
-        Add-Member -Membertype NoteProperty -Name 'suppressNotExistException' -value $True -InputObject $body            
+
+        Add-Member -Membertype NoteProperty -Name 'orderId' -value $OrderId -InputObject $body
+        Add-Member -Membertype NoteProperty -Name 'suppressNotExistException' -value $True -InputObject $body
 
         [string] $requestBody = $body | ConvertTo-Json -Depth 100
         $response = Invoke-JS7WebRequest -Path '/order' -Body $requestBody
-    
+
         if ( $response.StatusCode -eq 200 )
         {
             $returnOrder = ( $response.Content | ConvertFrom-JSON )
@@ -162,13 +162,13 @@ param
 
             if ( $returnOrder.state._text -ne 'PENDING' )
             {
-                throw "$($MyInvocation.MyCommand.Name): order already started and is in $($returnOrder.state._text) state: $OrderId"                
+                throw "$($MyInvocation.MyCommand.Name): order already started and is in $($returnOrder.state._text) state: $OrderId"
             }
 
         } else {
             throw ( $response | Format-List -Force | Out-String )
         }
-    
+
 
         if ( $AtDate -ge (Get-Date) )
         {
@@ -221,7 +221,7 @@ param
                 Add-Member -Membertype NoteProperty -Name 'arguments' -value $objArguments -InputObject $objOrder
             }
         } elseif ( $returnOrder.arguments ) {
-            Add-Member -Membertype NoteProperty -Name 'arguments' -value $returnOrder.arguments -InputObject $objOrder            
+            Add-Member -Membertype NoteProperty -Name 'arguments' -value $returnOrder.arguments -InputObject $objOrder
         }
 
         $objOrders += $objOrder
@@ -240,81 +240,86 @@ param
             {
                 $objAuditLog = New-Object PSObject
                 Add-Member -Membertype NoteProperty -Name 'comment' -value $AuditComment -InputObject $objAuditLog
-    
+
                 if ( $AuditTimeSpent )
                 {
                     Add-Member -Membertype NoteProperty -Name 'timeSpent' -value $AuditTimeSpent -InputObject $objAuditLog
                 }
-    
+
                 if ( $AuditTicketLink )
                 {
                     Add-Member -Membertype NoteProperty -Name 'ticketLink' -value $AuditTicketLink -InputObject $objAuditLog
                 }
-    
+
                 Add-Member -Membertype NoteProperty -Name 'auditLog' -value $objAuditLog -InputObject $body
             }
-    
-            [string] $requestBody = $body | ConvertTo-Json -Depth 100
-            $response = Invoke-JS7WebRequest '/orders/cancel' $requestBody
-            
-            if ( $response.StatusCode -eq 200 )
+
+            if ( $PSCmdlet.ShouldProcess( 'orders', '/orders/cancel' ) )
             {
-                $requestResult = ( $response.Content | ConvertFrom-JSON )
-                
-                if ( !$requestResult.ok )
+                [string] $requestBody = $body | ConvertTo-Json -Depth 100
+                $response = Invoke-JS7WebRequest '/orders/cancel' $requestBody
+
+                if ( $response.StatusCode -eq 200 )
                 {
+                    $requestResult = ( $response.Content | ConvertFrom-JSON )
+
+                    if ( !$requestResult.ok )
+                    {
+                        throw ( $response | Format-List -Force | Out-String )
+                    }
+                } else {
                     throw ( $response | Format-List -Force | Out-String )
                 }
-            } else {
-                throw ( $response | Format-List -Force | Out-String )
-            }        
-            
-            
+            }
+
             $body = New-Object PSObject
             Add-Member -Membertype NoteProperty -Name 'controllerId' -value $script:jsWebService.ControllerId -InputObject $body
             Add-Member -Membertype NoteProperty -Name 'orders' -value $objOrders -InputObject $body
-    
+
             if ( $AuditComment -or $AuditTimeSpent -or $AuditTicketLink )
             {
                 $objAuditLog = New-Object PSObject
                 Add-Member -Membertype NoteProperty -Name 'comment' -value $AuditComment -InputObject $objAuditLog
-    
+
                 if ( $AuditTimeSpent )
                 {
                     Add-Member -Membertype NoteProperty -Name 'timeSpent' -value $AuditTimeSpent -InputObject $objAuditLog
                 }
-    
+
                 if ( $AuditTicketLink )
                 {
                     Add-Member -Membertype NoteProperty -Name 'ticketLink' -value $AuditTicketLink -InputObject $objAuditLog
                 }
-    
+
                 Add-Member -Membertype NoteProperty -Name 'auditLog' -value $objAuditLog -InputObject $body
             }
-    
-            [string] $requestBody = $body | ConvertTo-Json -Depth 100
-            $response = Invoke-JS7WebRequest '/orders/add' $requestBody
-            
-            if ( $response.StatusCode -eq 200 )
-            {
-                $returnOrderIds = ( $response.Content | ConvertFrom-JSON ).orderIds
-                
-                if ( !$returnOrderIds )
-                {
-                    throw "could not add orders: $($requestResult.message)"
-                }
-            } else {
-                throw ( $response | Format-List -Force | Out-String )
-            }
-        
-            $returnOrderIds
 
-            Write-Verbose ".. $($MyInvocation.MyCommand.Name): $($objOrders.count) orders started"                
+            if ( $PSCmdlet.ShouldProcess( 'orders', '/orders/add' ) )
+            {
+                [string] $requestBody = $body | ConvertTo-Json -Depth 100
+                $response = Invoke-JS7WebRequest '/orders/add' $requestBody
+
+                if ( $response.StatusCode -eq 200 )
+                {
+                    $returnOrderIds = ( $response.Content | ConvertFrom-JSON ).orderIds
+
+                    if ( !$returnOrderIds )
+                    {
+                        throw "could not add orders: $($requestResult.message)"
+                    }
+                } else {
+                    throw ( $response | Format-List -Force | Out-String )
+                }
+
+                $returnOrderIds
+
+                Write-Verbose ".. $($MyInvocation.MyCommand.Name): $($objOrders.count) orders started"
+            }
         } else {
-            Write-Verbose ".. $($MyInvocation.MyCommand.Name): no orders found"                
+            Write-Verbose ".. $($MyInvocation.MyCommand.Name): no orders found"
         }
 
-        Log-StopWatch -CommandName $MyInvocation.MyCommand.Name -StopWatch $stopWatch
-        Touch-JS7Session
+        Trace-JS7StopWatch -CommandName $MyInvocation.MyCommand.Name -StopWatch $stopWatch
+        Update-JS7Session
     }
 }

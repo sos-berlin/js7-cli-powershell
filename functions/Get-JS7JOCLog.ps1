@@ -5,7 +5,7 @@ function Get-JS7JOCLog
 Return the JOC Cockpit log
 
 .DESCRIPTION
-Returns the latest JOC Cockpit log or the specified log file. Should the JOC Cockpit log have rotated 
+Returns the latest JOC Cockpit log or the specified log file. Should the JOC Cockpit log have rotated
 then previous log files can be specified using the -Filename parameter. The list of JOC Cockpit log file names is available from the Get-JS7JOCLogFilename cmdlet.
 
 .PARAMETER Filename
@@ -41,9 +41,9 @@ param
     Begin
     {
         Approve-JS7Command $MyInvocation.MyCommand
-        $stopWatch = Start-StopWatch
+        $stopWatch = Start-JS7StopWatch
     }
-    
+
     Process
     {
         $body = New-Object PSObject
@@ -51,21 +51,21 @@ param
         {
             Add-Member -Membertype NoteProperty -Name 'filename' -value $Filename -InputObject $body
         }
-        
+
         [string] $requestBody = $body | ConvertTo-Json -Depth 100
         $response = Invoke-JS7WebRequest -Path '/joc/log' -Body $requestBody
-            
+
         if ( $response.StatusCode -ne 200 )
         {
             throw ( $response | Format-List -Force | Out-String )
         }
-        
+
         [System.Text.Encoding]::UTF8.GetString( $response.Content )
     }
 
     End
     {
-        Log-StopWatch -CommandName $MyInvocation.MyCommand.Name -StopWatch $stopWatch
-        Touch-JS7Session
+        Trace-JS7StopWatch -CommandName $MyInvocation.MyCommand.Name -StopWatch $stopWatch
+        Update-JS7Session
     }
 }

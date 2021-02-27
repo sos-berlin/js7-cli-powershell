@@ -18,11 +18,11 @@ param
     Process
     {
         $response = Invoke-JS7WebRequest -Path '/authentication/logout' -Body ""
-        
+
         if ( $response.StatusCode -eq 200 )
         {
             $requestResult = ( $response.Content | ConvertFrom-JSON )
-            
+
             if ( $requestResult.isAuthenticated -ne $false )
             {
                 throw ( $response | Format-List -Force | Out-String )
@@ -31,8 +31,7 @@ param
             throw ( $response | Format-List -Force | Out-String )
         }
 
-        $script:js = Create-JSObject
-        $script:jsWebService = Create-WebServiceObject
+        $script:jsWebService = New-JS7WebServiceObject
         $script:jsWebServiceCredential = $null
-    }    
+    }
 }

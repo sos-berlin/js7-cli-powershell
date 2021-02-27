@@ -1,7 +1,7 @@
 @{
 
 # Script module or binary module file associated with this manifest.
-ModuleToProcess = 'JS7.psm1'
+RootModule = 'JS7.psm1'
 
 # Version number of this module.
 ModuleVersion = '1.0.0'
@@ -19,13 +19,13 @@ CompanyName = 'SOS GmbH'
 Copyright = 'Copyright (c) 2020 by SOS GmbH, licensed under Apache 2.0 License.'
 
 # Description of the functionality provided by this module
-Description = 'JS7 provides a set of cmdlets to control a JobScheduler Controller and Agents from the command line.'
+Description = 'Provides a number of cmdlets to access the JS7 JOC Cockpit REST Web Service.'
 
 # Minimum version of the Windows PowerShell engine required by this module
 PowerShellVersion = '5.1'
 
 # Functions to export from this module
-FunctionsToExport = @( 
+FunctionsToExport = @(
     'Add-JS7Folder',
     'Add-JS7InventoryItem',
     'Add-JS7Order',
@@ -68,7 +68,7 @@ FunctionsToExport = @(
     'Remove-JS7DailyPlanOrder',
     'Remove-JS7Folder',
     'Remove-JS7InventoryItem',
-    'Remove-JS7TerminatedOrder',
+    'Remove-JS7CompletedOrder',
     'Restart-JS7ControllerInstance',
     'Restart-JS7JOCService',
     'Restore-JS7Agent',

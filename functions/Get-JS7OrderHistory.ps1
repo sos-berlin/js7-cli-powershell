@@ -5,7 +5,7 @@ function Get-JS7OrderHistory
 Returns the order execution history
 
 .DESCRIPTION
-History information is returned for orders from a JS7 Controller. 
+History information is returned for orders from a JS7 Controller.
 Order executions can be selected by workflow, order ID, folder, history status etc.
 
 The history information returned includes start time, end time, return code etc.
@@ -20,7 +20,7 @@ Optionally specifies the path and name of a workflow for which order history inf
 Optionally specifies the folder that includes workflows for which the order history should be returned.
 
 .PARAMETER Recursive
-Specifies that any sub-folders should be looked up when used with the -Folder parameter. 
+Specifies that any sub-folders should be looked up when used with the -Folder parameter.
 By default no sub-folders will be looked up for workflow paths.
 
 .PARAMETER ExcludeOrder
@@ -46,7 +46,7 @@ Consider that a UTC date has to be provided.
 Default should no order ID be provided: End of the current day as a UTC date
 
 .PARAMETER RelativeDateFrom
-Specifies a relative date starting from which history items should be returned, e.g. 
+Specifies a relative date starting from which history items should be returned, e.g.
 
 * -1s, -2s: one second ago, two seconds ago
 * -1m, -2m: one minute ago, two minutes ago
@@ -63,7 +63,7 @@ for the timezone that is specified with the -Timezone parameter.
 This parameter takes precedence over the -DateFrom parameter.
 
 .PARAMETER RelativeDateTo
-Specifies a relative date until which history items should be returned, e.g. 
+Specifies a relative date until which history items should be returned, e.g.
 
 * -1s, -2s: one second ago, two seconds ago
 * -1m, -2m: one minute ago, two minutes ago
@@ -81,7 +81,7 @@ This parameter takes precedence over the -DateFrom parameter.
 
 .PARAMETER Timezone
 Specifies the timezone to which dates should be converted from the history information.
-A timezone can e.g. be specified like this: 
+A timezone can e.g. be specified like this:
 
   Get-JS7OrderHistory -Timezone (Get-Timezone -Id 'GMT Standard Time')
 
@@ -106,7 +106,7 @@ Specifies that history information for running orders should be returned.
 
 .PARAMETER WorkflowId
 This is an implicit parameter used when pipelining order objects to this cmdlet as e.g. with
-   
+
    Get-JS7Order -Folder /some_path | Get-JS7OrderHistory
 
 .OUTPUTS
@@ -224,14 +224,14 @@ param
     Begin
     {
         Approve-JS7Command $MyInvocation.MyCommand
-        $stopWatch = Start-StopWatch
+        $stopWatch = Start-JS7StopWatch
 
         $orders = @()
         $folders = @()
         $historyStates = @()
         $excludeOrders = @()
     }
-        
+
     Process
     {
         Write-Debug ".. $($MyInvocation.MyCommand.Name): parameter Folder=$Folder, WorkflowPath=$WorkflowPath, OrderId=$OrderId"
@@ -240,25 +240,25 @@ param
         {
             $WorkflowPath = $WorkflowId.path
         }
-    
+
         if ( $Folder -and $Folder -ne '/' )
-        { 
+        {
             if ( !$Folder.StartsWith( '/' ) )
             {
                 $Folder = '/' + $Folder
             }
-        
+
             if ( $Folder.EndsWith( '/' ) )
             {
                 $Folder = $Folder.Substring( 0, $Folder.Length-1 )
             }
         }
-    
+
         if ( $Folder -eq '/' -and !$WorkflowPath -and !$OrderId -and !$Recursive )
         {
             $Recursive = $True
         }
-        
+
         if ( $Successful )
         {
             $historyStates += 'SUCCESSFUL'
@@ -287,12 +287,12 @@ param
         if ( $OrderId -or $WorkflowPath )
         {
             $objOrder = New-Object PSObject
-                        
+
             if ( $OrderId )
             {
                 Add-Member -Membertype NoteProperty -Name 'orderId' -value $OrderId -InputObject $objOrder
             }
-            
+
             if ( $WorkflowPath )
             {
                 Add-Member -Membertype NoteProperty -Name 'workflowPath' -value $WorkflowPath -InputObject $objOrder
@@ -312,7 +312,7 @@ param
             foreach( $excludeOrderItem in $ExcludeOrder )
             {
                 $objExcludeOrder = New-Object PSObject
-                
+
                 if ( $excludeOrderItem.orderId )
                 {
                     Add-Member -Membertype NoteProperty -Name 'orderId' -value $excludeOrderItem.orderId -InputObject $objExcludeOrder
@@ -330,7 +330,7 @@ param
             }
         }
     }
-    
+
     End
     {
         # PowerShell/.NET does not create date output in the target timezone but with the local timezone only, let's work around this:
@@ -341,7 +341,7 @@ param
         {
             $timezoneOffsetHours += 1
         }
-                    
+
         [string] $timezoneOffset = "$($timezoneOffsetPrefix)$($timezoneOffsetHours.ToString().PadLeft( 2, '0' )):$($Timezone.BaseUtcOffset.Minutes.ToString().PadLeft( 2, '0' ))"
 
         $body = New-Object PSObject
@@ -407,7 +407,7 @@ param
 
         [string] $requestBody = $body | ConvertTo-Json -Depth 100
         $response = Invoke-JS7WebRequest -Path '/orders/history' -Body $requestBody
-        
+
         if ( $response.StatusCode -eq 200 )
         {
             $returnHistoryItems = ( $response.Content | ConvertFrom-JSON ).history
@@ -418,7 +418,7 @@ param
         if ( $Timezone.Id -eq 'UTC' )
         {
             $returnHistoryItems
-        } else {            
+        } else {
             $returnHistoryItems | Select-Object -Property `
                                            controllerId, `
                                            historyId, `
@@ -438,8 +438,8 @@ param
         } else {
             Write-Verbose ".. $($MyInvocation.MyCommand.Name): no history items found"
         }
-        
-        Log-StopWatch -CommandName $MyInvocation.MyCommand.Name -StopWatch $stopWatch
-        Touch-JS7Session
+
+        Trace-JS7StopWatch -CommandName $MyInvocation.MyCommand.Name -StopWatch $stopWatch
+        Update-JS7Session
     }
 }

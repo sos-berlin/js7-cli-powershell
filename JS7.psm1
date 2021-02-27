@@ -9,7 +9,7 @@ For further information see
 If the documentation is not available for your language then consider to use
 
     PS > [System.Threading.Thread]::CurrentThread.CurrentUICulture = 'en-US'
-    
+
 #>
 
 # --------------------------------
@@ -18,9 +18,6 @@ If the documentation is not available for your language then consider to use
 
 # JS7 Controller Object
 [PSObject] $js = $null
-
-# JS7 Controller environment
-[hashtable] $jsEnv = @{}
 
 # Commands that require a local Controller instance (Management of Windows Service)
 [string[]] $jsLocalCommands = @( 'Install-JS7Service', 'Remove-JS7Service', 'Start-JS7Controller' )
@@ -40,17 +37,17 @@ If the documentation is not available for your language then consider to use
 # -------------------------------------
 
 # JS7 Web Service Object
-[PSObject] $jsWebService = $null
+[PSObject] $script:jsWebService = $null
 
-# JS7 Web Service Request 
+# JS7 Web Service Request
 #     Credentials
-[System.Management.Automation.PSCredential] $jsWebServiceCredential = $null
+[System.Management.Automation.PSCredential] $script:jsWebServiceCredential = $null
 #    Use default credentials of the current user?
-[bool] $jsWebServiceOptionWebRequestUseDefaultCredentials = $false
+[bool] $script:jsWebServiceOptionWebRequestUseDefaultCredentials = $false
 #     Proxy Credentials
-[System.Management.Automation.PSCredential] $jsWebServiceProxyCredential = $null
+[System.Management.Automation.PSCredential] $script:jsWebServiceProxyCredential = $null
 #    Use default credentials of the current user?
-[bool] $jsWebServiceOptionWebRequestProxyUseDefaultCredentials = $true
+[bool] $script:jsWebServiceOptionWebRequestProxyUseDefaultCredentials = $true
 
 # --------------------
 # Globals with Options
@@ -58,9 +55,9 @@ If the documentation is not available for your language then consider to use
 
 # Options
 #     Debug Message: responses exceeding the max. output size are stored in temporary files
-[int] $jsOptionDebugMaxOutputSize = 1000
+[int] $script:jsOptionDebugMaxOutputSize = 1000
 #    Controller Web Request: timeout for establishing the connection in ms
-[int] $jsOptionWebRequestTimeout = 30
+[int] $script:jsOptionWebRequestTimeout = 30
 
 # ----------------------------------------------------------------------
 # Public Functions
@@ -126,7 +123,7 @@ When omitting the -Prefix parameter then
 * Stop-Job
 
 .PARAMETER ExcludesPrefix
-Specifies a prefix that is used should a resulting alias be a member of the list of 
+Specifies a prefix that is used should a resulting alias be a member of the list of
 excluded aliases that is specified with the -Excludes parameter.
 
 When used with the -NoDuplicates parameter then this parameter specifies the prefix that is used
@@ -177,9 +174,9 @@ param
     {
         if ( $NoDuplicates )
         {
-            $allCommands = Get-Command | Select-Object -Property Name | foreach { $_.Name }
+            $allCommands = Get-Command | Select-Object -Property Name | ForEach-Object { $_.Name }
         }
-        
+
         $commands = Get-Command -Module JS7 -CommandType 'Function'
         foreach( $command in $commands )
         {
@@ -199,10 +196,10 @@ param
                     continue
                 }
             }
-            
+
             if ( $NoDuplicates )
             {
-                if ( $allCommands -contains $aliasName ) 
+                if ( $allCommands -contains $aliasName )
                 {
                     if ( $ExcludesPrefix )
                     {
@@ -213,11 +210,11 @@ param
                 }
             }
 
-            Set-Alias -Name $aliasName -Value $command.Name            
+            Set-Alias -Name $aliasName -Value $command.Name
         }
-        
+
         Export-ModuleMember -Alias "*"
-    }    
+    }
 }
 
 # create alias names to shorten 'JS7' to 'JS'
@@ -229,178 +226,99 @@ param
 # Private Functions
 # ----------------------------------------------------------------------
 
-function Approve-JS7Command( [System.Management.Automation.CommandInfo] $command )
+function Approve-JS7Command( [System.Management.Automation.CommandInfo] $Command )
 {
-    if ( !$jsWebServiceCredential )
+    if ( !$script:jsWebServiceCredential )
     {
-        throw "$($command.Name): no valid session, login to the JS7 Web Service with the Connect-JS7 cmdlet"
+        throw "$($Command.Name): no valid session, login to the JS7 Web Service with the Connect-JS7 cmdlet"
     }
 
-    if ( !$SCRIPT:js.Local )
+    if ( !$script:js.Local )
     {
-        if ( $SCRIPT:jsLocalCommands -contains $command.Name )
+        if ( $script:jsLocalCommands -contains $Command.Name )
         {
-            throw "$($command.Name): cmdlet is available exclusively for local JS7 Controller. Switch instance with the Connect-JS7 cmdlet and specify the -Id or -InstallPath parameter for a local JS7 Controller"
+            throw "$($Command.Name): cmdlet is available exclusively for local JS7 Controller. Switch instance with the Connect-JS7 cmdlet and specify the -Id or -InstallPath parameter for a local JS7 Controller"
         }
     }
 
-    if ( !$SCRIPT:js.Url -and !$SCRIPT:jsOperations -and !$SCRIPT:jsWebService.ControllerId )
+    if ( !$script:js.Url -and !$script:jsOperations -and !$script:jsWebService.ControllerId )
     {
-        if ( $SCRIPT:jsLocalCommands -notcontains $command.Name )
+        if ( $script:jsLocalCommands -notcontains $Command.Name )
         {
-            throw "$($command.Name): cmdlet requires a JS7 URL. Switch instance with the Connect-JS7 cmdlet and specify the -Url parameter"
+            throw "$($Command.Name): cmdlet requires a JS7 URL. Switch instance with the Connect-JS7 cmdlet and specify the -Url parameter"
         }
     }
 }
 
-function Approve-JS7AgentCommand( [System.Management.Automation.CommandInfo] $command )
+function Approve-JS7AgentCommand( [System.Management.Automation.CommandInfo] $Command )
 {
-    if ( !$SCRIPT:jsAgent.Local )
+    if ( !$script:jsAgent.Local )
     {
-        if ( $SCRIPT:jsAgentLocalCommands -contains $command.Name )
+        if ( $script:jsAgentLocalCommands -contains $Command.Name )
         {
             throw "$($command.Name): cmdlet is available exclusively for local JS7 Agent. Switch instance with the Use-JS7Agent cmdlet and specify the -InstallPath parameter for a local JS7 Agent"
         }
     }
 
-    if ( !$SCRIPT:jsAgent.Url -and !$SCRIPT:jsOperations )
+    if ( !$script:jsAgent.Url -and !$script:jsOperations )
     {
-        if ( $SCRIPT:jsAgentLocalCommands -notcontains $command.Name )
+        if ( $script:jsAgentLocalCommands -notcontains $Command.Name )
         {
             throw "$($command.Name): cmdlet requires a JS7 Agent URL. Switch instance with the Use-JS7Agent cmdlet and specify the -Url parameter"
         }
     }
 }
 
-function Start-StopWatch()
+function Start-JS7StopWatch
 {
-    [System.Diagnostics.Stopwatch]::StartNew()
-}
+[cmdletbinding(SupportsShouldProcess)]
+[OutputType([System.Diagnostics.Stopwatch])]
+param
+()
 
-function Log-StopWatch( [string] $commandName, [System.Diagnostics.Stopwatch] $stopWatch )
-{
-    if ( $stopWatch )
+    if ( $PSCmdlet.ShouldProcess( 'Stopwatch' ) )
     {
-        Write-Verbose ".. $($commandName): time elapsed: $($stopWatch.Elapsed.TotalMilliseconds) ms"
+        [System.Diagnostics.Stopwatch]::StartNew()
     }
 }
 
-function Create-JSObject()
+function Trace-JS7StopWatch( [string] $CommandName, [System.Diagnostics.Stopwatch] $StopWatch )
 {
-    $js = New-Object PSObject
-    $jsInstall = New-Object PSObject
-    $jsConfig = New-Object PSObject
-    $jsService = New-Object PSObject
-    
-    $js | Add-Member -Membertype NoteProperty -Name Id -Value ''
-    $js | Add-Member -Membertype NoteProperty -Name Url -Value ''
-    $js | Add-Member -Membertype NoteProperty -Name ProxyUrl -Value ''
-
-    $js
+    if ( $StopWatch )
+    {
+        Write-Verbose ".. $($CommandName): time elapsed: $($StopWatch.Elapsed.TotalMilliseconds) ms"
+    }
 }
 
-function Create-StatisticsObject()
+function New-JS7WebServiceObject
 {
-    $stat = New-Object PSObject
+[cmdletbinding(SupportsShouldProcess)]
+param
+()
 
-    $stat | Add-Member -Membertype NoteProperty -Name JobsExist -Value 0
-    $stat | Add-Member -Membertype NoteProperty -Name JobsPending -Value 0
-    $stat | Add-Member -Membertype NoteProperty -Name JobsRunning -Value 0
-    $stat | Add-Member -Membertype NoteProperty -Name JobsStopped -Value 0
-    $stat | Add-Member -Membertype NoteProperty -Name JobsNeedProcess -Value 0
+    if ( $PSCmdlet.ShouldProcess( $Service, '/joc/cluster/restart' ) )
+    {
+        $jsWebService = New-Object PSObject
 
-    $stat | Add-Member -Membertype NoteProperty -Name TasksExist -Value 0
-    $stat | Add-Member -Membertype NoteProperty -Name TasksRunning -Value 0
-    $stat | Add-Member -Membertype NoteProperty -Name TasksStarting -Value 0
-    
-    $stat | Add-Member -Membertype NoteProperty -Name OrdersExist -Value 0
-    $stat | Add-Member -Membertype NoteProperty -Name OrdersClustered -Value 0
-    $stat | Add-Member -Membertype NoteProperty -Name OrdersStanding -Value 0
+        $jsWebService | Add-Member -Membertype NoteProperty -Name Url -Value ''
+        $jsWebService | Add-Member -Membertype NoteProperty -Name ProxyUrl -Value ''
+        $jsWebService | Add-Member -Membertype NoteProperty -Name Base -Value ''
+        $jsWebService | Add-Member -Membertype NoteProperty -Name Timeout -Value $script:jsOptionWebRequestTimeout
+        $jsWebService | Add-Member -Membertype NoteProperty -Name SkipCertificateCheck -Value $false
+        $jsWebService | Add-Member -Membertype NoteProperty -Name SSLProtocol -Value ''
+        $jsWebService | Add-Member -Membertype NoteProperty -Name Certificate -Value ''
+        $jsWebService | Add-Member -Membertype NoteProperty -Name ControllerId -Value ''
+        $jsWebService | Add-Member -Membertype NoteProperty -Name AccessToken -Value ''
+        $jsWebService | Add-Member -Membertype NoteProperty -Name ControllerInstances -Value @()
 
-    $stat | Add-Member -Membertype NoteProperty -Name SchedulesExist -Value 0
-    $stat | Add-Member -Membertype NoteProperty -Name ProcessClassesExist -Value 0
-    $stat | Add-Member -Membertype NoteProperty -Name FoldersExist -Value 0
-    $stat | Add-Member -Membertype NoteProperty -Name LocksExist -Value 0
-    $stat | Add-Member -Membertype NoteProperty -Name MonitorsExist -Value 0
-    
-    $stat
-}
-
-function Create-WorkflowObject()
-{
-    $workflow = New-Object PSObject
-
-    $workflow | Add-Member -Membertype NoteProperty -Name Workflow -Value ''
-    $workflow | Add-Member -Membertype NoteProperty -Name Path -Value ''
-    $workflow | Add-Member -Membertype NoteProperty -Name Directory -Value ''
-    $workflow | Add-Member -Membertype NoteProperty -Name Volatile -Value ''
-    $workflow | Add-Member -Membertype NoteProperty -Name Permanent -Value ''
-
-    $workflow
-}
-
-function Create-OrderObject()
-{
-    $order = New-Object PSObject
-
-    $order | Add-Member -Membertype NoteProperty -Name OrderId -Value ''
-    $order | Add-Member -Membertype NoteProperty -Name Workflow -Value ''
-    $order | Add-Member -Membertype NoteProperty -Name Path -Value ''
-    $order | Add-Member -Membertype NoteProperty -Name Directory -Value ''
-    $order | Add-Member -Membertype NoteProperty -Name Volatile -Value ''
-    $order | Add-Member -Membertype NoteProperty -Name Permanent -Value ''
-    $order | Add-Member -Membertype NoteProperty -Name OrderHistory -Value @()
-
-    $order
-}
-
-function Create-JobObject()
-{
-    $job = New-Object PSObject
-
-    $job | Add-Member -Membertype NoteProperty -Name Job -Value ''
-    $job | Add-Member -Membertype NoteProperty -Name Path -Value ''
-    $job | Add-Member -Membertype NoteProperty -Name Directory -Value ''
-    $job | Add-Member -Membertype NoteProperty -Name Volatile -Value ''
-    $job | Add-Member -Membertype NoteProperty -Name Permanent -Value ''
-    $job | Add-Member -Membertype NoteProperty -Name Tasks -Value @()
-    $job | Add-Member -Membertype NoteProperty -Name TaskHistory -Value @()
-
-    $job
-}
-
-function Create-JSAgentObject()
-{
-    $jsAgent = New-Object PSObject
-    
-    $jsAgent | Add-Member -Membertype NoteProperty -Name Url -Value ''
-    $jsAgent | Add-Member -Membertype NoteProperty -Name ProxyUrl -Value ''
-
-    $jsAgent
-}
-
-function Create-WebServiceObject()
-{
-    $jsWebService = New-Object PSObject
-
-    $jsWebService | Add-Member -Membertype NoteProperty -Name Url -Value ''
-    $jsWebService | Add-Member -Membertype NoteProperty -Name ProxyUrl -Value ''
-    $jsWebService | Add-Member -Membertype NoteProperty -Name Base -Value ''
-    $jsWebService | Add-Member -Membertype NoteProperty -Name Timeout -Value $script:jsOptionWebRequestTimeout
-    $jsWebService | Add-Member -Membertype NoteProperty -Name SkipCertificateCheck -Value $false
-    $jsWebService | Add-Member -Membertype NoteProperty -Name SSLProtocol -Value ''
-    $jsWebService | Add-Member -Membertype NoteProperty -Name Certificate -Value ''
-    $jsWebService | Add-Member -Membertype NoteProperty -Name ControllerId -Value ''
-    $jsWebService | Add-Member -Membertype NoteProperty -Name AccessToken -Value ''
-    $jsWebService | Add-Member -Membertype NoteProperty -Name ControllerInstances -Value @()
-
-    $jsWebService
+        $jsWebService
+    }
 }
 
 function isPowerShellVersion( [int] $Major=-1, [int] $Minor=-1, [int] $Patch=-1 )
 {
     $rc = $false
-    
+
     if ( $Major -gt -1 )
     {
         if ( $PSVersionTable.PSVersion.Major -eq $Major )
@@ -434,15 +352,19 @@ function isPowerShellVersion( [int] $Major=-1, [int] $Minor=-1, [int] $Patch=-1 
     $rc
 }
 
-function Touch-JS7Session()
+function Update-JS7Session
 {
-    try
+[cmdletbinding(SupportsShouldProcess)]
+param
+()
+
+    if ( $script:jsWebService.ControllerId )
     {
-        if ( $script:jsWebService.ControllerId )
+        if ( $PSCmdlet.ShouldProcess( 'session' ) )
         {
             Invoke-JS7WebRequest -Path '/touch' | Out-Null
         }
-    } catch {}    
+    }
 }
 
 function Invoke-JS7WebRequest( [string] $Path, [object] $Body, [string] $Method='POST', [string] $ContentType='application/json', [hashtable] $Headers=@{'Accept' = 'application/json'}, [string] $InFile, [boolean] $Verbose )
@@ -458,7 +380,7 @@ function Invoke-JS7WebRequest( [string] $Path, [object] $Body, [string] $Method=
     $requestParams.Add( 'Verbose', $Verbose )
     $requestParams.Add( 'Uri', $requestUrl )
     $requestParams.Add( 'Method', $Method )
-    
+
     if ( $ContentType )
     {
         $requestParams.Add( 'ContentType', $ContentType )
@@ -471,27 +393,27 @@ function Invoke-JS7WebRequest( [string] $Path, [object] $Body, [string] $Method=
 
     $Headers.Add( 'X-Access-Token', $script:jsWebService.AccessToken )
     $requestParams.Add( 'Headers', $Headers )
-    
+
     if ( isPowerShellVersion 6 )
     {
         $requestParams.Add( 'AllowUnencryptedAuthentication', $true )
     }
-        
+
     if ( isPowerShellVersion 7 )
     {
         $requestParams.Add( 'SkipHttpErrorCheck', $true )
     }
-        
+
     if ( $script:jsWebService.Timeout )
     {
         $requestParams.Add( 'TimeoutSec', $script:jsWebService.Timeout )
     }
-    
+
     if ( $script:jsWebService.SkipCertificateCheck )
     {
         $requestParams.Add( 'SkipCertificateCheck', $true )
     }
-    
+
     if ( $script:jsWebService.SSLProtocol )
     {
         $requestParams.Add( 'SSLProtocol', $script:jsWebService.SSLProtocol )
@@ -512,16 +434,16 @@ function Invoke-JS7WebRequest( [string] $Path, [object] $Body, [string] $Method=
         $requestParams.Add( 'InFile', $InFile )
     }
 
-    try 
+    try
     {
         Write-Debug ".. $($MyInvocation.MyCommand.Name): sending request to JS7 Web Service $($requestUrl)"
         Write-Debug ".... Invoke-WebRequest:"
-        
-        $requestParams.Keys | % {
+
+        $requestParams.Keys | ForEach-Object {
             if ( $_ -eq 'Headers' )
             {
                 $item = $_
-                $requestParams.Item($_).Keys | % {
+                $requestParams.Item($_).Keys | ForEach-Object {
                     Write-Debug "...... Header: $_ : $($requestParams.Item($item).Item($_))"
                 }
             } else {
@@ -556,19 +478,6 @@ function Invoke-JS7WebRequest( [string] $Path, [object] $Body, [string] $Method=
     }
 }
 
-# return the directory name of a path
-function Get-DirectoryName( [string] $path )
-{
-    if ( $path.LastIndexOf('\') -ge 0 )
-    {
-        $path = $path.Substring( $path.LastIndexOf('\')+1 )
-    } elseif ( $path.LastIndexOf('/') -ge 0 ) {
-        $path = $path.Substring( $path.LastIndexOf('/')+1 )
-    }
-    
-    $path
-}
-
 # return the basename of an object
 function Get-JS7Object-Basename( [string] $objectPath )
 {
@@ -596,59 +505,12 @@ function Get-JS7Object-CanonicalPath( [string] $objectPath )
     {
         $objectPath = $objectPath.Substring( 0, $objectPath.LastIndexOf('/') )
     }
-    
+
     $objectPath
 }
-
-# execute Windows command script and return environment variables
-function Invoke-CommandScript
-{
-<#
-.SYNOPSIS
-
-Invoke the specified batch file (and parameters), but also propagate any
-environment variable changes back to the PowerShell environment that
-called it.
-
-#>
-param
-(
-    [Parameter(Mandatory = $true)]
-    [string] $Path,
-    [string] $ArgumentList
-)
-
-    #Set-StrictMode -Version 3
-
-    $tempFile = [IO.Path]::GetTempFileName()
-
-    ## Store the output of cmd.exe.  We also ask cmd.exe to output
-    ## the environment table after the batch file completes
-    ## cmd /c " `"$Path`" $ArgumentList && set > `"$tempFile`" "
-
-    $process = Start-Process -FilePath "cmd.exe" "/c ""`"$Path`" $ArgumentList && set > `"$tempFile`""" " -WindowStyle Hidden -PassThru -Wait
-    if ( !$process.ExitCode -eq 0 )
-    {
-        throw "$($MyInvocation.MyCommand.Name): command script execution failed with exit code: $($process.ExitCode)"
-    }
-
-    ## Go through the environment variables in the temp file.
-    ## For each of them, set the variable in our local environment.
-    Get-Content $tempFile | Foreach-Object {
-        if($_ -match "^(.*?)=(.*)$")
-        {
-#           Set-Content "env:\$($matches[1])" $matches[2]
-            $SCRIPT:jsEnv["$($matches[1])"] = $matches[2]
-        }
-    }
-
-    Remove-Item $tempFile
-}
-
 
 # ----------------------------------------------------------------------
 # Main
 # ----------------------------------------------------------------------
 
-$js = Create-JSObject
-$jsWebService = Create-WebServiceObject
+$script:jsWebService = New-JS7WebServiceObject

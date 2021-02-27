@@ -9,18 +9,18 @@ This cmdlet deploys a configuration object to a number of JS7 Controllers. Consi
 that can be deployed to more than one Controller.
 
 Deployment includes that objects such as workflows are digitally signed and forwarded to a Controller.
-Depending on the security level JOC Cockpit is operated for signging is available with a general certificate, 
+Depending on the security level JOC Cockpit is operated for signging is available with a general certificate,
 with a user based certificate or by external signing.
 
 Deployment can include to permanently delete previously removed objects from Controllers and from the inventory.
-Therefore, if a deployable object is removed, e.g. with the Remove-JS7InventoryItem cmdlet, then this removal has to 
+Therefore, if a deployable object is removed, e.g. with the Remove-JS7InventoryItem cmdlet, then this removal has to
 be committed using this cmdlet for deployment.
 
 .PARAMETER Path
 Specifies the folder, sub-folder and name of the object, e.g. a workflow path.
 
 .PARAMETER Type
-Specifies the object type which is one of: 
+Specifies the object type which is one of:
 
 * FOLDER
 * WORKFLOW
@@ -29,7 +29,7 @@ Specifies the object type which is one of:
 * JUNCTION
 
 .PARAMETER Folder
-Optionally specifies the folder for which included inventory objects should be published. 
+Optionally specifies the folder for which included inventory objects should be published.
 This parameter is used alternatively to the -Path parameter that specifies to publish an individual inventory object.
 
 .PARAMETER ControllerId
@@ -54,7 +54,7 @@ with a ticket system that logs the time spent on interventions with JobScheduler
 .PARAMETER AuditTicketLink
 Specifies a URL to a ticket system that keeps track of any interventions performed for JobScheduler.
 
-This information is visible with the Audit Log view of JOC Cockpit. 
+This information is visible with the Audit Log view of JOC Cockpit.
 It can be useful when integrated with a ticket system that logs interventions with JobScheduler.
 
 .INPUTS
@@ -106,20 +106,16 @@ param
     [Parameter(Mandatory=$False,ValueFromPipeline=$False,ValueFromPipelinebyPropertyName=$True)]
     [switch] $Delete,
     [Parameter(Mandatory=$False,ValueFromPipeline=$False,ValueFromPipelinebyPropertyName=$True)]
-    [switch] $WithoutDraft,
-    [Parameter(Mandatory=$False,ValueFromPipeline=$False,ValueFromPipelinebyPropertyName=$True)]
-    [switch] $Deployed,
-    [Parameter(Mandatory=$False,ValueFromPipeline=$False,ValueFromPipelinebyPropertyName=$True)]
     [string] $AuditComment,
     [Parameter(Mandatory=$False,ValueFromPipeline=$False,ValueFromPipelinebyPropertyName=$True)]
     [int] $AuditTimeSpent,
     [Parameter(Mandatory=$False,ValueFromPipeline=$False,ValueFromPipelinebyPropertyName=$True)]
-    [Uri] $AuditTicketLink    
+    [Uri] $AuditTicketLink
 )
 	Begin
 	{
 		Approve-JS7Command $MyInvocation.MyCommand
-        $stopWatch = Start-StopWatch
+        $stopWatch = Start-JS7StopWatch
 
         if ( !$AuditComment -and ( $AuditTimeSpent -or $AuditTicketLink ) )
         {
@@ -132,19 +128,19 @@ param
 
         $deployableTypes = @('FOLDER','WORKFLOW','JOBCLASS','LOCK','JUNCTION')
     }
-    
+
     Process
     {
         if ( $Path.endsWith('/') )
         {
             throw "$($MyInvocation.MyCommand.Name): path has to include folder, sub-folder and object name"
         }
-        
+
         if ( $Path -and !$Type )
         {
             throw "$($MyInvocation.MyCommand.Name): path requires to specify the object type, use -Type parameter"
         }
-        
+
         if ( $Path -and $Folder -and ($Folder -ne '/') )
         {
             throw "$($MyInvocation.MyCommand.Name): only one of the parameters -Path or -Folder can be used"
@@ -185,21 +181,21 @@ param
                     $deleteObjects += @{ 'path' = $Path; 'type' = $Type[0]; 'valid' = $True; 'deployed' = $True }
                 } else {
                     $storeObjects += @{ 'path' = $Path; 'type' = $Type[0]; 'valid' = $True; 'deployed' = $True }
-                }                
+                }
             } else {
                 $body = New-Object PSObject
                 Add-Member -Membertype NoteProperty -Name 'objectType' -value $Type[0] -InputObject $body
                 Add-Member -Membertype NoteProperty -Name 'path' -value $Path -InputObject $body
                 Add-Member -Membertype NoteProperty -Name 'onlyValidObjects' -value $False -InputObject $body
                 Add-Member -Membertype NoteProperty -Name 'withoutDeployed' -value $False -InputObject $body
-                
+
                 [string] $requestBody = $body | ConvertTo-Json -Depth 100
                 $response = Invoke-JS7WebRequest -Path '/inventory/deployable' -Body $requestBody
-        
+
                 if ( $response.StatusCode -eq 200 )
                 {
                     $deployableObject = ( $response.Content | ConvertFrom-JSON ).deployable
-    
+
                     if ( !$deployableObject.id )
                     {
                         throw ( $response | Format-List -Force | Out-String )
@@ -207,7 +203,7 @@ param
                 } else {
                     throw ( $response | Format-List -Force | Out-String )
                 }
-        
+
                 if ( $Delete )
                 {
                     $deleteObjects += @{ 'path' = $Path; 'type' = $Type[0]; 'valid' = $deployableObject.valid; 'deployed' = $deployableObject.deployed }
@@ -218,11 +214,11 @@ param
         } else {
             $body = New-Object PSObject
             Add-Member -Membertype NoteProperty -Name 'folder' -value $Folder -InputObject $body
-            Add-Member -Membertype NoteProperty -Name 'recursive' -value ($Recursive -eq $True) -InputObject $body                                    
+            Add-Member -Membertype NoteProperty -Name 'recursive' -value ($Recursive -eq $True) -InputObject $body
             Add-Member -Membertype NoteProperty -Name 'objectTypes' -value $Type -InputObject $body
-            Add-Member -Membertype NoteProperty -Name 'onlyValidObjects' -value $False -InputObject $body                    
+            Add-Member -Membertype NoteProperty -Name 'onlyValidObjects' -value $False -InputObject $body
             Add-Member -Membertype NoteProperty -Name 'withVersions' -value $False -InputObject $body
-            
+
             [string] $requestBody = $body | ConvertTo-Json -Depth 100
             $response = Invoke-JS7WebRequest -Path '/inventory/deployables' -Body $requestBody
 
@@ -241,7 +237,7 @@ param
                     {
                         $deployableObject.folder += '/'
                     }
-                
+
                     if ( $Delete )
                     {
                         $deleteObjects += @{ 'path' = "$($deployableObject.folder)$($deployableObject.objectName)"; 'type' = $deployableObject.objectType; 'valid' = $deployableObject.valid; 'deployed' = $deployableObject.deployed }
@@ -250,13 +246,13 @@ param
                     }
                # }
             }
-            
+
             if ( $Type[0] -eq 'FOLDER' -and $Delete -and $Folder )
             {
-                $deleteObjects += @{ 'path' = "$($Folder)"; 'type' = 'FOLDER'; 'valid' = $True; 'deployed' = $True }                
+                $deleteObjects += @{ 'path' = "$($Folder)"; 'type' = 'FOLDER'; 'valid' = $True; 'deployed' = $True }
             }
         }
-        
+
         if ( $ControllerId )
         {
             $controllerIds += $ControllerId
@@ -269,7 +265,7 @@ param
         {
             $body = New-Object PSObject
             Add-Member -Membertype NoteProperty -Name 'controllerIds' -value $controllerIds -InputObject $body
-        
+
             $draftConfigurations = @()
             $deployConfigurations = @()
             foreach( $object in $storeObjects )
@@ -278,7 +274,7 @@ param
                 {
                     throw "$($MyInvocation.MyCommand.Name): invalid object selected for deployment: path=$($object.path), type=$($object.type)"
                 }
-                
+
                 if ( $object.deployed )
                 {
                     $deployConfiguration = New-Object PSObject
@@ -304,7 +300,7 @@ param
 
             if ( $deployConfigurations.count -or $draftConfigurations.count )
             {
-            
+
                 $storeObject = New-Object PSObject
 
                 if ( $draftConfigurations.count )
@@ -316,7 +312,7 @@ param
                 {
                     Add-Member -Membertype NoteProperty -Name 'deployConfigurations' -value $deployConfigurations -InputObject $storeObject
                 }
-    
+
                 Add-Member -Membertype NoteProperty -Name 'store' -value $storeObject -InputObject $body
             }
 
@@ -344,32 +340,32 @@ param
                 Add-Member -Membertype NoteProperty -Name 'delete' -value $deleteObject -InputObject $body
             }
 
-       
+
             if ( $AuditComment -or $AuditTimeSpent -or $AuditTicketLink )
             {
                 $objAuditLog = New-Object PSObject
                 Add-Member -Membertype NoteProperty -Name 'comment' -value $AuditComment -InputObject $objAuditLog
-    
+
                 if ( $AuditTimeSpent )
                 {
                     Add-Member -Membertype NoteProperty -Name 'timeSpent' -value $AuditTimeSpent -InputObject $objAuditLog
                 }
-    
+
                 if ( $AuditTicketLink )
                 {
                     Add-Member -Membertype NoteProperty -Name 'ticketLink' -value $AuditTicketLink -InputObject $objAuditLog
                 }
-    
+
                 Add-Member -Membertype NoteProperty -Name 'auditLog' -value $objAuditLog -InputObject $body
             }
-       
+
             [string] $requestBody = $body | ConvertTo-Json -Depth 100
             $response = Invoke-JS7WebRequest -Path '/inventory/deployment/deploy' -Body $requestBody
 
             if ( $response.StatusCode -eq 200 )
             {
                 $requestResult = ( $response.Content | ConvertFrom-JSON )
-                
+
                 if ( !$requestResult.ok )
                 {
                     throw ( $response | Format-List -Force | Out-String )
@@ -377,12 +373,12 @@ param
             } else {
                 throw ( $response | Format-List -Force | Out-String )
             }
-        
+
             Write-Verbose ".. $($MyInvocation.MyCommand.Name): $($storeObjects.count + $deleteObjects.count) objects deployed"
         } else {
-            Write-Verbose ".. $($MyInvocation.MyCommand.Name): no objects deployed"                
+            Write-Verbose ".. $($MyInvocation.MyCommand.Name): no objects deployed"
         }
 
-        Log-StopWatch -CommandName $MyInvocation.MyCommand.Name -StopWatch $stopWatch
+        Trace-JS7StopWatch -CommandName $MyInvocation.MyCommand.Name -StopWatch $stopWatch
     }
 }

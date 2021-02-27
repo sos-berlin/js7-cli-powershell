@@ -24,7 +24,7 @@ Consider that a UTC date has to be provided.
 Default: End of the current day as a UTC date
 
 .PARAMETER RelativeDateFrom
-Specifies a relative date starting from which history items should be returned, e.g. 
+Specifies a relative date starting from which history items should be returned, e.g.
 
 * -1s, -2s: one second ago, two seconds ago
 * -1m, -2m: one minute ago, two minutes ago
@@ -41,7 +41,7 @@ for the timezone that is specified with the -Timezone parameter.
 This parameter takes precedence over the -DateFrom parameter.
 
 .PARAMETER RelativeDateTo
-Specifies a relative date until which history items should be returned, e.g. 
+Specifies a relative date until which history items should be returned, e.g.
 
 * -1s, -2s: one second ago, two seconds ago
 * -1m, -2m: one minute ago, two minutes ago
@@ -56,11 +56,6 @@ Alternatively a timezone offset can be added, e.g. by using -1d+TZ, that is calc
 for the timezone that is specified with the -Timezone parameter.
 
 This parameter takes precedence over the -DateFrom parameter.
-
-.PARAMETER Timezone
-Specifies the timezone to which dates should be converted from the history information.
-
-Default: Dates are returned in UTC.
 
 .PARAMETER Summary
 Specifies that summary information about orders and tasks should be returned.
@@ -101,8 +96,6 @@ param
     [string] $RelativeDateFrom,
     [Parameter(Mandatory=$False,ValueFromPipeline=$False,ValueFromPipelinebyPropertyName=$True)]
     [string] $RelativeDateTo,
-    [Parameter(Mandatory=$False,ValueFromPipeline=$False,ValueFromPipelinebyPropertyName=$True)]
-    [TimeZoneInfo] $Timezone = (Get-Timezone -Id 'UTC'),
     [Parameter(Mandatory=$False,ValueFromPipelinebyPropertyName=$True)]
     [switch] $History,
     [Parameter(Mandatory=$False,ValueFromPipelinebyPropertyName=$True)]
@@ -113,48 +106,48 @@ param
     Begin
     {
         Approve-JS7Command $MyInvocation.MyCommand
-        $stopWatch = Start-StopWatch
+        $stopWatch = Start-JS7StopWatch
     }
 
     Process
-    {        
+    {
         $body = New-Object PSObject
         Add-Member -Membertype NoteProperty -Name 'controllerId' -value $script:jsWebService.ControllerId -InputObject $body
 
         [string] $requestBody = $body | ConvertTo-Json -Depth 100
         $response = Invoke-JS7WebRequest -Path '/controller' -Body $requestBody
-    
+
         if ( $response.StatusCode -eq 200 )
         {
             $volatileStatus = ( $response.Content | ConvertFrom-JSON ).controller
         } else {
             throw ( $response | Format-List -Force | Out-String )
-        }    
+        }
 
 
         $response = Invoke-JS7WebRequest -Path '/controller/p' -Body $requestBody
-    
+
         if ( $response.StatusCode -eq 200 )
         {
             $permanentStatus = ( $response.Content | ConvertFrom-JSON ).controller
         } else {
             throw ( $response | Format-List -Force | Out-String )
-        }    
- 
+        }
+
 
         $response = Invoke-JS7WebRequest -Path '/controllers/p' -Body $requestBody
-    
+
         if ( $response.StatusCode -eq 200 )
         {
             $clusterStatus = ( $response.Content | ConvertFrom-JSON ).controllers
         } else {
             throw ( $response | Format-List -Force | Out-String )
-        }    
+        }
 
         $returnStatus = New-Object PSObject
         Add-Member -Membertype NoteProperty -Name 'Volatile' -value $volatileStatus -InputObject $returnStatus
         Add-Member -Membertype NoteProperty -Name 'Permanent' -value $permanentStatus -InputObject $returnStatus
-        
+
         foreach( $clusterNodeInstance in $clusterStatus )
         {
             if ( $clusterNodeInstance.Url -eq $volatileStatus.Url )
@@ -174,7 +167,7 @@ param
                 }
             }
         }
-        
+
         if ( $Display )
         {
             $output = "
@@ -198,22 +191,22 @@ ________________________________________________________________________
 ................ role:   $($cluster.role)
 .................. OS:   $($cluster.os.name), $($cluster.os.architecture), $($cluster.os.distribution)"
             }
-            
+
              $output += "
 ________________________________________________________________________"
             Write-Output $output
         }
-        
+
         if ( $Summary )
         {
             $response = Invoke-JS7WebRequest -Path '/orders/overview/snapshot' -Body $requestBody
-    
+
             if ( $response.StatusCode -eq 200 )
             {
                 $orderSummary = ( $response.Content | ConvertFrom-JSON ).orders
             } else {
                 throw ( $response | Format-List -Force | Out-String )
-            }    
+            }
 
             if ( $Display )
             {
@@ -231,7 +224,7 @@ Order Summary
 ________________________________________________________________________"
                 Write-Output $output
             }
-            
+
             Add-Member -Membertype NoteProperty -Name 'OrderSummary' -value $orderSummary -InputObject $returnStatus
         }
 
@@ -270,23 +263,23 @@ ________________________________________________________________________"
 
             [string] $requestBody = $body | ConvertTo-Json -Depth 100
             $response = Invoke-JS7WebRequest -Path '/orders/overview/summary' -Body $requestBody
-    
+
             if ( $response.StatusCode -eq 200 )
             {
                 $orderHistory = ( $response.Content | ConvertFrom-JSON ).orders
             } else {
                 throw ( $response | Format-List -Force | Out-String )
-            }    
+            }
 
 
             $response = Invoke-JS7WebRequest -Path '/jobs/overview/summary' -Body $requestBody
-    
+
             if ( $response.StatusCode -eq 200 )
             {
                 $jobHistory = ( $response.Content | ConvertFrom-JSON ).jobs
             } else {
                 throw ( $response | Format-List -Force | Out-String )
-            }    
+            }
 
             if ( $Display )
             {
@@ -301,11 +294,11 @@ Task History
 ________________________________________________________________________"
                 Write-Output $output
             }
-            
+
             Add-Member -Membertype NoteProperty -Name 'OrderHistory' -value $orderHistory -InputObject $returnStatus
             Add-Member -Membertype NoteProperty -Name 'JobHistory' -value $jobHistory -InputObject $returnStatus
         }
-        
+
         if ( !$Display )
         {
             $returnStatus
@@ -316,7 +309,7 @@ ________________________________________________________________________"
 
     End
     {
-        Log-StopWatch -CommandName $MyInvocation.MyCommand.Name -StopWatch $stopWatch
-        Touch-JS7Session
+        Trace-JS7StopWatch -CommandName $MyInvocation.MyCommand.Name -StopWatch $stopWatch
+        Update-JS7Session
     }
 }

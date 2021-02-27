@@ -1,25 +1,25 @@
 function Test-JS7ControllerInstance
-{ 
+{
 <#
 .SYNOPSIS
 Tests the connection to a JS7 Controller instance
 
 .DESCRIPTION
 The cmdlets tests the connection between JOC Cockpit and a Controller instance.
-A standalone Controller instance or the active or passive member of a Controller cluster can be 
+A standalone Controller instance or the active or passive member of a Controller cluster can be
 tested to be accessible.
 
 .PARAMETER Url
 Specifies the Url of the Controller instance to be tested.
 
-Without use of this parameter and the -Passive parameter  
-a standalone Controller instance or the active member of a Controller cluster is checked. 
+Without use of this parameter and the -Passive parameter
+a standalone Controller instance or the active member of a Controller cluster is checked.
 
 .PARAMETER Passive
 Specifies that the passive member of Controller cluster should be be tested.
 
-Without use of this parameter and the -Url parameter  
-a standalone Controller instance or the active member of a Controller cluster is checked. 
+Without use of this parameter and the -Url parameter
+a standalone Controller instance or the active member of a Controller cluster is checked.
 
 .OUTPUTS
 This cmdlet returns status information about a Controller.
@@ -53,7 +53,7 @@ param
     Begin
     {
         Approve-JS7Command $MyInvocation.MyCommand
-        $stopWatch = Start-StopWatch
+        $stopWatch = Start-JS7StopWatch
     }
 
     Process
@@ -71,11 +71,11 @@ param
 
         [string] $requestBody = $body | ConvertTo-Json -Depth 100
         $response = Invoke-JS7WebRequest -Path '/controller/test' -Body $requestBody
-        
+
         if ( $response.StatusCode -eq 200 )
         {
             $requestResult = ( $response.Content | ConvertFrom-JSON ).controller
-            
+
             if ( !$requestResult.controllerId )
             {
                 throw ( $response | Format-List -Force | Out-String )
@@ -89,7 +89,7 @@ param
 
     End
     {
-        Log-StopWatch -CommandName $MyInvocation.MyCommand.Name -StopWatch $stopWatch
-        Touch-JS7Session
+        Trace-JS7StopWatch -CommandName $MyInvocation.MyCommand.Name -StopWatch $stopWatch
+        Update-JS7Session
     }
 }

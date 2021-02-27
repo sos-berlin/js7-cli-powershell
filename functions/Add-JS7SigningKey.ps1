@@ -51,7 +51,7 @@ with a ticket system that logs the time spent on interventions with JobScheduler
 .PARAMETER AuditTicketLink
 Specifies a URL to a ticket system that keeps track of any interventions performed for JobScheduler.
 
-This information is visible with the Audit Log view of JOC Cockpit. 
+This information is visible with the Audit Log view of JOC Cockpit.
 It can be useful when integrated with a ticket system that logs interventions with JobScheduler.
 
 .OUTPUTS
@@ -104,12 +104,12 @@ param
     [Parameter(Mandatory=$False,ValueFromPipeline=$False,ValueFromPipelinebyPropertyName=$True)]
     [int] $AuditTimeSpent,
     [Parameter(Mandatory=$False,ValueFromPipeline=$False,ValueFromPipelinebyPropertyName=$True)]
-    [Uri] $AuditTicketLink    
+    [Uri] $AuditTicketLink
 )
     Begin
     {
         Approve-JS7Command $MyInvocation.MyCommand
-        $stopWatch = Start-StopWatch
+        $stopWatch = Start-JS7StopWatch
 
         if ( !$AuditComment -and ( $AuditTimeSpent -or $AuditTicketLink ) )
         {
@@ -118,7 +118,7 @@ param
 
         $securityLevel = (Get-JS7JOCProperties).securityLevel
     }
-        
+
     Process
     {
         Write-Debug ".. $($MyInvocation.MyCommand.Name): parameter KeyAlgorith=$KeyAlgorithm"
@@ -129,7 +129,7 @@ param
             {
                 if ( $PrivateKey )
                 {
-                    throw "$($MyInvocation.MyCommand.Name): private key cannot be added for security level HIGH, use -Certificate parameter"                    
+                    throw "$($MyInvocation.MyCommand.Name): private key cannot be added for security level HIGH, use -Certificate parameter"
                 }
             } else {
                 if ( !$PrivateKey )
@@ -137,19 +137,18 @@ param
                     throw "$($MyInvocation.MyCommand.Name): private key required, use -PrivateKey parameter"
                 }
             }
-                
-             if ( !$Certificate )
-             {
-                 throw "$($MyInvocation.MyCommand.Name): certificate required for security level HIGH, use -Certificate parameter"                                        
-             }
+
+            if ( !$Certificate )
+            {
+                throw "$($MyInvocation.MyCommand.Name): certificate required for security level HIGH, use -Certificate parameter"
+            }
         } else {
             if ( $securityLevel -eq 'HIGH' )
             {
                 if ( $PrivateKey )
                 {
-                    throw "$($MyInvocation.MyCommand.Name): private key cannot be added for security level HIGH, use -PublicKey parameter"                    
+                    throw "$($MyInvocation.MyCommand.Name): private key cannot be added for security level HIGH, use -PublicKey parameter"
                 }
-                
             } else {
                 if ( !$PrivateKey )
                 {
@@ -159,31 +158,31 @@ param
 
             if ( !$PublicKey )
             {
-                throw "$($MyInvocation.MyCommand.Name): public key required for security level HIGH, use -PublicKey parameter"                                        
+                throw "$($MyInvocation.MyCommand.Name): public key required for security level HIGH, use -PublicKey parameter"
             }
         }
 
-        
+
         $keys = New-Object PSObject
         Add-Member -Membertype NoteProperty -Name 'keyAlgorithm' -value $KeyAlgorithm -InputObject $keys
 
         if ( $PrivateKey )
         {
-            Add-Member -Membertype NoteProperty -Name 'privateKey' -value $PrivateKey -InputObject $keys            
+            Add-Member -Membertype NoteProperty -Name 'privateKey' -value $PrivateKey -InputObject $keys
         }
 
         if ( $PublicKey )
         {
-            Add-Member -Membertype NoteProperty -Name 'publicKey' -value $PublicKey -InputObject $keys            
+            Add-Member -Membertype NoteProperty -Name 'publicKey' -value $PublicKey -InputObject $keys
         }
 
         if ( $Certificate )
         {
-            Add-Member -Membertype NoteProperty -Name 'certificate' -value $Certificate -InputObject $keys            
+            Add-Member -Membertype NoteProperty -Name 'certificate' -value $Certificate -InputObject $keys
         }
 
         $body = New-Object PSObject
-        Add-Member -Membertype NoteProperty -Name 'keys' -value $keys -InputObject $body            
+        Add-Member -Membertype NoteProperty -Name 'keys' -value $keys -InputObject $body
 
         if ( $AuditComment -or $AuditTimeSpent -or $AuditTicketLink )
         {
@@ -202,26 +201,26 @@ param
 
             Add-Member -Membertype NoteProperty -Name 'auditLog' -value $objAuditLog -InputObject $body
         }
-    
+
         [string] $requestBody = $body | ConvertTo-Json -Depth 100
         $response = Invoke-JS7WebRequest -Path '/profile/key/store' -Body $requestBody
-    
+
         if ( $response.StatusCode -eq 200 )
         {
             if ( !($response.Content | ConvertFrom-JSON).ok )
             {
-                throw ( $response | Format-List -Force | Out-String )                
+                throw ( $response | Format-List -Force | Out-String )
             }
         } else {
             throw ( $response | Format-List -Force | Out-String )
         }
-    
+
         Write-Verbose ".. $($MyInvocation.MyCommand.Name): keys added"
     }
 
     End
     {
-        Log-StopWatch -CommandName $MyInvocation.MyCommand.Name -StopWatch $stopWatch
-        Touch-JS7Session        
+        Trace-JS7StopWatch -CommandName $MyInvocation.MyCommand.Name -StopWatch $stopWatch
+        Update-JS7Session
     }
 }

@@ -7,14 +7,14 @@ Removes objects such as workflows, schedules etc. from the JOC Cockpit inventory
 .DESCRIPTION
 This cmdlet removes objects such as a workflows, schedules etc. from the JOC Cockpit inventory.
 
-Consider to commit removals by deploying or releasing the object, 
+Consider to commit removals by deploying or releasing the object,
 see the Publish-JS7DeployableItem and  Publish-JS7ReleasableItem cmdlets.
 
 .PARAMETER Path
 Specifies the folder and sub-folders of the object.
 
 .PARAMETER Type
-Specifies the object type which is one of: 
+Specifies the object type which is one of:
 
 * WORKFLOW
 * JOBCLASS
@@ -39,7 +39,7 @@ with a ticket system that logs the time spent on interventions with JobScheduler
 .PARAMETER AuditTicketLink
 Specifies a URL to a ticket system that keeps track of any interventions performed for JobScheduler.
 
-This information is visible with the Audit Log view of JOC Cockpit. 
+This information is visible with the Audit Log view of JOC Cockpit.
 It can be useful when integrated with a ticket system that logs interventions with JobScheduler.
 
 .INPUTS
@@ -57,7 +57,7 @@ Removes the indicated worfklow from the JOC Cockpit inventory.
 about_js7
 
 #>
-[cmdletbinding()]
+[cmdletbinding(SupportsShouldProcess)]
 param
 (
     [Parameter(Mandatory=$True,ValueFromPipeline=$False,ValueFromPipelinebyPropertyName=$True)]
@@ -70,35 +70,35 @@ param
     [Parameter(Mandatory=$False,ValueFromPipeline=$False,ValueFromPipelinebyPropertyName=$True)]
     [int] $AuditTimeSpent,
     [Parameter(Mandatory=$False,ValueFromPipeline=$False,ValueFromPipelinebyPropertyName=$True)]
-    [Uri] $AuditTicketLink    
+    [Uri] $AuditTicketLink
 )
 	Begin
 	{
 		Approve-JS7Command $MyInvocation.MyCommand
-        $stopWatch = Start-StopWatch
+        $stopWatch = Start-JS7StopWatch
 
         if ( !$AuditComment -and ( $AuditTimeSpent -or $AuditTicketLink ) )
         {
             throw "$($MyInvocation.MyCommand.Name): Audit Log comment required, use parameter -AuditComment if one of the parameters -AuditTimeSpent or -AuditTicketLink is used"
         }
     }
-    
+
     Process
     {
         if ( $Type -ne 'FOLDER' -and $Path.endsWith('/') )
         {
             throw "$($MyInvocation.MyCommand.Name): path has to include folder, sub-folder and object name"
         }
-        
+
         if ( $Path.endsWith('/') )
         {
             $Path = $Path.Substring( 0, $Path.Length-1 )
         }
-        
+
         $body = New-Object PSObject
         Add-Member -Membertype NoteProperty -Name 'path' -value $Path -InputObject $body
         Add-Member -Membertype NoteProperty -Name 'objectType' -value $Type -InputObject $body
-            
+
         if ( $AuditComment -or $AuditTimeSpent -or $AuditTicketLink )
         {
             $objAuditLog = New-Object PSObject
@@ -117,27 +117,30 @@ param
             Add-Member -Membertype NoteProperty -Name 'auditLog' -value $objAuditLog -InputObject $body
         }
 
-        [string] $requestBody = $body | ConvertTo-Json -Depth 100
-        $response = Invoke-JS7WebRequest -Path '/inventory/remove' -Body $requestBody
-        
-        if ( $response.StatusCode -eq 200 )
+        if ( $PSCmdlet.ShouldProcess( $Path, '/inventory/remove' ) )
         {
-            $requestResult = ( $response.Content | ConvertFrom-JSON )
-            
-            if ( !$requestResult.ok )
+            [string] $requestBody = $body | ConvertTo-Json -Depth 100
+            $response = Invoke-JS7WebRequest -Path '/inventory/remove' -Body $requestBody
+
+            if ( $response.StatusCode -eq 200 )
             {
+                $requestResult = ( $response.Content | ConvertFrom-JSON )
+
+                if ( !$requestResult.ok )
+                {
+                    throw ( $response | Format-List -Force | Out-String )
+                }
+            } else {
                 throw ( $response | Format-List -Force | Out-String )
             }
-        } else {
-            throw ( $response | Format-List -Force | Out-String )
+
+            Write-Verbose ".. $($MyInvocation.MyCommand.Name): object removed: $Path"
         }
-    
-        Write-Verbose ".. $($MyInvocation.MyCommand.Name): object removed: $Path"                
     }
 
     End
     {
-        Log-StopWatch -CommandName $MyInvocation.MyCommand.Name -StopWatch $stopWatch
-        Touch-JS7Session
+        Trace-JS7StopWatch -CommandName $MyInvocation.MyCommand.Name -StopWatch $stopWatch
+        Update-JS7Session
     }
 }

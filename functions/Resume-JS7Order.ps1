@@ -36,7 +36,7 @@ with a ticket system that logs the time spent on interventions with JobScheduler
 .PARAMETER AuditTicketLink
 Specifies a URL to a ticket system that keeps track of any interventions performed for JobScheduler.
 
-This information is visible with the Audit Log view of JOC Cockpit. 
+This information is visible with the Audit Log view of JOC Cockpit.
 It can be useful when integrated with a ticket system that logs interventions with JobScheduler.
 
 .INPUTS
@@ -58,7 +58,7 @@ Resumes all suspended orders for all workflows.
 .EXAMPLE
 Get-JS7Order -Folder / | Resume-JS7Order
 
-Resumes orders that are configured with the root folder 
+Resumes orders that are configured with the root folder
 without consideration of sub-folders.
 
 .EXAMPLE
@@ -94,7 +94,7 @@ param
     Begin
     {
         Approve-JS7Command $MyInvocation.MyCommand
-        $stopWatch = Start-StopWatch
+        $stopWatch = Start-JS7StopWatch
 
         if ( !$AuditComment -and ( $AuditTimeSpent -or $AuditTicketLink ) )
         {
@@ -104,7 +104,7 @@ param
         $orders = @()
         $positions = @()
     }
-    
+
     Process
     {
         $orders += $OrderId
@@ -129,27 +129,27 @@ param
             {
                 $objAuditLog = New-Object PSObject
                 Add-Member -Membertype NoteProperty -Name 'comment' -value $AuditComment -InputObject $objAuditLog
-    
+
                 if ( $AuditTimeSpent )
                 {
                     Add-Member -Membertype NoteProperty -Name 'timeSpent' -value $AuditTimeSpent -InputObject $objAuditLog
                 }
-    
+
                 if ( $AuditTicketLink )
                 {
                     Add-Member -Membertype NoteProperty -Name 'ticketLink' -value $AuditTicketLink -InputObject $objAuditLog
                 }
-    
+
                 Add-Member -Membertype NoteProperty -Name 'auditLog' -value $objAuditLog -InputObject $body
             }
-        
+
             [string] $requestBody = $body | ConvertTo-Json -Depth 100
             $response = Invoke-JS7WebRequest '/orders/resume' $requestBody
-            
+
             if ( $response.StatusCode -eq 200 )
             {
                 $requestResult = ( $response.Content | ConvertFrom-JSON )
-                
+
                 if ( !$requestResult.ok )
                 {
                     throw ( $response | Format-List -Force | Out-String )
@@ -158,12 +158,12 @@ param
                 throw ( $response | Format-List -Force | Out-String )
             }
 
-            Write-Verbose ".. $($MyInvocation.MyCommand.Name): $($orders.count) orders resumed"        
+            Write-Verbose ".. $($MyInvocation.MyCommand.Name): $($orders.count) orders resumed"
         } else {
             Write-Verbose ".. $($MyInvocation.MyCommand.Name): no orders found"
         }
-    
-        Log-StopWatch -CommandName $MyInvocation.MyCommand.Name -StopWatch $stopWatch
-        Touch-JS7Session
+
+        Trace-JS7StopWatch -CommandName $MyInvocation.MyCommand.Name -StopWatch $stopWatch
+        Update-JS7Session
     }
 }

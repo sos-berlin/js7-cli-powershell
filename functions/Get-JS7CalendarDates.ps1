@@ -59,15 +59,15 @@ param
     Begin
     {
         Approve-JS7Command $MyInvocation.MyCommand
-        $stopWatch = Start-StopWatch
-        
+        $stopWatch = Start-JS7StopWatch
+
         $returnCalendarDates = @()
     }
-        
+
     Process
     {
         Write-Debug ".. $($MyInvocation.MyCommand.Name): parameter CalendarPath=$CalendarPath"
-    
+
         if ( $CalendarPath.endsWith( '/') )
         {
             throw "$($MyInvocation.MyCommand.Name): the -CalendarPath parameter has to specify the folder and name of a calendar"
@@ -86,7 +86,7 @@ param
         {
             Add-Member -Membertype NoteProperty -Name 'dateFrom' -value (Get-Date $DateFrom -Format 'yyyy-MM-dd') -InputObject $body
         }
-        
+
         if ( $DateTo )
         {
             Add-Member -Membertype NoteProperty -Name 'dateTo' -value (Get-Date $DateTo -Format 'yyyy-MM-dd') -InputObject $body
@@ -94,19 +94,19 @@ param
 
         [string] $requestBody = $body | ConvertTo-Json -Depth 100
         $response = Invoke-JS7WebRequest -Path '/calendar/dates' -Body $requestBody
-    
+
         if ( $response.StatusCode -eq 200 )
         {
             $returnCalendarDateItems = ( $response.Content | ConvertFrom-JSON ).dates
         } else {
             throw ( $response | Format-List -Force | Out-String )
         }
-    
+
         $returnCalendarDates += $returnCalendarDateItems
     }
 
     End
-    {        
+    {
         $returnCalendarDates
 
         if ( $returnCalendarDates.count )
@@ -115,8 +115,8 @@ param
         } else {
             Write-Verbose ".. $($MyInvocation.MyCommand.Name): no calendar dates found"
         }
-        
-        Log-StopWatch -CommandName $MyInvocation.MyCommand.Name -StopWatch $stopWatch
-        Touch-JS7Session        
+
+        Trace-JS7StopWatch -CommandName $MyInvocation.MyCommand.Name -StopWatch $stopWatch
+        Update-JS7Session
     }
 }
