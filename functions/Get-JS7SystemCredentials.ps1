@@ -45,7 +45,7 @@ param
     [Parameter(Mandatory=$False,ValueFromPipeline=$False,ValueFromPipelinebyPropertyName=$True)]
     [ValidateNotNullOrEmpty()]
     [Alias("Address", "Location", "Name")]
-    [string]$TargetName
+    [string] $TargetName
 )
 
     Begin

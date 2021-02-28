@@ -296,7 +296,7 @@ function New-JS7WebServiceObject
 param
 ()
 
-    if ( $PSCmdlet.ShouldProcess( $Service, '/joc/cluster/restart' ) )
+    if ( $PSCmdlet.ShouldProcess( 'jsWebService' ) )
     {
         $jsWebService = New-Object PSObject
 

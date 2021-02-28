@@ -16,10 +16,10 @@ Author = 'Andreas Pueschel'
 CompanyName = 'SOS GmbH'
 
 # Copyright statement for this module
-Copyright = 'Copyright (c) 2020 by SOS GmbH, licensed under Apache 2.0 License.'
+Copyright = 'Copyright (c) 2020 by SOS GmbH, licensed under GPL v3 License.'
 
 # Description of the functionality provided by this module
-Description = 'Provides a number of cmdlets to access the JS7 JOC Cockpit REST Web Service.'
+Description = 'Control jobs and job chains with JS7 JobScheduler Controller and Agents, access the JOC Cockpit REST Web Service.'
 
 # Minimum version of the Windows PowerShell engine required by this module
 PowerShellVersion = '5.1'
@@ -115,16 +115,16 @@ PrivateData = @{
         Category = "Scripting Techniques"
 
         # Keyword tags to help users find this module via navigations and search.
-        Tags = @('powershell','job scheduling','workload automation')
+        Tags = @('PSEdition_Desktop','PSEdition_Core','Windows','Linux','MacOS','Cmdlet','Workflow','JobScheduler','JS7','Scheduling','Workload Automation')
 
         # The web address of an icon which can be used in galleries to represent this module
         IconUri = "https://kb.sos-berlin.com/download/attachments/3638359/JobScheduler_logo_wiki.jpg?version=1&modificationDate=1413144531000&api=v2"
 
         # The web address of this module's project or support homepage.
-        ProjectUri = "https://www.sos-berlin.com/js7"
+        ProjectUri = "https://kb.sos-berlin.com/x/PpQwAw"
 
         # The web address of this module's license. Points to a page that's embeddable and linkable.
-        LicenseUri = "http://www.apache.org/licenses/LICENSE-2.0.html"
+        LicenseUri = "https://www.gnu.org/licenses/gpl-3.0.en.html"
 
         # Release notes for this particular version of the module
         # ReleaseNotes = False
@@ -138,7 +138,7 @@ PrivateData = @{
 }
 
 # HelpInfo URI of this module
-# HelpInfoURI = 'https://kb.sos-berlin.com/x/cID4'
+HelpInfoURI = 'https://kb.sos-berlin.com/x/fpQwAw'
 
 # Default prefix for commands exported from this module. Override the default prefix using Import-Module -Prefix.
 # DefaultCommandPrefix = ''
