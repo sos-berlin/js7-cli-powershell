@@ -7,6 +7,9 @@ Adds an order to a workflow in the JS7 Controller
 .DESCRIPTION
 Creates a temporary order for execution with the specified workflow.
 
+.PARAMETER WorkflowPath
+Specifies the path and name of a workflow for which an order should be added.
+
 .PARAMETER OrderName
 Specifies the name of an order. The JOC Cockpit web service will consider the order name
 when creating unique order iDs from the pattern #<YYYY-MM-DD>#<qualifier><timestamp>-<order-name>
@@ -16,9 +19,6 @@ such as with #2020-11-22#T072521128-Some_Order_Name.
 * qualifier: one of T(emporary), P(lan), F(ile)
 * timespan: time specified in milliseconds
 * order-name: the value of the -OrderName parameter
-
-.PARAMETER WorkflowPath
-Specifies the path and name of a workflow for which an order should be added.
 
 .PARAMETER Arguments
 Specifies the arguments for the order. Arguments are created from a hashmap,
@@ -129,9 +129,9 @@ about_js7
 param
 (
     [Parameter(Mandatory=$True,ValueFromPipeline=$False,ValueFromPipelinebyPropertyName=$True)]
-    [string] $OrderName,
-    [Parameter(Mandatory=$True,ValueFromPipeline=$False,ValueFromPipelinebyPropertyName=$True)]
     [string] $WorkflowPath,
+    [Parameter(Mandatory=$False,ValueFromPipeline=$False,ValueFromPipelinebyPropertyName=$True)]
+    [string] $OrderName,
     [Parameter(Mandatory=$False,ValueFromPipeline=$False,ValueFromPipelinebyPropertyName=$True)]
     [hashtable] $Arguments,
     [Parameter(Mandatory=$False,ValueFromPipeline=$False,ValueFromPipelinebyPropertyName=$True)]
@@ -218,22 +218,7 @@ param
 #>
         if ( $Arguments )
         {
-            $objArgs = @()
-            foreach( $argument in $Arguments.GetEnumerator() )
-            {
-                if ( $argument.key )
-                {
-                    $objArg = New-Object PSObject
-                    Add-Member -Membertype NoteProperty -Name 'name' -value $argument.key -InputObject $objArg
-                    Add-Member -Membertype NoteProperty -Name 'value' -value $argument.value -InputObject $objArg
-                    $objArgs += $objArg
-                }
-            }
-
-            if ( $objArgs.count )
-            {
-                Add-Member -Membertype NoteProperty -Name 'arguments' -value $objArgs -InputObject $objOrder
-            }
+            Add-Member -Membertype NoteProperty -Name 'arguments' -value $Arguments -InputObject $objOrder
         }
 
         $objOrders += $objOrder
