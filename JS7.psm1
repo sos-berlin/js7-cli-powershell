@@ -419,10 +419,10 @@ function Invoke-JS7WebRequest( [string] $Path, [object] $Body, [string] $Method=
         $requestParams.Add( 'SSLProtocol', $script:jsWebService.SSLProtocol )
     }
 
-    if ( $script:jsWebService.Certificate )
-    {
-        $requestParams.Add( 'Certificate', $script:jsWebService.Certificate )
-    }
+   if ( $script:jsWebService.Certificate )
+   {
+       $requestParams.Add( 'Certificate', $script:jsWebService.Certificate )
+   }
 
     if ( $Body )
     {
@@ -447,7 +447,10 @@ function Invoke-JS7WebRequest( [string] $Path, [object] $Body, [string] $Method=
                     Write-Debug "...... Header: $_ : $($requestParams.Item($item).Item($_))"
                 }
             } else {
-                Write-Debug "...... Argument: $_  $($requestParams.Item($_))"
+                if ( $_ -ne 'Certificate' )
+                {
+                    Write-Debug "...... Argument: $_  $($requestParams.Item($_))"
+                }
             }
         }
 

@@ -204,7 +204,7 @@ param
 
             [string] $requestBody = $body | ConvertTo-Json -Depth 100
             $response = Invoke-JS7WebRequest -Path '/calendars' -Body $requestBody
-s
+
             if ( $response.StatusCode -eq 200 )
             {
                 $returnCalendars = ( $response.Content | ConvertFrom-JSON ).calendars

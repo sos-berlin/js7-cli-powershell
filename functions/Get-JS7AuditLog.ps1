@@ -88,6 +88,12 @@ All dates in JobScheduler are UTC and can be converted e.g. to the local time zo
 
 Default: Dates are returned in UTC.
 
+.PARAMETER Account
+Limits results to entries that have been caused by the specified account.
+
+.PARAMETER TicketLink
+Limits results to entries that inlcude the specified ticket link.
+
 .PARAMETER Limit
 Specifies the max. number of audit log entries to be returned.
 The default value is 10000, for an unlimited number of items the value -1 can be specified.
@@ -185,6 +191,10 @@ param
     [Parameter(Mandatory=$False,ValueFromPipeline=$False,ValueFromPipelinebyPropertyName=$True)]
     [TimeZoneInfo] $Timezone = (Get-Timezone -Id 'UTC'),
     [Parameter(Mandatory=$False,ValueFromPipeline=$False,ValueFromPipelinebyPropertyName=$True)]
+    [string] $Account,
+    [Parameter(Mandatory=$False,ValueFromPipeline=$False,ValueFromPipelinebyPropertyName=$True)]
+    [string] $TicketLink,
+    [Parameter(Mandatory=$False,ValueFromPipeline=$False,ValueFromPipelinebyPropertyName=$True)]
     [int] $Limit
 )
     Begin
@@ -264,7 +274,7 @@ param
     {
         # PowerShell/.NET does not create date output in the target timezone but with the local timezone only, let's work around this:
         $timezoneOffsetPrefix = if ( $Timezone.BaseUtcOffset.toString().startsWith( '-' ) ) { '-' } else { '+' }
-        $timezoneOffsetHours = $Timezone.BaseUtcOffset.Hours
+        $timezoneOffsetHours = [Math]::Abs($Timezone.BaseUtcOffset.hours)
 
         if ( $Timezone.SupportsDaylightSavingTime -and $Timezone.IsDaylightSavingTime( (Get-Date) ) )
         {
@@ -327,6 +337,16 @@ param
             } else {
                 Add-Member -Membertype NoteProperty -Name 'dateTo' -value ( Get-Date (Get-Date $DateTo).ToUniversalTime() -Format 'u').Replace(' ', 'T') -InputObject $body
             }
+        }
+
+        if ( $Account )
+        {
+            Add-Member -Membertype NoteProperty -Name 'account' -value $Account -InputObject $body
+        }
+
+        if ( $TicketLink )
+        {
+            Add-Member -Membertype NoteProperty -Name 'ticketLink' -value $TicketLink -InputObject $body
         }
 
         if ( $Limit )

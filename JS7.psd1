@@ -115,7 +115,7 @@ PrivateData = @{
         Category = "Scripting Techniques"
 
         # Keyword tags to help users find this module via navigations and search.
-        Tags = @('PSEdition_Desktop','PSEdition_Core','Windows','Linux','MacOS','Cmdlet','Workflow','JobScheduler','JS7','Scheduling','Workload Automation')
+        Tags = @('PSEdition_Desktop','PSEdition_Core','Windows','Linux','MacOS','Cmdlet','Workflow','JobScheduler','JS7','Scheduling','Workload-Automation')
 
         # The web address of an icon which can be used in galleries to represent this module
         IconUri = "https://kb.sos-berlin.com/download/attachments/3638359/JobScheduler_logo_wiki.jpg?version=1&modificationDate=1413144531000&api=v2"
