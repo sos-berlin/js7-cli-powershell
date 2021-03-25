@@ -85,7 +85,7 @@ A timezone can e.g. be specified like this:
 
   Get-JS7OrderHistory -Timezone (Get-Timezone -Id 'GMT Standard Time')
 
-All dates in JobScheduler are UTC and can be converted e.g. to the local time zone like this:
+All dates in JS7 are UTC and can be converted e.g. to the local time zone like this:
 
   Get-JS7OrderHistory -Timezone (Get-Timezone)
 

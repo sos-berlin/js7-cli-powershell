@@ -34,6 +34,39 @@ One of the parameters -Folder, -WorkflowPath or -OrderId has to be specified if 
 Specifies that any sub-folders should be looked up if the -Folder parameter is used.
 By default no sub-folders will be searched for orders.
 
+.PARAMETER DateTo
+Specifies the date until which orders should be returned.
+Consider that a UTC date has to be provided.
+
+Default should no order ID be provided: End of the current day as a UTC date
+
+.PARAMETER RelativeDateTo
+Specifies a relative date until which orders should be returned, e.g.
+
+* 1s, 2s: one second later, two seconds later
+* 1m, 2m: one minute later, two minutes later
+* 1h, 2h: one hour later, two hours later
+* 1d, 2d: one day later, two days later
+* 1w, 2w: one week later, two weeks later
+* 1M, 2M: one month later, two months later
+* 1y, 2y: one year later, two years later
+
+Optionally a time offset can be specified, e.g. 1d+02:00, as otherwise midnight UTC is assumed.
+Alternatively a timezone offset can be added, e.g. by using 1d+TZ, that is calculated by the cmdlet
+for the timezone that is specified with the -Timezone parameter.
+
+.PARAMETER Timezone
+Specifies the timezone to which a relative date specified with the -RelativeDateTo parameter should be converted.
+A timezone can e.g. be specified like this:
+
+  Get-JS7Order -Timezone (Get-Timezone -Id 'GMT Standard Time')
+
+All dates in JS7 are UTC and can be converted e.g. to the local time zone like this:
+
+  Get-JS7Order -Timezone (Get-Timezone)
+
+Default: Dates are converted to UTC.
+
 .PARAMETER RegularExpression
 Specifies that a regular expession is applied to the order IDs to filter results.
 
@@ -120,6 +153,12 @@ param
     [Parameter(Mandatory=$False,ValueFromPipeline=$False,ValueFromPipelinebyPropertyName=$False)]
     [switch] $Recursive,
     [Parameter(Mandatory=$False,ValueFromPipeline=$False,ValueFromPipelinebyPropertyName=$True)]
+    [DateTime] $DateTo,
+    [Parameter(Mandatory=$False,ValueFromPipeline=$False,ValueFromPipelinebyPropertyName=$True)]
+    [string] $RelativeDateTo,
+    [Parameter(Mandatory=$False,ValueFromPipeline=$False,ValueFromPipelinebyPropertyName=$True)]
+    [TimeZoneInfo] $Timezone = (Get-Timezone -Id 'UTC'),
+    [Parameter(Mandatory=$False,ValueFromPipeline=$False,ValueFromPipelinebyPropertyName=$True)]
     [string] $RegularExpression,
     [Parameter(Mandatory=$False,ValueFromPipeline=$False,ValueFromPipelinebyPropertyName=$True)]
     [switch] $Compact,
@@ -176,6 +215,11 @@ param
         if ( $Folder -eq '/' -and !$WorkflowPath -and !$OrderId -and !$Recursive )
         {
             $Recursive = $True
+        }
+
+        if ( !$OrderId -and !$DateTo )
+        {
+            $DateTo = (Get-Date -Hour 0 -Minute 0 -Second 0).AddDays(1).ToUniversalTime()
         }
 
         if ( $Pending )
@@ -282,14 +326,40 @@ param
                 Add-Member -Membertype NoteProperty -Name 'recursive' -value ($Recursive -eq $True) -InputObject $body
             }
 
-            if ( $states.count )
+            if ( $DateTo -or $RelativeDateTo )
             {
-                Add-Member -Membertype NoteProperty -Name 'states' -value $states -InputObject $body
+                if ( $RelativeDateTo )
+                {
+                    if ( $RelativeDateTo.endsWith( '+TZ' ) )
+                    {
+                        # PowerShell/.NET does not create date output in the target timezone but with the local timezone only, let's work around this:
+                        $timezoneOffsetPrefix = if ( $Timezone.BaseUtcOffset.toString().startsWith( '-' ) ) { '-' } else { '+' }
+                        $timezoneOffsetHours = [Math]::Abs($Timezone.BaseUtcOffset.hours)
+                
+                        if ( $Timezone.SupportsDaylightSavingTime -and $Timezone.IsDaylightSavingTime( (Get-Date) ) )
+                        {
+                            $timezoneOffsetHours += 1
+                        }
+                
+                        [string] $timezoneOffset = "$($timezoneOffsetPrefix)$($timezoneOffsetHours.ToString().PadLeft( 2, '0' )):$($Timezone.BaseUtcOffset.Minutes.ToString().PadLeft( 2, '0' ))"
+
+                        $RelativeDateTo = $RelativeDateTo.Substring( 0, $RelativeDateTo.length-3 ) + $timezoneOffset
+                    }
+                    
+                    Add-Member -Membertype NoteProperty -Name 'dateTo' -value $RelativeDateTo -InputObject $body
+                } else {
+                    Add-Member -Membertype NoteProperty -Name 'dateTo' -value ( Get-Date (Get-Date $DateTo).ToUniversalTime() -Format 'u').Replace(' ', 'T') -InputObject $body
+                }
             }
 
             if ( $RegularExpression )
             {
                 Add-Member -Membertype NoteProperty -Name 'regex' -value $RegularExpression -InputObject $body
+            }
+
+            if ( $states.count )
+            {
+                Add-Member -Membertype NoteProperty -Name 'states' -value $states -InputObject $body
             }
 
             [string] $requestBody = $body | ConvertTo-Json -Depth 100
