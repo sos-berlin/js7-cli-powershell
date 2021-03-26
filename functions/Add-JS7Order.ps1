@@ -27,7 +27,7 @@ variables declaration of the workflow and include use of the data types:
 
 * string: $orderArgs = @{ 'arg1' = 'value1' }
 * number: $orderArgs = @{ 'arg2' = 3.14 }
-* boolean: $orderArgs = @{ 'arg3' = $true }
+* boolean: $orderArgs = @{ 'arg3' = $True }
 
 Example:
 $orderArgs = @{ 'arg1' = 'value1'; 'arg2' = 3.14; 'arg3' = $true }
