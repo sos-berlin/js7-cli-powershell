@@ -245,7 +245,7 @@ function Approve-JS7Command( [System.Management.Automation.CommandInfo] $Command
     {
         if ( $script:jsLocalCommands -notcontains $Command.Name )
         {
-            throw "$($Command.Name): cmdlet requires a JS7 URL. Switch instance with the Connect-JS7 cmdlet and specify the -Url parameter"
+            throw "$($Command.Name): cmdlet requires a JS7 Controller ID. Switch instance with the Connect-JS7 cmdlet and specify the -Url parameter"
         }
     }
 }

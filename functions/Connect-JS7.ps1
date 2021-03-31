@@ -1,4 +1,4 @@
-﻿function Connect-JS7
+function Connect-JS7
 {
 <#
 .SYNOPSIS
@@ -399,7 +399,7 @@ param
                     throw "no credentials specified and no CN identified from specified certificate, use -Credentials and -Certificate parameter"
                 }
             }
-        
+
             if ( $Credentials ) {
                 if ( isPowerShellVersion 6 )
                 {
@@ -411,7 +411,7 @@ param
 
                 $requestParams.Add( 'Credential', $Credentials )
             } else {
-                throw "no credentials and no certificate specified, use -Credentials or -Certificate parameter"
+               throw "no credentials and no certificate specified, use -Credentials or -Certificate parameter"
             }
         }
 
