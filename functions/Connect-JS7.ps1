@@ -410,6 +410,8 @@ param
                 }
 
                 $requestParams.Add( 'Credential', $Credentials )
+                $script:jsWebServiceOptionWebRequestUseDefaultCredentials = $false
+                $script:jsWebServiceCredential = $Credentials
             } else {
                throw "no credentials and no certificate specified, use -Credentials or -Certificate parameter"
             }

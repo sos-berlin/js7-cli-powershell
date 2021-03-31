@@ -59,6 +59,7 @@ FunctionsToExport = @(
     'Get-JS7TaskHistory',
     'Get-JS7TaskLog',
     'Get-JS7Workflow',
+    'Invoke-JS7TestRun',
     'New-JS7ControllerInstance',
     'New-JS7DailyPlanOrder',
     'New-JS7SigningKey',
