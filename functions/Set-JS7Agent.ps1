@@ -27,7 +27,7 @@ Specifies the URL for which the Agent is available. A URL includes the protocol 
 for which an Agent is operated.
 
 .PARAMETER WatchCluster
-A JS7 Controller cluster requires a minimum of one Agent to be assigned the role of a cluster watcher.
+A JS7 Controller cluster requires one Agent to be assigned the role of a cluster watcher.
 Such an Agent will be considered if the JS7 Controller cluster decides about a fail-over situation with
 no network connection being available between primary and secondary JS7 Controller instances.
 

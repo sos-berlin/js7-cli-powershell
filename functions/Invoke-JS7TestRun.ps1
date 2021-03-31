@@ -1,6 +1,5 @@
 function Invoke-JS7TestRun
 {
-
 <#
 .SYNOPSIS
 Performs test runs for JS7.
@@ -52,8 +51,8 @@ and to cleanup test resoures.
 Specifies the root folder in the JOC Cockpit inventory to which test case resources such as workflows are added.
 
 .PARAMETER SourceDirectory
-Specifies the source directory where test case resources are stored. Test case resources include
-.json files for workflows and related inventory objects.
+Specifies the source directory where test case resources are stored. Test case resources
+include .json files for workflows and related inventory objects.
 
 .PARAMETER Recursive
 If this parameter is used then the source directory with test case resource files is 
@@ -99,10 +98,10 @@ Specifies that a progress bar is displayed that provides information about the p
 This parameter is ignored if the -AtDate parameter is used.
 
 .INPUTS
-This cmdlet accepts pipelined objects.
+This cmdlet accepts pipelined input.
 
 .OUTPUTS
-This cmdlet does not return any output
+This cmdlet returns no output.
 
 .EXAMPLE
 Invoke-JS7TestRun -BaseFolder '/TestRuns' -SourceDirectory "Z:\Documents\PowerShell\jstest\TestCases\Instructions" -Recursive -TestRun Test0000000070
@@ -125,6 +124,10 @@ Do not run test cases but perform the "cleanup" step only, i.e. erase the test d
 Invoke-JS7TestRun -TestRun Test0000000068 -BaseFolder '/TestRuns' -SourceDirectory "Z:\Documents\PowerShell\jstest\testcases\instructions" -Count 1 -AtDate "2020-12-31 01:02:03"
 
 Run a single test case by modifying the batch size to 1 (Default: 100)
+
+.LINK
+about_js7
+
 #>
 [cmdletbinding()]
 param
@@ -363,5 +366,6 @@ param
         }
     
         Trace-JS7StopWatch -CommandName $MyInvocation.MyCommand.Name -StopWatch $stopWatch
+        Update-JS7Session
     }
 }

@@ -2,43 +2,34 @@ function New-JS7ControllerInstance
 {
 <#
 .SYNOPSIS
-Tests the connection to a JS7 Controller instance
+Creates a new JS7 Controller instance PowerShell object for use with other cmdlets.
 
 .DESCRIPTION
-The cmdlets tests the connection between JOC Cockpit and a Controller instance.
-A standalone Controller instance or the active or passive member of a Controller cluster can be
-tested to be accessible.
+The cmdlets is used to create a PowerShell object for a new Controller instance
+that is added with the Set-JS7Controller cmdlet.
 
 .PARAMETER Url
-Specifies the Url of the Controller instance to be tested.
+Specifies the Url of the Controller instance that should be added. The Url is specified
+for use by JOC Cockpit.
 
-Without use of this parameter and the -Passive parameter
-a standalone Controller instance or the active member of a Controller cluster is checked.
+.PARAMETER ClusterUrl
+Specifies the URL by which this Controller can be found from some other cluster member.
 
-.PARAMETER Passive
-Specifies that the passive member of Controller cluster should be be tested.
+Typically this is the same as the -Url parameter. However, depending on network zones
+and use of proxies the Controller ID might be accesssible from a different Url in the cluster.
 
-Without use of this parameter and the -Url parameter
-a standalone Controller instance or the active member of a Controller cluster is checked.
+If this parameter is not specified then the value of the -Url parameter is used for the cluster Url.
+
+.PARAMETER Title
+Specifies a title for the Controller instance that becomes visible with the JOC Cockpit dashboard.
 
 .OUTPUTS
-This cmdlet returns status information about a Controller.
+This cmdlet returns a PowerShell custom object for a Controller instance.
 
 .EXAMPLE
-$result = Test-JS7ControllerInstance
+$instance = New-JS7ControllerInstance -Url https://controller-primary.sos:4443 -Title 'PRIMARY CONTROLLER'
 
-Checks if a standalone Controller instance or the active member of a Controller cluster is accessible.
-
-.EXAMPLE
-$result = Test-JS7ControllerInstance -Passive
-
-Checks if the passive member of a Controller cluster is accessible.
-
-.EXAMPLE
-$result = Test-JS7ControllerInstance -Url (Get-JS7ControllerInstance -Active).active.url
-
-Checks if the Controller instance from the given URL is accessible.
-
+Returns a PowerShell object for a new Controller instance.
 .LINK
 about_js7
 
