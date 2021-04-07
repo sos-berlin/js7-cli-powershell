@@ -34,6 +34,7 @@ Returns a PowerShell object for a new Controller instance.
 about_js7
 
 #>
+[cmdletbinding(SupportsShouldProcess)]
 param
 (
     [Parameter(Mandatory=$True,ValueFromPipeline=$False,ValueFromPipelinebyPropertyName=$False)]
@@ -54,7 +55,7 @@ param
     {
         $controllerInstance = New-Object PSObject
         Add-Member -Membertype NoteProperty -Name 'url' -value $Url -InputObject $controllerInstance
-        
+
         if ( $ClusterUrl )
         {
             Add-Member -Membertype NoteProperty -Name 'clusterUrl' -value $ClusterUrl -InputObject $controllerInstance
@@ -67,7 +68,10 @@ param
             Add-Member -Membertype NoteProperty -Name 'title' -value $Title -InputObject $controllerInstance
         }
 
-        $controllerInstance
+        if ( $PSCmdlet.ShouldProcess( 'controller', 'controller instance object' ) )
+        {
+            $controllerInstance
+        }
     }
 
     End

@@ -15,7 +15,7 @@ that the deletion of objects has not yet been committed with one of the cmdlets:
 Specifies the folder and optionally sub-folders to be removed.
 
 .PARAMETER NewPath
-Optionally specifies the new path for the restored folder. If this parameter is not used then the original path will be restored. 
+Optionally specifies the new path for the restored folder. If this parameter is not used then the original path will be restored.
 If a path with the same hierarchy and name exists then the removed path cannot be restored. You could consider to use the -Prefix
 and -Suffix parameters to create unique folder names.
 
@@ -99,20 +99,20 @@ param
         $body = New-Object PSObject
         Add-Member -Membertype NoteProperty -Name 'path' -value $Path -InputObject $body
         Add-Member -Membertype NoteProperty -Name 'objectType' -value 'FOLDER' -InputObject $body
-        
+
         if ( $NewPath )
         {
-            Add-Member -Membertype NoteProperty -Name 'newPath' -value $NewPath -InputObject $body            
+            Add-Member -Membertype NoteProperty -Name 'newPath' -value $NewPath -InputObject $body
         }
 
         if ( $Prefix )
         {
-            Add-Member -Membertype NoteProperty -Name 'prefix' -value $Prefix -InputObject $body            
+            Add-Member -Membertype NoteProperty -Name 'prefix' -value $Prefix -InputObject $body
         }
 
         if ( $Suffix )
         {
-            Add-Member -Membertype NoteProperty -Name 'suffix' -value $Suffix -InputObject $body            
+            Add-Member -Membertype NoteProperty -Name 'suffix' -value $Suffix -InputObject $body
         }
 
         if ( $AuditComment -or $AuditTimeSpent -or $AuditTicketLink )

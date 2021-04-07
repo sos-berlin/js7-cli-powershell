@@ -197,7 +197,7 @@ param
     [Parameter(Mandatory=$False,ValueFromPipeline=$False,ValueFromPipelinebyPropertyName=$True)]
     [string] $Path,
     [Parameter(Mandatory=$False,ValueFromPipeline=$False,ValueFromPipelinebyPropertyName=$True)]
-    [ValidateSet('FOLDER','WORKFLOW','JOBCLASS','LOCK','JUNCTION','WORKINGDAYSCALENDAR','NONWORKINGDAYSCALENDAR','SCHEDULE')]
+    [ValidateSet('FOLDER','WORKFLOW','JOBCLASS','LOCK','JUNCTION','FILEORDERSOURCE','WORKINGDAYSCALENDAR','NONWORKINGDAYSCALENDAR','SCHEDULE')]
     [string[]] $Type,
     [Parameter(Mandatory=$False,ValueFromPipeline=$False,ValueFromPipelinebyPropertyName=$True)]
     [string] $Folder = '/',
@@ -636,45 +636,43 @@ param
 
             if ( $deployablesObj -or $releasablesObj )
             {
-
                 Add-Member -Membertype NoteProperty -Name 'withoutInvalid' -value ($Valid -eq $True) -InputObject $body
-    
-    
+
                 if ( $AuditComment -or $AuditTimeSpent -or $AuditTicketLink )
                 {
                     $objAuditLog = New-Object PSObject
                     Add-Member -Membertype NoteProperty -Name 'comment' -value $AuditComment -InputObject $objAuditLog
-    
+
                     if ( $AuditTimeSpent )
                     {
                         Add-Member -Membertype NoteProperty -Name 'timeSpent' -value $AuditTimeSpent -InputObject $objAuditLog
                     }
-    
+
                     if ( $AuditTicketLink )
                     {
                         Add-Member -Membertype NoteProperty -Name 'ticketLink' -value $AuditTicketLink -InputObject $objAuditLog
                     }
-    
+
                     Add-Member -Membertype NoteProperty -Name 'auditLog' -value $objAuditLog -InputObject $body
                 }
-    
+
                 $headers = @{'Accept' = 'application/octet-stream'; 'Accept-Encoding' = 'gzip, deflate' }
-    
+
                 [string] $requestBody = $body | ConvertTo-Json -Depth 100
                 $response = Invoke-JS7WebRequest -Path '/inventory/export' -Body $requestBody -Headers $headers
-    
+
                 if ( $response.StatusCode -ne 200 )
                 {
                     throw ( $response | Format-List -Force | Out-String )
                 }
-    
+
                 if ( $FilePath )
                 {
                     if ( Test-Path -Path $FilePath -PathType Leaf )
                     {
                         Remove-Item -Path $FilePath -Force
                     }
-    
+
                     [System.Text.Encoding]::ASCII.GetString( $response.Content ) | Out-File $FilePath
                 } else {
                     [System.Text.Encoding]::ASCII.GetString( $response.Content )

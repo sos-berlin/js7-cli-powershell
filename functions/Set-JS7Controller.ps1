@@ -5,7 +5,7 @@ function Set-JS7Controller
 Registers a Controller and Agents.
 
 .DESCRIPTION
-The cmdlet registers a Controller either for a Standalone Controller instance or for 
+The cmdlet registers a Controller either for a Standalone Controller instance or for
 a primary and a secondary Controller Cluster instance.
 A Controller Cluster requires an Agent to be added that acts as a cluster watcher.
 
@@ -77,6 +77,7 @@ In addition, an Agent is added that acts as cluster watch.
 about_js7
 
 #>
+[cmdletbinding(SupportsShouldProcess)]
 param
 (
     [Parameter(Mandatory=$True,ValueFromPipeline=$False,ValueFromPipelinebyPropertyName=$False)]

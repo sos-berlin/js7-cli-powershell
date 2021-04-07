@@ -6,8 +6,8 @@ Performs test runs for JS7.
 
 .DESCRIPTION
 The cmdlet is used to automate execution of test cases with JS7.
-A test run execution is a loop across a number of test cases for workflows. 
-Each test case is executed for a number of times that is specified with the -BatchSize parameter (default: 50). 
+A test run execution is a loop across a number of test cases for workflows.
+Each test case is executed for a number of times that is specified with the -BatchSize parameter (default: 50).
 The -Count parameter (default: 1) specifies the number of loops to repeat a test case.
 The -SourceDirectory parameter indicates a directory that includes test cases, i.e. .json files for workflows.
 
@@ -55,7 +55,7 @@ Specifies the source directory where test case resources are stored. Test case r
 include .json files for workflows and related inventory objects.
 
 .PARAMETER Recursive
-If this parameter is used then the source directory with test case resource files is 
+If this parameter is used then the source directory with test case resource files is
 traversed recurisvley for any sub-directories.
 
 .PARAMETER WaitInterval
@@ -106,13 +106,13 @@ This cmdlet returns no output.
 .EXAMPLE
 Invoke-JS7TestRun -BaseFolder '/TestRuns' -SourceDirectory "Z:\Documents\PowerShell\jstest\TestCases\Instructions" -Recursive -TestRun Test0000000070
 
-Run test cases from any sub-directories of the specified directory recursively and 
+Run test cases from any sub-directories of the specified directory recursively and
 wait for completion to check results and to cleanup test data.
 
 .EXAMPLE
 Invoke-JS7TestRun -BaseFolder '/TestRuns' -SourceDirectory "Z:\Documents\PowerShell\jstest\testcases\instructions" -Recursive -TestRun Test0000000070 -Prepare -Run
 
-Run test cases for the "prepare" and "run" steps only, i.e. the completion of 
+Run test cases for the "prepare" and "run" steps only, i.e. the completion of
 test cases is not waited for and no cleanup is performed.
 
 .EXAMPLE
@@ -205,15 +205,15 @@ param
         {
             $BaseFolder = $BaseFolder.Substring( 0, $BaseFolder.Length-1 )
         }
-        
+
         $testFolder = "$BaseFolder/$TestRun"
-    
+
         # 1. prepare test case resources
         if ( $Prepare )
         {
             Add-JS7Folder -Path $testFolder
         }
-    
+
         $testObjects = @()
         $sourceFiles = Get-ChildItem $SourceDirectory -Filter "*.json" -Recurse:$Recursive
         foreach( $sourceFile in $sourceFiles )
@@ -225,25 +225,25 @@ param
             $testObjectPath    = "$testFolder/$testObjectNewName"
             $testObjectItem    = (Get-Content -Raw -Path $sourceFile.FullName).Replace( $testObjectName, $testObjectNewName ) | ConvertFrom-Json
             $testObjects += @{ 'path'=$testObjectPath; 'type'=$testObjectType }
-            
+
             if ( $Prepare )
             {
                 Add-JS7InventoryItem -Path $testObjectPath -Type $testObjectType -Item $testObjectItem
                 Publish-JS7DeployableItem -ControllerId $controllerId -Path $testObjectPath -Type $testObjectType
             }
         }
-        
+
         # 2. run test case
         if ( $Run )
         {
             $addOrderParams = @{}
             $addOrderParams.Add( 'OrderName', $TestRun )
-    
+
             if ( $AtDate )
             {
                 $addOrderParams.Add( 'AtDate', $AtDate )
             }
-    
+
             if ( $Count -le $BatchSize )
             {
                 $testCountOuter = $Count
@@ -255,16 +255,16 @@ param
                 $testCountOuter = $Count
                 $testCountInner = 1
             }
-            
+
             $sum = ($testObjects.count*$testCountOuter*$testCountInner)
             $cur = 0
             Write-Verbose ".. performing $sum test runs with batches of $($testObjects.count) workflows with $testCountOuter outer loops for $testCountInner inner loops"
-            
+
             foreach( $testObject in $testObjects )
             {
                 if ( $testObject.type -eq 'WORKFLOW' )
                 {
-                    for( $i=1; $i -le $testCountOuter; $i++ ) 
+                    for( $i=1; $i -le $testCountOuter; $i++ )
                     {
                         $cur++
                         Write-Verbose ".. batches: $cur, object loops: $i, executing: 1..$testCountInner | Add-JS7Order -WorkflowPath $($testObject.path) -OrderName $TestRun -AtDate $AtDate"
@@ -277,7 +277,7 @@ param
                 }
             }
         }
-    
+
         # 3. monitor test case execution
         if ( $Monitor -and !$AtDate )
         {
@@ -290,7 +290,7 @@ param
                     }
                     Start-Sleep -Seconds 1
                 }
-                
+
                 $orders = Get-JS7Order -RegularExpression "$TestRun`$"
                 if ( $orders.count )
                 {
@@ -298,12 +298,12 @@ param
                 }
             } While ( $orders.count )
         }
-    
+
         if ( $Progress )
         {
-            Write-Progress -Id 1 -Activity "JS7 Test Run: $TestRun" 
+            Write-Progress -Id 1 -Activity "JS7 Test Run: $TestRun"
         }
-    
+
         # 4. check test execution results
         if ( $Check -and !$AtDate )
         {
@@ -311,27 +311,27 @@ param
             {
                 Write-Progress -Id 1 -Activity "JS7 Test Run: $TestRun" -CurrentOperation "checking order execution state ..." -Status "1 of 2 steps to check state: IN PROGRESS" -PercentComplete (0/2) -SecondsRemaining -1
             }
-            
+
             $ordersInProgress = Get-JS7OrderHistory -RegularExpression "$TestRun`$" | Where-Object { $_.state._text -eq 'INCOMPLETE' }
-            if ( $historyInProgress.count )
+            if ( $ordersInProgress.count )
             {
-                Write-Output ".. $($historyInProgress.count) orders found with state: IN PROGRESS"
+                Write-Output ".. $($ordersInProgress.count) orders found with state: IN PROGRESS"
             }
-    
+
             if ( $Progress )
             {
                 Write-Progress -Id 1 -Activity "JS7 Test Run: $TestRun" -CurrentOperation "checking order execution state ..." -Status "2 of 2 steps to check state: FAILED" -PercentComplete (1/2) -SecondsRemaining -1
             }
-            
+
             $ordersFailed = Get-JS7OrderHistory -RegularExpression "$TestRun`$" | Where-Object { $_.state._text -eq 'FAILED' }
-            
-            if ( $historyFailed.count )
+
+            if ( $ordersFailed.count )
             {
-                Write-Error "$($historyFailed.count) orders found with state: FAILED"
+                Write-Error "$($ordersFailed.count) orders found with state: FAILED"
             }
         }
     }
-    
+
     End
     {
         # 5. cleanup test case resources
@@ -341,30 +341,30 @@ param
             {
                 Write-Progress -Id 1 -Activity "JS7 Test Run: $TestRun" -CurrentOperation "cleaning up ..." -Status "1 of 2 steps to cancel remaining orders" -PercentComplete (0/2) -SecondsRemaining -1
             }
-            
+
             $orders = Get-JS7Order -RegularExpression "$TestRun`$"
-        
+
             if ( $orders.count )
             {
                 Write-Output ".. $($orders.count) orders found to cancel"
                 $orders | Stop-JS7Order -Kill
             }
-            
+
             if ( $Progress )
             {
                 Write-Progress -Id 1 -Activity "JS7 Test Run: $TestRun" -CurrentOperation "cleaning up ..." -Status "2 of 2 steps to delete test data" -PercentComplete (0/2) -SecondsRemaining -1
             }
-            
+
             # Drop test run folder with any includes resources
             Remove-JS7Folder -Path $testFolder
             Publish-JS7DeployableItem -ControllerId $ControllerId -Path $testFolder -Type FOLDER -Delete
-            
+
             if ( $Progress )
             {
                 Write-Progress -Id 1 -Activity "JS7 Test Run: $TestRun" -Completed
             }
         }
-    
+
         Trace-JS7StopWatch -CommandName $MyInvocation.MyCommand.Name -StopWatch $stopWatch
         Update-JS7Session
     }

@@ -108,7 +108,7 @@ param
     Process
     {
         $orders += $OrderId
-        
+
         if ( $Position )
         {
             $positions += $Position
@@ -122,7 +122,7 @@ param
             $body = New-Object PSObject
             Add-Member -Membertype NoteProperty -Name 'controllerId' -value $script:jsWebService.ControllerId -InputObject $body
             Add-Member -Membertype NoteProperty -Name 'orderIds' -value $orders -InputObject $body
-            
+
             if ( $positions.count )
             {
                 Add-Member -Membertype NoteProperty -Name 'position' -value $positions -InputObject $body

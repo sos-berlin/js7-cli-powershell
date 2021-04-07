@@ -81,7 +81,7 @@ param
         {
             throw "$($MyInvocation.MyCommand.Name): Audit Log comment required, use parameter -AuditComment if one of the parameters -AuditTimeSpent or -AuditTicketLink is used"
         }
-        
+
         $removableObjects = @()
     }
 
@@ -100,7 +100,7 @@ param
         $removableObj = New-Object PSObject
         Add-Member -Membertype NoteProperty -Name 'path' -value $Path -InputObject $removableObj
         Add-Member -Membertype NoteProperty -Name 'objectType' -value $Type -InputObject $removableObj
-        
+
         $removableObjects += $removableObj
     }
 

@@ -27,7 +27,7 @@ Specifies the object type which is one of:
 * SCHEDULE
 
 .PARAMETER NewPath
-Optionally specifies the new path for the restored object. If this parameter is not used then the original path will be restored. 
+Optionally specifies the new path for the restored object. If this parameter is not used then the original path will be restored.
 If a path with the same hierarchy and name exists then the removed path cannot be restored. You could consider to use the -Prefix
 and -Suffix parameters to create unique folder names.
 
@@ -122,17 +122,17 @@ param
 
         if ( $NewPath )
         {
-            Add-Member -Membertype NoteProperty -Name 'newPath' -value $NewPath -InputObject $body            
+            Add-Member -Membertype NoteProperty -Name 'newPath' -value $NewPath -InputObject $body
         }
 
         if ( $Prefix )
         {
-            Add-Member -Membertype NoteProperty -Name 'prefix' -value $Prefix -InputObject $body            
+            Add-Member -Membertype NoteProperty -Name 'prefix' -value $Prefix -InputObject $body
         }
 
         if ( $Suffix )
         {
-            Add-Member -Membertype NoteProperty -Name 'suffix' -value $Suffix -InputObject $body            
+            Add-Member -Membertype NoteProperty -Name 'suffix' -value $Suffix -InputObject $body
         }
 
         if ( $AuditComment -or $AuditTimeSpent -or $AuditTicketLink )
