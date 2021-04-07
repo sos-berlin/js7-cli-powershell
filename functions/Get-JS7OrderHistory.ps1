@@ -320,7 +320,7 @@ param
 
                 if ( $excludeOrderItem.workflowPath )
                 {
-                    Add-Member -Membertype NoteProperty -Name 'workflow' -value $excludeOrderItem.workflowPath -InputObject $objExcludeOrder
+                    Add-Member -Membertype NoteProperty -Name 'workflowPath' -value $excludeOrderItem.workflowPath -InputObject $objExcludeOrder
                 }
 
                 if ( $excludeOrderItem.orderId -or $excludeOrderItem.workflowPath )

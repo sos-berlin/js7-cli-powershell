@@ -18,6 +18,7 @@ Specifies the object type which is one of:
 * JOBCLASS
 * LOCK
 * JUNCTION
+* FILEORDERSOURCE
 * WORKINGDAYSCALENDAR
 * NONWORKINGDAYSCALENDAR
 * SCHEDULE
@@ -49,7 +50,7 @@ This information is visible with the Audit Log view of JOC Cockpit.
 It can be useful when integrated with a ticket system that logs interventions with JobScheduler.
 
 .INPUTS
-This cmdlet accepts pipelined objects that are e.g. returned from a Get-JS7Workflow cmdlet.
+This cmdlet accepts pipelined objects.
 
 .OUTPUTS
 This cmdlet returns no output.
@@ -57,7 +58,12 @@ This cmdlet returns no output.
 .EXAMPLE
 Add-JS7InventoryItem -Path /some/directory/sampleLock -Type 'LOCK' -Item ( '{ "limit": 1 }' | ConvertFrom-Json )
 
-Read the worfklow configuration from the given file and store the workflow with the specified path.
+On-the-fly adds a resource lock to the invnetory. The JSON document for the resource lock is specified with the -Item parameter.
+
+.EXAMPLE
+Add-JS7InventoryItem -Path /some/directory/sampleLock -Type 'LOCK' -Item (Get-Content /tmp/myForkExample.workflow.json -Raw)
+
+Reads a resource lock from a file and adds it to the invnetory.
 
 .LINK
 about_js7
@@ -69,7 +75,7 @@ param
     [Parameter(Mandatory=$True,ValueFromPipeline=$False,ValueFromPipelinebyPropertyName=$True)]
     [string] $Path,
     [Parameter(Mandatory=$True,ValueFromPipeline=$False,ValueFromPipelinebyPropertyName=$True)]
-    [ValidateSet('WORKFLOW','JOBCLASS','LOCK','JUNCTION','WORKINGDAYSCALENDAR','NONWORKINGDAYSCALENDAR','ORDER')]
+    [ValidateSet('WORKFLOW','JOBCLASS','LOCK','JUNCTION','FILEORDERSOURCE','WORKINGDAYSCALENDAR','NONWORKINGDAYSCALENDAR','ORDER')]
     [string] $Type,
     [Parameter(Mandatory=$True,ValueFromPipeline=$False,ValueFromPipelinebyPropertyName=$True)]
     [object] $Item,
@@ -145,7 +151,7 @@ param
             throw ( $response | Format-List -Force | Out-String )
         }
 
-        Write-Verbose ".. $($MyInvocation.MyCommand.Name): object imported: $Path"
+        Write-Verbose ".. $($MyInvocation.MyCommand.Name): object added to inventory: $Path"
     }
 
     End

@@ -226,7 +226,7 @@ param
     [Parameter(Mandatory=$False,ValueFromPipeline=$False,ValueFromPipelinebyPropertyName=$True)]
     [string] $FilePath,
     [Parameter(Mandatory=$False,ValueFromPipeline=$False,ValueFromPipelinebyPropertyName=$True)]
-    [ValidateSet('ZIP','TAR.GZ')]
+    [ValidateSet('ZIP','TAR_GZ')]
     [string] $Format = 'ZIP',
     [Parameter(Mandatory=$False,ValueFromPipeline=$False,ValueFromPipelinebyPropertyName=$True)]
     [string] $AuditComment,
@@ -352,7 +352,7 @@ param
 
                 if ( $response.StatusCode -eq 200 )
                 {
-                    $releasableObjects = ( $response.Content | ConvertFrom-JSON ).releasables
+                    $releasableObjects = ( $response.Content | ConvertFrom-Json ).releasables
                 } else {
                     throw ( $response | Format-List -Force | Out-String )
                 }
@@ -408,7 +408,7 @@ param
 
                 if ( $response.StatusCode -eq 200 )
                 {
-                    $deployableObject = ( $response.Content | ConvertFrom-JSON ).deployable
+                    $deployableObject = ( $response.Content | ConvertFrom-Json ).deployable
 
                     if ( !$deployableObject.id )
                     {
@@ -607,7 +607,7 @@ param
             }
 
 
-            if ( $forSigningObj )
+            if ( $ForSigning )
             {
                 $forSigningObj = New-Object PSObject
                 Add-Member -Membertype NoteProperty -Name 'controllerId' -value $ControllerId -InputObject $forSigningObj
@@ -618,7 +618,7 @@ param
                 }
 
                 Add-Member -Membertype NoteProperty -Name 'forSigning' -value $forSigningObj -InputObject $body
-            } else {
+            } elseif ( $deployablesObj -or $releasablesObj ) {
                 $shallowCopyObj = New-Object PSObject
 
                 if ( $deployablesObj )
@@ -634,52 +634,56 @@ param
                 Add-Member -Membertype NoteProperty -Name 'shallowCopy' -value $shallowCopyObj -InputObject $body
             }
 
-            Add-Member -Membertype NoteProperty -Name 'withoutInvalid' -value ($Valid = $True) -InputObject $body
-
-
-            if ( $AuditComment -or $AuditTimeSpent -or $AuditTicketLink )
+            if ( $deployablesObj -or $releasablesObj )
             {
-                $objAuditLog = New-Object PSObject
-                Add-Member -Membertype NoteProperty -Name 'comment' -value $AuditComment -InputObject $objAuditLog
 
-                if ( $AuditTimeSpent )
+                Add-Member -Membertype NoteProperty -Name 'withoutInvalid' -value ($Valid -eq $True) -InputObject $body
+    
+    
+                if ( $AuditComment -or $AuditTimeSpent -or $AuditTicketLink )
                 {
-                    Add-Member -Membertype NoteProperty -Name 'timeSpent' -value $AuditTimeSpent -InputObject $objAuditLog
+                    $objAuditLog = New-Object PSObject
+                    Add-Member -Membertype NoteProperty -Name 'comment' -value $AuditComment -InputObject $objAuditLog
+    
+                    if ( $AuditTimeSpent )
+                    {
+                        Add-Member -Membertype NoteProperty -Name 'timeSpent' -value $AuditTimeSpent -InputObject $objAuditLog
+                    }
+    
+                    if ( $AuditTicketLink )
+                    {
+                        Add-Member -Membertype NoteProperty -Name 'ticketLink' -value $AuditTicketLink -InputObject $objAuditLog
+                    }
+    
+                    Add-Member -Membertype NoteProperty -Name 'auditLog' -value $objAuditLog -InputObject $body
+                }
+    
+                $headers = @{'Accept' = 'application/octet-stream'; 'Accept-Encoding' = 'gzip, deflate' }
+    
+                [string] $requestBody = $body | ConvertTo-Json -Depth 100
+                $response = Invoke-JS7WebRequest -Path '/inventory/export' -Body $requestBody -Headers $headers
+    
+                if ( $response.StatusCode -ne 200 )
+                {
+                    throw ( $response | Format-List -Force | Out-String )
+                }
+    
+                if ( $FilePath )
+                {
+                    if ( Test-Path -Path $FilePath -PathType Leaf )
+                    {
+                        Remove-Item -Path $FilePath -Force
+                    }
+    
+                    [System.Text.Encoding]::ASCII.GetString( $response.Content ) | Out-File $FilePath
+                } else {
+                    [System.Text.Encoding]::ASCII.GetString( $response.Content )
                 }
 
-                if ( $AuditTicketLink )
-                {
-                    Add-Member -Membertype NoteProperty -Name 'ticketLink' -value $AuditTicketLink -InputObject $objAuditLog
-                }
-
-                Add-Member -Membertype NoteProperty -Name 'auditLog' -value $objAuditLog -InputObject $body
-            }
-
-            $headers = @{'Accept' = 'application/octet-stream'; 'Accept-Encoding' = 'gzip, deflate' }
-
-            [string] $requestBody = $body | ConvertTo-Json -Depth 100
-            $response = Invoke-JS7WebRequest -Path '/inventory/export' -Body $requestBody -Headers $headers
-
-            if ( $response.StatusCode -ne 200 )
-            {
-                throw ( $response | Format-List -Force | Out-String )
-            }
-
-            if ( $FilePath )
-            {
-                if ( Test-Path -Path $FilePath -PathType Leaf )
-                {
-                    Remove-Item -Path $FilePath -Force
-                }
-
-                [System.Text.Encoding]::ASCII.GetString( $response.Content ) | Out-File $FilePath
+                Write-Verbose ".. $($MyInvocation.MyCommand.Name): $($exportObjects.count) objects exported"
             } else {
-                [System.Text.Encoding]::ASCII.GetString( $response.Content )
+                Write-Verbose ".. $($MyInvocation.MyCommand.Name): no objects exported"
             }
-
-            Write-Verbose ".. $($MyInvocation.MyCommand.Name): $($exportObjects.count) objects exported"
-        } else {
-            Write-Verbose ".. $($MyInvocation.MyCommand.Name): no objects exported"
         }
 
         Trace-JS7StopWatch -CommandName $MyInvocation.MyCommand.Name -StopWatch $stopWatch

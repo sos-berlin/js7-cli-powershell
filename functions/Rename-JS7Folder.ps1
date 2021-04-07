@@ -89,14 +89,32 @@ param
         Add-Member -Membertype NoteProperty -Name 'newPath' -value $NewPath -InputObject $body
         Add-Member -Membertype NoteProperty -Name 'overwrite' -value ($Overwrite -eq $True) -InputObject $body
 
+        if ( $AuditComment -or $AuditTimeSpent -or $AuditTicketLink )
+        {
+            $objAuditLog = New-Object PSObject
+            Add-Member -Membertype NoteProperty -Name 'comment' -value $AuditComment -InputObject $objAuditLog
+
+            if ( $AuditTimeSpent )
+            {
+                Add-Member -Membertype NoteProperty -Name 'timeSpent' -value $AuditTimeSpent -InputObject $objAuditLog
+            }
+
+            if ( $AuditTicketLink )
+            {
+                Add-Member -Membertype NoteProperty -Name 'ticketLink' -value $AuditTicketLink -InputObject $objAuditLog
+            }
+
+            Add-Member -Membertype NoteProperty -Name 'auditLog' -value $objAuditLog -InputObject $body
+        }
+
         [string] $requestBody = $body | ConvertTo-Json -Depth 100
         $response = Invoke-JS7WebRequest -Path '/inventory/rename' -Body $requestBody
 
         if ( $response.StatusCode -eq 200 )
         {
-            $requestResult = ( $response.Content | ConvertFrom-JSON )
+            $requestResult = ( $response.Content | ConvertFrom-Json )
 
-            if ( !$requestResult.ok )
+            if ( !$requestResult.path )
             {
                 throw ( $response | Format-List -Force | Out-String )
             }
@@ -104,7 +122,7 @@ param
             throw ( $response | Format-List -Force | Out-String )
         }
 
-        Write-Verbose ".. $($MyInvocation.MyCommand.Name): folder renamed: $Name"
+        Write-Verbose ".. $($MyInvocation.MyCommand.Name): folder renamed: $NewPath"
     }
 
     End

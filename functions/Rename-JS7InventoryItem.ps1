@@ -17,6 +17,7 @@ Specifies the object type which is one of:
 * JOBCLASS
 * LOCK
 * JUNCTION
+* FILEORDERSOURCE
 * WORKINGDAYSCALENDAR
 * NONWORKINGDAYSCALENDAR
 * SCHEDULE
@@ -66,7 +67,7 @@ param
     [Parameter(Mandatory=$True,ValueFromPipeline=$False,ValueFromPipelinebyPropertyName=$True)]
     [string] $Path,
     [Parameter(Mandatory=$True,ValueFromPipeline=$False,ValueFromPipelinebyPropertyName=$True)]
-    [ValidateSet('WORKFLOW','JOBCLASS','LOCK','JUNCTION','WORKINGDAYSCALENDAR','NONWORKINGDAYSCALENDAR','SCHEDULE')]
+    [ValidateSet('WORKFLOW','JOBCLASS','LOCK','JUNCTION','FILEORDERSOURCE','WORKINGDAYSCALENDAR','NONWORKINGDAYSCALENDAR','SCHEDULE')]
     [string] $Type,
     [Parameter(Mandatory=$True,ValueFromPipeline=$False,ValueFromPipelinebyPropertyName=$True)]
     [string] $NewPath,
@@ -97,25 +98,38 @@ param
             throw "$($MyInvocation.MyCommand.Name): path has to include folder, sub-folder and object name"
         }
 
-        if ( $Name.IndexOf( '/' ) -ge 0 )
-        {
-            throw "$($MyInvocation.MyCommand.Name): object name cannot container a folder separator such as '/'"
-        }
-
         $body = New-Object PSObject
         Add-Member -Membertype NoteProperty -Name 'path' -value $Path -InputObject $body
         Add-Member -Membertype NoteProperty -Name 'objectType' -value $Type -InputObject $body
         Add-Member -Membertype NoteProperty -Name 'newPath' -value $NewPath -InputObject $body
         Add-Member -Membertype NoteProperty -Name 'overwrite' -value ($Overwrite -eq $True) -InputObject $body
 
+        if ( $AuditComment -or $AuditTimeSpent -or $AuditTicketLink )
+        {
+            $objAuditLog = New-Object PSObject
+            Add-Member -Membertype NoteProperty -Name 'comment' -value $AuditComment -InputObject $objAuditLog
+
+            if ( $AuditTimeSpent )
+            {
+                Add-Member -Membertype NoteProperty -Name 'timeSpent' -value $AuditTimeSpent -InputObject $objAuditLog
+            }
+
+            if ( $AuditTicketLink )
+            {
+                Add-Member -Membertype NoteProperty -Name 'ticketLink' -value $AuditTicketLink -InputObject $objAuditLog
+            }
+
+            Add-Member -Membertype NoteProperty -Name 'auditLog' -value $objAuditLog -InputObject $body
+        }
+
         [string] $requestBody = $body | ConvertTo-Json -Depth 100
         $response = Invoke-JS7WebRequest -Path '/inventory/rename' -Body $requestBody
 
         if ( $response.StatusCode -eq 200 )
         {
-            $requestResult = ( $response.Content | ConvertFrom-JSON )
+            $requestResult = ( $response.Content | ConvertFrom-Json )
 
-            if ( !$requestResult.ok )
+            if ( !$requestResult.path )
             {
                 throw ( $response | Format-List -Force | Out-String )
             }
@@ -123,7 +137,7 @@ param
             throw ( $response | Format-List -Force | Out-String )
         }
 
-        Write-Verbose ".. $($MyInvocation.MyCommand.Name): object renamed: $Name"
+        Write-Verbose ".. $($MyInvocation.MyCommand.Name): object renamed: $NewPath"
     }
 
     End

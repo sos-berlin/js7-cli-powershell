@@ -371,7 +371,7 @@ param
 
                 if ( $excludeJobItem.workflowPath )
                 {
-                    Add-Member -Membertype NoteProperty -Name 'workflow' -value $excludeJobItem.workflowPath -InputObject $objExcludeJob
+                    Add-Member -Membertype NoteProperty -Name 'workflowPath' -value $excludeJobItem.workflowPath -InputObject $objExcludeJob
                 }
 
                 if ( $excludeJobItem.job -or $excludeJobItem.workflowPath )

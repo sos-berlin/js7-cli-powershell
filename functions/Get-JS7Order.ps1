@@ -125,7 +125,7 @@ $orders = Get-JS7Order -WorkflowPath /test/globals/workflow1
 Returns the orders for workflow "workflow1" from the folder "/test/globals".
 
 .EXAMPLE
-$orders = Get-JS7Order -OrderId #2020-11-19#P0000000498-orderSampleWorfklow2a
+$orders = Get-JS7Order -OrderId "#2020-11-19#P0000000498-orderSampleWorfklow2a"
 
 Returns the order with the respective identifier.
 

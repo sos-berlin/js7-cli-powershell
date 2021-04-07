@@ -21,6 +21,15 @@ Specifies the number of seconds for establishing a connection to the JS7 REST We
 With the timeout being exceeded an exception is raised.
 
 Default: 15000 ms
+
+.EXAMPLE
+Set-JS7Option -WebRequestTimeout 10
+
+Modifies the timeout for web service requests to 10s.
+
+.LINK
+about_js7
+
 #>
 [cmdletbinding(SupportsShouldProcess)]
 param

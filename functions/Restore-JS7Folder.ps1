@@ -14,6 +14,19 @@ that the deletion of objects has not yet been committed with one of the cmdlets:
 .PARAMETER Path
 Specifies the folder and optionally sub-folders to be removed.
 
+.PARAMETER NewPath
+Optionally specifies the new path for the restored folder. If this parameter is not used then the original path will be restored. 
+If a path with the same hierarchy and name exists then the removed path cannot be restored. You could consider to use the -Prefix
+and -Suffix parameters to create unique folder names.
+
+.PARAMETER Prefix
+Optionally specifies a prefix that is prepended to the restored path. If the same path alreadyy exists then incremental numbers will be added
+to the prefix until a unique path is created.
+
+.PARAMETER Suffix
+Optionally specifies a suffix that is appended to the restored path. If the same path alreadyy exists then incremental numbers will be added
+to the suffix until a unique path is created.
+
 .PARAMETER AuditComment
 Specifies a free text that indicates the reason for the current intervention, e.g. "business requirement", "maintenance window" etc.
 
@@ -53,6 +66,12 @@ param
     [Parameter(Mandatory=$True,ValueFromPipeline=$False,ValueFromPipelinebyPropertyName=$True)]
     [string] $Path,
     [Parameter(Mandatory=$False,ValueFromPipeline=$False,ValueFromPipelinebyPropertyName=$True)]
+    [string] $NewPath,
+    [Parameter(Mandatory=$False,ValueFromPipeline=$False,ValueFromPipelinebyPropertyName=$True)]
+    [string] $Prefix,
+    [Parameter(Mandatory=$False,ValueFromPipeline=$False,ValueFromPipelinebyPropertyName=$True)]
+    [string] $Suffix,
+    [Parameter(Mandatory=$False,ValueFromPipeline=$False,ValueFromPipelinebyPropertyName=$True)]
     [string] $AuditComment,
     [Parameter(Mandatory=$False,ValueFromPipeline=$False,ValueFromPipelinebyPropertyName=$True)]
     [int] $AuditTimeSpent,
@@ -80,15 +99,48 @@ param
         $body = New-Object PSObject
         Add-Member -Membertype NoteProperty -Name 'path' -value $Path -InputObject $body
         Add-Member -Membertype NoteProperty -Name 'objectType' -value 'FOLDER' -InputObject $body
+        
+        if ( $NewPath )
+        {
+            Add-Member -Membertype NoteProperty -Name 'newPath' -value $NewPath -InputObject $body            
+        }
+
+        if ( $Prefix )
+        {
+            Add-Member -Membertype NoteProperty -Name 'prefix' -value $Prefix -InputObject $body            
+        }
+
+        if ( $Suffix )
+        {
+            Add-Member -Membertype NoteProperty -Name 'suffix' -value $Suffix -InputObject $body            
+        }
+
+        if ( $AuditComment -or $AuditTimeSpent -or $AuditTicketLink )
+        {
+            $objAuditLog = New-Object PSObject
+            Add-Member -Membertype NoteProperty -Name 'comment' -value $AuditComment -InputObject $objAuditLog
+
+            if ( $AuditTimeSpent )
+            {
+                Add-Member -Membertype NoteProperty -Name 'timeSpent' -value $AuditTimeSpent -InputObject $objAuditLog
+            }
+
+            if ( $AuditTicketLink )
+            {
+                Add-Member -Membertype NoteProperty -Name 'ticketLink' -value $AuditTicketLink -InputObject $objAuditLog
+            }
+
+            Add-Member -Membertype NoteProperty -Name 'auditLog' -value $objAuditLog -InputObject $body
+        }
 
         [string] $requestBody = $body | ConvertTo-Json -Depth 100
-        $response = Invoke-JS7WebRequest -Path '/inventory/recover' -Body $requestBody
+        $response = Invoke-JS7WebRequest -Path '/inventory/trash/restore' -Body $requestBody
 
         if ( $response.StatusCode -eq 200 )
         {
-            $requestResult = ( $response.Content | ConvertFrom-JSON )
+            $requestResult = ( $response.Content | ConvertFrom-Json )
 
-            if ( !$requestResult.ok )
+            if ( !$requestResult.path )
             {
                 throw ( $response | Format-List -Force | Out-String )
             }

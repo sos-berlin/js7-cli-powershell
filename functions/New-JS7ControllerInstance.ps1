@@ -27,7 +27,7 @@ Specifies a title for the Controller instance that becomes visible with the JOC 
 This cmdlet returns a PowerShell custom object for a Controller instance.
 
 .EXAMPLE
-$instance = New-JS7ControllerInstance -Url https://controller-primary.sos:4443 -Title 'PRIMARY CONTROLLER'
+$instance = New-JS7ControllerInstance -Url https://controller-primary.sos:4443 -Role primary -Title 'PRIMARY CONTROLLER'
 
 Returns a PowerShell object for a new Controller instance.
 .LINK

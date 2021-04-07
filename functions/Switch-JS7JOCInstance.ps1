@@ -71,7 +71,7 @@ param
     {
         if ( !$MemberId )
         {
-            $jocCluster = Get-JS7JOCCluster
+            $jocCluster = Get-JS7JOCInstance
             if ( $jocCluster.passive.count -gt 0 )
             {
                 $MemberId = $jocCluster.passive[0].memberId

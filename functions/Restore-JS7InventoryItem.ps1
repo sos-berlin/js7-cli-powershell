@@ -21,9 +21,23 @@ Specifies the object type which is one of:
 * JOBCLASS
 * LOCK
 * JUNCTION
+* FILEORDERSOURCE
 * WORKINGDAYSCALENDAR
 * NONWORKINGDAYSCALENDAR
 * SCHEDULE
+
+.PARAMETER NewPath
+Optionally specifies the new path for the restored object. If this parameter is not used then the original path will be restored. 
+If a path with the same hierarchy and name exists then the removed path cannot be restored. You could consider to use the -Prefix
+and -Suffix parameters to create unique folder names.
+
+.PARAMETER Prefix
+Optionally specifies a prefix that is prepended to the restored object's path. If the same path alreadyy exists then incremental numbers will be added
+to the prefix until a unique path is created.
+
+.PARAMETER Suffix
+Optionally specifies a suffix that is appended to the restored object's path. If the same path alreadyy exists then incremental numbers will be added
+to the suffix until a unique path is created.
 
 .PARAMETER AuditComment
 Specifies a free text that indicates the reason for the current intervention, e.g. "business requirement", "maintenance window" etc.
@@ -64,8 +78,14 @@ param
     [Parameter(Mandatory=$True,ValueFromPipeline=$False,ValueFromPipelinebyPropertyName=$True)]
     [string] $Path,
     [Parameter(Mandatory=$True,ValueFromPipeline=$False,ValueFromPipelinebyPropertyName=$True)]
-    [ValidateSet('WORKFLOW','JOBCLASS','LOCK','JUNCTION','WORKINGDAYSCALENDAR','NONWORKINGDAYSCALENDAR','SCHEDULE')]
+    [ValidateSet('WORKFLOW','JOBCLASS','LOCK','JUNCTION','FILEORDERSOURCE','WORKINGDAYSCALENDAR','NONWORKINGDAYSCALENDAR','SCHEDULE')]
     [string] $Type,
+    [Parameter(Mandatory=$False,ValueFromPipeline=$False,ValueFromPipelinebyPropertyName=$True)]
+    [string] $NewPath,
+    [Parameter(Mandatory=$False,ValueFromPipeline=$False,ValueFromPipelinebyPropertyName=$True)]
+    [string] $Prefix,
+    [Parameter(Mandatory=$False,ValueFromPipeline=$False,ValueFromPipelinebyPropertyName=$True)]
+    [string] $Suffix,
     [Parameter(Mandatory=$False,ValueFromPipeline=$False,ValueFromPipelinebyPropertyName=$True)]
     [string] $AuditComment,
     [Parameter(Mandatory=$False,ValueFromPipeline=$False,ValueFromPipelinebyPropertyName=$True)]
@@ -100,6 +120,21 @@ param
         Add-Member -Membertype NoteProperty -Name 'path' -value $Path -InputObject $body
         Add-Member -Membertype NoteProperty -Name 'objectType' -value $Type -InputObject $body
 
+        if ( $NewPath )
+        {
+            Add-Member -Membertype NoteProperty -Name 'newPath' -value $NewPath -InputObject $body            
+        }
+
+        if ( $Prefix )
+        {
+            Add-Member -Membertype NoteProperty -Name 'prefix' -value $Prefix -InputObject $body            
+        }
+
+        if ( $Suffix )
+        {
+            Add-Member -Membertype NoteProperty -Name 'suffix' -value $Suffix -InputObject $body            
+        }
+
         if ( $AuditComment -or $AuditTimeSpent -or $AuditTicketLink )
         {
             $objAuditLog = New-Object PSObject
@@ -119,13 +154,13 @@ param
         }
 
         [string] $requestBody = $body | ConvertTo-Json -Depth 100
-        $response = Invoke-JS7WebRequest -Path '/inventory/recover' -Body $requestBody
+        $response = Invoke-JS7WebRequest -Path '/inventory/trash/restore' -Body $requestBody
 
         if ( $response.StatusCode -eq 200 )
         {
-            $requestResult = ( $response.Content | ConvertFrom-JSON )
+            $requestResult = ( $response.Content | ConvertFrom-Json )
 
-            if ( !$requestResult.ok )
+            if ( !$requestResult.path )
             {
                 throw ( $response | Format-List -Force | Out-String )
             }

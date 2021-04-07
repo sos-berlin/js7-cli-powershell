@@ -63,7 +63,7 @@ param
     [Parameter(Mandatory=$True,ValueFromPipeline=$False,ValueFromPipelinebyPropertyName=$True)]
     [string] $Path,
     [Parameter(Mandatory=$True,ValueFromPipeline=$False,ValueFromPipelinebyPropertyName=$True)]
-    [ValidateSet('WORKFLOW','JOBCLASS','LOCK','JUNCTION','WORKINGDAYSCALENDAR','NONWORKINGDAYSCALENDAR','SCHEDULE')]
+    [ValidateSet('WORKFLOW','JOBCLASS','LOCK','JUNCTION','FILEORDERSOURCE','WORKINGDAYSCALENDAR','NONWORKINGDAYSCALENDAR','SCHEDULE')]
     [string] $Type,
     [Parameter(Mandatory=$False,ValueFromPipeline=$False,ValueFromPipelinebyPropertyName=$True)]
     [string] $AuditComment,
@@ -81,6 +81,8 @@ param
         {
             throw "$($MyInvocation.MyCommand.Name): Audit Log comment required, use parameter -AuditComment if one of the parameters -AuditTimeSpent or -AuditTicketLink is used"
         }
+        
+        $removableObjects = @()
     }
 
     Process
@@ -95,9 +97,17 @@ param
             $Path = $Path.Substring( 0, $Path.Length-1 )
         }
 
+        $removableObj = New-Object PSObject
+        Add-Member -Membertype NoteProperty -Name 'path' -value $Path -InputObject $removableObj
+        Add-Member -Membertype NoteProperty -Name 'objectType' -value $Type -InputObject $removableObj
+        
+        $removableObjects += $removableObj
+    }
+
+    End
+    {
         $body = New-Object PSObject
-        Add-Member -Membertype NoteProperty -Name 'path' -value $Path -InputObject $body
-        Add-Member -Membertype NoteProperty -Name 'objectType' -value $Type -InputObject $body
+        Add-Member -Membertype NoteProperty -Name 'objects' -value $removableObjects -InputObject $body
 
         if ( $AuditComment -or $AuditTimeSpent -or $AuditTicketLink )
         {
@@ -136,10 +146,7 @@ param
 
             Write-Verbose ".. $($MyInvocation.MyCommand.Name): object removed: $Path"
         }
-    }
 
-    End
-    {
         Trace-JS7StopWatch -CommandName $MyInvocation.MyCommand.Name -StopWatch $stopWatch
         Update-JS7Session
     }

@@ -41,7 +41,7 @@ This cmdlet accepts pipelined order objects that are e.g. returned from a Get-Jo
 This cmdlet returns an array of order objects.
 
 .EXAMPLE
-Remmove-JS7CompletedOrder -Id "#2021-01-19#T086350577-ap27"
+Remove-JS7CompletedOrder -OrderId "#2021-01-19#T086350577-ap27"
 
 Causes the indicated order to be removed upon completion of its workflow.
 

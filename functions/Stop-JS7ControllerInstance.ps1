@@ -77,12 +77,12 @@ Aborts a standalone JobScheduler Controller instance or active Cluster instance.
 In a JS7 cluster a fail-over takes place unless the -NoFailover switch is used.
 
 .EXAMPLE
-Stop-JS7ControllerInstance -Url (Get-JS7Status.Passive.Url)
+Stop-JS7ControllerInstance -Url (Get-JS7ControllerStatus.Passive.Url)
 
 Stops a passive JS7 Controller instance with normal termination.
 
 .EXAMPLE
-Stop-JS7ControllerInstance -Url (Get-JS7Status).Passive.Url) -Restart
+Stop-JS7ControllerInstance -Url (Get-JS7ControllerStatus).Passive.Url) -Restart
 
 Restarts a JS7 Controller instance that is the passive member in a cluster.
 

@@ -65,12 +65,12 @@ and a fail-over takes place to the passive cluster member. Use -of the -NoFailov
 the switch-over.
 
 .EXAMPLE
-Restart-JS7ControllerInstance -Url (Get-JS7Status).Active.Url
+Restart-JS7ControllerInstance -Url (Get-JS7ControllerStatus).Active.Url
 
 Retarts the JS7 Controller active cluster member or standalone instance.
 
 .EXAMPLE
-Restart-JS7ControllerInstance -Url (Get-JS7Status).Passive.Url -NoFailover
+Restart-JS7ControllerInstance -Url (Get-JS7ControllerStatus).Passive.Url -NoFailover
 
 Retarts the JS7 Controller passive cluster member. Consider use of the -NoFailover switch
 as a passive cluster member cannot switch-over to an active cluster member.

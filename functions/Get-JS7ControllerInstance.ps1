@@ -92,7 +92,7 @@ param
 
         if ( $response.StatusCode -eq 200 )
         {
-            $volatileStatus = ( $response.Content | ConvertFrom-JSON ).controller
+            $volatileStatus = ( $response.Content | ConvertFrom-Json ).controller
         } else {
             throw ( $response | Format-List -Force | Out-String )
         }
@@ -102,7 +102,7 @@ param
 
         if ( $response.StatusCode -eq 200 )
         {
-            $clusterStatus = ( $response.Content | ConvertFrom-JSON ).Controllers
+            $clusterStatus = ( $response.Content | ConvertFrom-Json ).Controllers
         } else {
             throw ( $response | Format-List -Force | Out-String )
         }
@@ -115,16 +115,11 @@ param
             {
                 if ( $Active -and ( !$volatileStatus.clusterNodeState -or $volatileStatus.clusterNodeState._text -eq 'active' ) )
                 {
-                    Add-Member -Membertype NoteProperty -Name 'Active' -value $clusterNodeInstance -InputObject $returnControllerCluster
-                } elseif ( $Passive ) {
-                    Add-Member -Membertype NoteProperty -Name 'Passive' -value $clusterNodeInstance -InputObject $returnControllerCluster
+                    Add-Member -Membertype NoteProperty -Name 'Active' -value $clusterNodeInstance -InputObject $returnControllerCluster -Force
                 }
             } else {
-                if ( $Active -and $volatileStatus.clusterNodeState._text -eq 'active' )
-                {
-                    Add-Member -Membertype NoteProperty -Name 'Passive' -value $clusterNodeInstance -InputObject $returnControllerCluster
-                } elseif ( $Passive ) {
-                    Add-Member -Membertype NoteProperty -Name 'Active' -value $clusterNodeInstance -InputObject $returnControllerCluster
+                if ( $Passive ) {
+                    Add-Member -Membertype NoteProperty -Name 'Passive' -value $clusterNodeInstance -InputObject $returnControllerCluster -Force
                 }
             }
         }
