@@ -20,17 +20,17 @@ such as with #2020-11-22#T072521128-Some_Order_Name.
 * timespan: time specified in milliseconds
 * order-name: the value of the -OrderName parameter
 
-.PARAMETER Arguments
-Specifies the arguments for the order. Arguments are created from a hashmap,
+.PARAMETER Variables
+Specifies the variables for the order. Variables are created from a hashmap,
 i.e. a list of names and values. Values have to be specified according to the
 variables declaration of the workflow and include use of the data types:
 
-* string: $orderArgs = @{ 'arg1' = 'value1' }
-* number: $orderArgs = @{ 'arg2' = 3.14 }
-* boolean: $orderArgs = @{ 'arg3' = $true }
+* string: $orderVariables = @{ 'arg1' = 'value1' }
+* number: $orderVariables = @{ 'arg2' = 3.14 }
+* boolean: $orderVariables = @{ 'arg3' = $true }
 
 Example:
-$orderArgs = @{ 'arg1' = 'value1'; 'arg2' = 3.14; 'arg3' = $true }
+$orderVariables = @{ 'var1' = 'value1'; 'var2' = 3.14; 'var3' = $true }
 
 Consider that a workflow can declare required variables that have to be added to an order.
 
@@ -116,10 +116,10 @@ $orderId = Add-JS7Order -OrderName Test -WorkflowPath /sos/reporting/Reporting -
 Adds the indicated order for a later date that is specified for the "Europe/Berlin" time zone.
 
 .EXAMPLE
-$orderId = Add-JS7Order -WorkflowPath /sos/reporting/Reporting -At "now+3600" -Arguments @{'param1' = 'value1'; 'param2' = 3.14; 'param3' = $true}
+$orderId = Add-JS7Order -WorkflowPath /sos/reporting/Reporting -At "now+3600" -Variables @{'var1' = 'value1'; 'var2' = 3.14; 'var3' = $true}
 
 Adds an order to the indicated workflow. The order will start one hour later and will use the
-arguments as specified by the -Arguments parameter.
+variables as specified by the -Variables parameter.
 
 .LINK
 about_js7
@@ -133,7 +133,7 @@ param
     [Parameter(Mandatory=$False,ValueFromPipeline=$False,ValueFromPipelinebyPropertyName=$True)]
     [string] $OrderName,
     [Parameter(Mandatory=$False,ValueFromPipeline=$False,ValueFromPipelinebyPropertyName=$True)]
-    [hashtable] $Arguments,
+    [hashtable] $Variables,
     [Parameter(Mandatory=$False,ValueFromPipeline=$False,ValueFromPipelinebyPropertyName=$True)]
     [string] $At,
     [Parameter(Mandatory=$False,ValueFromPipeline=$False,ValueFromPipelinebyPropertyName=$True)]
@@ -216,9 +216,9 @@ param
             Add-Member -Membertype NoteProperty -Name 'endPosition' -value $EndPosition -InputObject $objOrder
         }
 #>
-        if ( $Arguments )
+        if ( $Variables )
         {
-            Add-Member -Membertype NoteProperty -Name 'arguments' -value $Arguments -InputObject $objOrder
+            Add-Member -Membertype NoteProperty -Name 'arguments' -value $Variables -InputObject $objOrder
         }
 
         $objOrders += $objOrder

@@ -50,6 +50,12 @@ and to cleanup test resoures.
 .PARAMETER BaseFolder
 Specifies the root folder in the JOC Cockpit inventory to which test case resources such as workflows are added.
 
+.PARAMETER SourceArchive
+Specifies a source archive file (in .zip or .tar.gz format) that holds .json files for workflows and
+related inventory objects.
+
+The archive file can be created by exporting objects from the JOC Cockpit configuration.
+
 .PARAMETER SourceDirectory
 Specifies the source directory where test case resources are stored. Test case resources
 include .json files for workflows and related inventory objects.
@@ -137,8 +143,6 @@ param
     [Parameter(Mandatory=$False,ValueFromPipeline=$False,ValueFromPipelinebyPropertyName=$True)]
     [string] $TestRun = 'Test0000000000',
     [Parameter(Mandatory=$False,ValueFromPipeline=$False,ValueFromPipelinebyPropertyName=$True)]
-    [string] $TestRunPrefix = 'tcr',
-    [Parameter(Mandatory=$False,ValueFromPipeline=$False,ValueFromPipelinebyPropertyName=$True)]
     [int] $Count = 1,
     [Parameter(Mandatory=$False,ValueFromPipeline=$False,ValueFromPipelinebyPropertyName=$True)]
     [int] $BatchSize  = 100,
@@ -146,6 +150,8 @@ param
     [DateTime] $AtDate,
     [Parameter(Mandatory=$False,ValueFromPipeline=$False,ValueFromPipelinebyPropertyName=$True)]
     [string] $BaseFolder,
+    [Parameter(Mandatory=$False,ValueFromPipeline=$False,ValueFromPipelinebyPropertyName=$True)]
+    [string] $SourceArchive,
     [Parameter(Mandatory=$False,ValueFromPipeline=$False,ValueFromPipelinebyPropertyName=$True)]
     [string] $SourceDirectory,
     [Parameter(Mandatory=$False,ValueFromPipeline=$False,ValueFromPipelinebyPropertyName=$True)]
@@ -190,9 +196,9 @@ param
             throw "$($MyInvocation.MyCommand.Name): no base folder specified, use -BaseFolder"
         }
 
-        if ( !$SourceDirectory -and $Prepare )
+        if ( !$SourceArchive -and !$SourceDirectory -and $Prepare )
         {
-            throw "$($MyInvocation.MyCommand.Name): no source directory for test cases specified, use -SourceDirectory"
+            throw "$($MyInvocation.MyCommand.Name): no source archive or source directory for test cases specified, use -SourceArchive or -SourceDirectory"
         }
 
         if ( !$ControllerId )
@@ -212,24 +218,26 @@ param
         if ( $Prepare )
         {
             Add-JS7Folder -Path $testFolder
-        }
 
-        $testObjects = @()
-        $sourceFiles = Get-ChildItem $SourceDirectory -Filter "*.json" -Recurse:$Recursive
-        foreach( $sourceFile in $sourceFiles )
-        {
-            $testObjectType    = ([System.IO.FileInfo] $sourceFile.BaseName).Extension.Substring( 1 ).ToUpper()
-            $testObjectName    = ([System.IO.FileInfo]$sourceFile.BaseName).BaseName
-            $testObjectNewName = $TestRunPrefix + $testObjectName.SubString( $TestRunPrefix.length )
-    #       $testObjectPath    = "$testFolder/$(([System.IO.FileInfo]$sourceFile.BaseName).BaseName)"
-            $testObjectPath    = "$testFolder/$testObjectNewName"
-            $testObjectItem    = (Get-Content -Raw -Path $sourceFile.FullName).Replace( $testObjectName, $testObjectNewName ) | ConvertFrom-Json
-            $testObjects += @{ 'path'=$testObjectPath; 'type'=$testObjectType }
-
-            if ( $Prepare )
+            if ( !$SourceArchive )
             {
-                Add-JS7InventoryItem -Path $testObjectPath -Type $testObjectType -Item $testObjectItem
-                Publish-JS7DeployableItem -ControllerId $controllerId -Path $testObjectPath -Type $testObjectType
+                $SourceArchive = New-TemporaryFile
+                Write-Verbose ".. creating temporary archive file: $SourceArchive"
+                if ( $Recursive )
+                {
+                    Compress-Archive -DestinationPath $SourceArchive -Path "$($SourceDirectory)/*" -Force
+                } else {
+                    Compress-Archive -DestinationPath $SourceArchive -Path "$($SourceDirectory)/*.*" -Force
+                }
+            }
+
+            Import-JS7InventoryItem -FilePath $SourceArchive -TargetFolder $testFolder -Suffix 'imported'
+            Publish-JS7DeployableItem -ControllerId $ControllerId -Folder $testFolder -Recursive
+            Publish-JS7ReleasableItem -Folder $testFolder -Recursive
+
+            if ( $Run )
+            {
+                Start-Sleep -Seconds 3
             }
         }
 
@@ -256,19 +264,43 @@ param
                 $testCountInner = 1
             }
 
-            $sum = ($testObjects.count*$testCountOuter*$testCountInner)
+            $workflows = Get-JS7Workflow -Folder $testFolder -Recursive
+            $sum = ($workflows.count*$testCountOuter*$testCountInner)
             $cur = 0
-            Write-Verbose ".. performing $sum test runs with batches of $($testObjects.count) workflows with $testCountOuter outer loops for $testCountInner inner loops"
 
-            foreach( $testObject in $testObjects )
+            Write-Verbose ".. performing $sum test runs with batches of $($workflows.count) workflows with $testCountOuter outer loops for $testCountInner inner loops"
+
+            foreach( $workflow in $workflows )
             {
-                if ( $testObject.type -eq 'WORKFLOW' )
+                if ( $workflow.type -eq 'WORKFLOW' )
                 {
+                    $variables = @{}
+
+                    if ( $workflow.orderRequirements -and $workflow.orderRequirements.parameters )
+                    {
+                        $variableProperties = ( $workflow.orderRequirements.parameters | Get-Member -MemberType NoteProperty )
+
+                        for( $i=0; $i -le $variableProperties.count; $i++ )
+                        {
+                            $variable = $workflow.orderRequirements.parameters."$($variableProperties[$i].name)"
+                            if ( !$variable.default )
+                            {
+                               if ( $variable.type -eq 'Boolean' )
+                               {
+                                   $variables.Add( $variableProperties[$i].name, $True )
+                               } elseif ( $variable.type -eq 'String' ) {
+                                   $variables.Add( $variableProperties[$i].name, 'some string' )
+                               } elseif ( $variable.type -eq 'Number' ) {
+                                   $variables.Add( $variableProperties[$i].name, 1 )
+                               }
+                            }
+                        }
+                    }
                     for( $i=1; $i -le $testCountOuter; $i++ )
                     {
                         $cur++
-                        Write-Verbose ".. batches: $cur, object loops: $i, executing: 1..$testCountInner | Add-JS7Order -WorkflowPath $($testObject.path) -OrderName $TestRun -AtDate $AtDate"
-                        1..$testCountInner | Add-JS7Order -WorkflowPath $testObject.path @addOrderParams | Out-Null
+                        Write-Verbose ".. batches: $cur, object loops: $i, executing: 1..$testCountInner | Add-JS7Order -WorkflowPath $($workflow.path) -OrderName $TestRun -AtDate $AtDate"
+                        1..$testCountInner | Add-JS7Order -WorkflowPath $workflow.path -Variables $variables @addOrderParams | Out-Null
                         if ( $Progress )
                         {
                             Write-Progress -Id 1 -Activity "JS7 Test Run: $TestRun" -CurrentOperation "adding orders ..." -Status "$($cur*$testCountInner) of $sum orders added" -PercentComplete (($cur/$sum)*100) -SecondsRemaining -1
@@ -357,7 +389,7 @@ param
 
             # Drop test run folder with any includes resources
             Remove-JS7Folder -Path $testFolder
-            Publish-JS7DeployableItem -ControllerId $ControllerId -Path $testFolder -Type FOLDER -Delete
+            # Publish-JS7DeployableItem -ControllerId $ControllerId -Path $testFolder -Type FOLDER -Delete
 
             if ( $Progress )
             {

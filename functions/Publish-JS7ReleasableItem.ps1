@@ -23,6 +23,9 @@ Specifies the object type which is one of:
 Optionally specifies the folder for which included inventory objects should be published.
 This parameter is used alternatively to the -Path parameter that specifies to publish an individual inventory object.
 
+.PARAMETER Recursive
+Specifies that any sub-folders should be looked up. By default no sub-folders will be considered.
+
 .PARAMETER Delete
 Specifies the action to permanently delete previously removed objects.
 Without this switch objects are released for use with any JS7 Controller.
@@ -71,9 +74,12 @@ param
     [Parameter(Mandatory=$False,ValueFromPipeline=$True,ValueFromPipelinebyPropertyName=$True)]
     [string] $Path,
     [Parameter(Mandatory=$False,ValueFromPipeline=$False,ValueFromPipelinebyPropertyName=$True)]
+    [ValidateSet('FOLDER','SCHEDULE','WORKINGDAYSCALENDAR','NONWORKINGDAYSCALENDAR')]
     [string[]] $Type,
     [Parameter(Mandatory=$False,ValueFromPipeline=$False,ValueFromPipelinebyPropertyName=$True)]
     [string] $Folder = '/',
+    [Parameter(Mandatory=$False,ValueFromPipeline=$False,ValueFromPipelinebyPropertyName=$True)]
+    [switch] $Recursive,
     [Parameter(Mandatory=$False,ValueFromPipeline=$False,ValueFromPipelinebyPropertyName=$True)]
     [switch] $Delete,
     [Parameter(Mandatory=$False,ValueFromPipeline=$False,ValueFromPipelinebyPropertyName=$True)]
@@ -119,6 +125,11 @@ param
         if ( !$Path -and !$Folder )
         {
             throw "$($MyInvocation.MyCommand.Name): one of the parameters -Path or -Folder has to be used"
+        }
+
+        if ( $Folder -eq '/' -and !$Path -and !$Recursive )
+        {
+            $Recursive = $True
         }
 
         if ( $Type )

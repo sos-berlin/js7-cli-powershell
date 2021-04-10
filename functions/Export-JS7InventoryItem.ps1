@@ -251,7 +251,7 @@ param
         }
 
         $formats = @{ 'ZIP' = 'zip'; 'TAR_GZ' = 'tar.gz' }
-        $deployableTypes = @('FOLDER','WORKFLOW','JOBCLASS','LOCK','JUNCTION')
+        $deployableTypes = @('FOLDER','WORKFLOW','JOBCLASS','LOCK','JUNCTION','FILEORDERSOURCE')
         $releasableTypes = @('FOLDER','WORKINGDAYSCALENDAR','NONWORKINGDAYSCALENDAR','SCHEDULE')
         $exportObjects = @{}
         $deployablesObj = $null
@@ -286,7 +286,6 @@ param
             $WithoutRemoved = $True
         }
 
-
         if ( $Releasable )
         {
             if ( $Path )
@@ -310,7 +309,7 @@ param
 
                 if ( $response.StatusCode -eq 200 )
                 {
-                    $releasableObject = ( $response.Content | ConvertFrom-JSON ).releasable
+                    $releasableObject = ( $response.Content | ConvertFrom-Json ).releasable
 
                     if ( !$releasableObject.id )
                     {
@@ -331,52 +330,60 @@ param
                     $exportObjects.Add( $exportKey, @{ 'area' = 'releasable'; 'path' = "$($releasableObject.folder)$($releasableObject.objectName)"; 'type' = $releasableObject.objectType; 'released' = $releasableObject.released } )
                 }
             } else {
-                $body = New-Object PSObject
-
-                if ( !$Type )
+                if ( $Type -eq 'FOLDER' )
                 {
-                    Add-Member -Membertype NoteProperty -Name 'objectTypes' -value $releasableTypes -InputObject $body
+                    $exportKey = "$($Folder)-$($Folder)-FOLDER"
+                    $exportObject = @{ 'area' = 'releasable'; 'path' = "$($folder)"; 'type' = 'FOLDER'; 'recursive' = ($Recursive -eq $True) }
+                    $exportObjects.Add( $exportKey, $exportObject )
                 } else {
-                    Add-Member -Membertype NoteProperty -Name 'objectTypes' -value $Type -InputObject $body
-                }
 
-                Add-Member -Membertype NoteProperty -Name 'folder' -value $Folder -InputObject $body
-                Add-Member -Membertype NoteProperty -Name 'recursive' -value ($Recursive -eq $True) -InputObject $body
-                Add-Member -Membertype NoteProperty -Name 'onlyValidObjects' -value ($Valid -eq $True) -InputObject $body
-                Add-Member -Membertype NoteProperty -Name 'withoutDrafts' -value ($WithoutDrafts -eq $True) -InputObject $body
-                Add-Member -Membertype NoteProperty -Name 'withoutReleased' -value ($WithoutReleased -eq $True) -InputObject $body
-                Add-Member -Membertype NoteProperty -Name 'withoutRemovedObjects' -value ($WithoutRemoved -eq $True) -InputObject $body
+                    $body = New-Object PSObject
 
-                [string] $requestBody = $body | ConvertTo-Json -Depth 100
-                $response = Invoke-JS7WebRequest -Path '/inventory/releasables' -Body $requestBody
-
-                if ( $response.StatusCode -eq 200 )
-                {
-                    $releasableObjects = ( $response.Content | ConvertFrom-Json ).releasables
-                } else {
-                    throw ( $response | Format-List -Force | Out-String )
-                }
-
-                foreach( $releasableObject in $releasableObjects )
-                {
-                    if ( $releasableObject.id )
+                    if ( !$Type )
                     {
-                        if ( $releasableObject.folder -and !$releasableObject.folder.endsWith( '/' ) )
-                        {
-                            $releasableObject.folder += '/'
-                        }
+                        Add-Member -Membertype NoteProperty -Name 'objectTypes' -value $releasableTypes -InputObject $body
+                    } else {
+                        Add-Member -Membertype NoteProperty -Name 'objectTypes' -value $Type -InputObject $body
+                    }
 
-                        $exportKey = "$($releasableObject.folder)-$($releasableObject.objectName)-$($releasableObject.objectType)"
-                        if ( !$exportObjects.Item( $exportKey ) )
-                        {
-                            $exportObject = @{ 'area' = 'releasable'; 'path' = "$($releasableObject.folder)$($releasableObject.objectName)"; 'type' = $releasableObject.objectType; ; 'released' = $releasableObject.released }
+                    Add-Member -Membertype NoteProperty -Name 'folder' -value $Folder -InputObject $body
+                    Add-Member -Membertype NoteProperty -Name 'recursive' -value ($Recursive -eq $True) -InputObject $body
+                    Add-Member -Membertype NoteProperty -Name 'onlyValidObjects' -value ($Valid -eq $True) -InputObject $body
+                    Add-Member -Membertype NoteProperty -Name 'withoutDrafts' -value ($WithoutDrafts -eq $True) -InputObject $body
+                    Add-Member -Membertype NoteProperty -Name 'withoutReleased' -value ($WithoutReleased -eq $True) -InputObject $body
+                    Add-Member -Membertype NoteProperty -Name 'withoutRemovedObjects' -value ($WithoutRemoved -eq $True) -InputObject $body
 
-                            if ( $object.type -eq 'FOLDER' )
+                    [string] $requestBody = $body | ConvertTo-Json -Depth 100
+                    $response = Invoke-JS7WebRequest -Path '/inventory/releasables' -Body $requestBody
+
+                    if ( $response.StatusCode -eq 200 )
+                    {
+                        $releasableObjects = ( $response.Content | ConvertFrom-Json ).releasables
+                    } else {
+                        throw ( $response | Format-List -Force | Out-String )
+                    }
+
+                    foreach( $releasableObject in $releasableObjects )
+                    {
+                        if ( $releasableObject.id )
+                        {
+                            if ( $releasableObject.folder -and !$releasableObject.folder.endsWith( '/' ) )
                             {
-                                $exportObject.Add( 'recursive', ($Recursive -eq $True) )
+                                $releasableObject.folder += '/'
                             }
 
-                            $exportObjects.Add( $exportKey, $exportObject )
+                            $exportKey = "$($releasableObject.folder)-$($releasableObject.objectName)-$($releasableObject.objectType)"
+                            if ( !$exportObjects.Item( $exportKey ) )
+                            {
+                                $exportObject = @{ 'area' = 'releasable'; 'path' = "$($releasableObject.folder)$($releasableObject.objectName)"; 'type' = $releasableObject.objectType; ; 'released' = $releasableObject.released }
+
+                                if ( $object.type -eq 'FOLDER' )
+                                {
+                                    $exportObject.Add( 'recursive', ($Recursive -eq $True) )
+                                }
+
+                                $exportObjects.Add( $exportKey, $exportObject )
+                            }
                         }
                     }
                 }
@@ -559,6 +566,11 @@ param
                     Add-Member -Membertype NoteProperty -Name 'path' -value $object.path -InputObject $releasedConfiguration
                     Add-Member -Membertype NoteProperty -Name 'objectType' -value $object.type -InputObject $releasedConfiguration
 
+                    if ( $object.type -eq 'FOLDER' )
+                    {
+                        Add-Member -Membertype NoteProperty -Name 'recursive' -value ($Recursive -eq $True) -InputObject $releasedConfiguration
+                    }
+
                     $releasedConfigurationItem = New-Object PSObject
                     Add-Member -Membertype NoteProperty -Name 'configuration' -value $releasedConfiguration -InputObject $releasedConfigurationItem
 
@@ -567,6 +579,11 @@ param
                     $draftConfiguration = New-Object PSObject
                     Add-Member -Membertype NoteProperty -Name 'path' -value $object.path -InputObject $draftConfiguration
                     Add-Member -Membertype NoteProperty -Name 'objectType' -value $object.type -InputObject $draftConfiguration
+
+                    if ( $object.type -eq 'FOLDER' )
+                    {
+                        Add-Member -Membertype NoteProperty -Name 'recursive' -value ($Recursive -eq $True) -InputObject $draftConfiguration
+                    }
 
                     $draftConfigurationItem = New-Object PSObject
                     Add-Member -Membertype NoteProperty -Name 'configuration' -value $draftConfiguration -InputObject $draftConfigurationItem
@@ -610,7 +627,11 @@ param
             if ( $ForSigning )
             {
                 $forSigningObj = New-Object PSObject
-                Add-Member -Membertype NoteProperty -Name 'controllerId' -value $ControllerId -InputObject $forSigningObj
+
+                if ( $ControllerId )
+                {
+                    Add-Member -Membertype NoteProperty -Name 'controllerId' -value $ControllerId -InputObject $forSigningObj
+                }
 
                 if ( $deployablesObj )
                 {
@@ -620,6 +641,11 @@ param
                 Add-Member -Membertype NoteProperty -Name 'forSigning' -value $forSigningObj -InputObject $body
             } elseif ( $deployablesObj -or $releasablesObj ) {
                 $shallowCopyObj = New-Object PSObject
+
+                if ( $ControllerId )
+                {
+                    Add-Member -Membertype NoteProperty -Name 'controllerId' -value $ControllerId -InputObject $shallowCopyObj
+                }
 
                 if ( $deployablesObj )
                 {
@@ -656,7 +682,8 @@ param
                     Add-Member -Membertype NoteProperty -Name 'auditLog' -value $objAuditLog -InputObject $body
                 }
 
-                $headers = @{'Accept' = 'application/octet-stream'; 'Accept-Encoding' = 'gzip, deflate' }
+#               $headers = @{'Accept' = 'application/octet-stream'; 'Accept-Encoding' = 'gzip, deflate' }
+                $headers = @{'Accept' = 'application/json, text/plain, */*'; 'Accept-Encoding' = 'gzip, deflate, br' }
 
                 [string] $requestBody = $body | ConvertTo-Json -Depth 100
                 $response = Invoke-JS7WebRequest -Path '/inventory/export' -Body $requestBody -Headers $headers

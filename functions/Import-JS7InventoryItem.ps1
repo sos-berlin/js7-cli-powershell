@@ -24,6 +24,22 @@ Optionally specifies the folder in the JOC Cockpit inventory to which imported o
 Without this parameter any folders as specified with the import file will be used.
 New folders are automatically created and optionally existing folders will be overwritten.
 
+.PARAMETER Prefix
+Specifies a prefix - followed by a dash - to be prepended to object names in case that a target object
+with the same name exists and that the -Overwrite switch has not been used.
+
+If an object with the same name including the prefix exists then a unique name is created from an
+incremental number that is inserted between the prefix and the dash.
+
+.PARAMETER Suffix
+Specifies a suffix - preceded by a dash - to be appended to object names in case that a target object
+with the same name exists and that the -Overwrite switch has not been used.
+
+If an object with the same name including the suffix exists then a unique name is created from an
+incremental number that is inserted between the suffix and the dash.
+
+If both -Prefix and -Suffix parameters are specified then the -Prefix parameter is ignored.
+
 .PARAMETER Overwrite
 Specifies that existing objects in the JOC Cockpit inventory will be overwritten
 from objects with the same path in the archive file.
@@ -62,7 +78,7 @@ Imports any objects included with the import file "export.zip". Objects existing
 the JOC Cockpit inventory will not be overwritten.
 
 .EXAMPLE
-Import-JS7InventoryItem -Folder /some_folder -FilePath /tmp/export.tar.gz -Format TAR.GZ -Overwrite
+Import-JS7InventoryItem -Folder /import -FilePath /tmp/export.tar.gz -Format TAR.GZ -Overwrite
 
 Imports any objects from the given import file. As a compressed tar file is used the respective archive format
 is specified. Objects are added to the path /some_folder such as e.g. an object /myPath/myWorkflow will be added to
@@ -84,6 +100,10 @@ param
     [string] $Format = 'ZIP',
     [Parameter(Mandatory=$False,ValueFromPipeline=$False,ValueFromPipelinebyPropertyName=$True)]
     [string] $TargetFolder = '/',
+    [Parameter(Mandatory=$False,ValueFromPipeline=$False,ValueFromPipelinebyPropertyName=$True)]
+    [string] $Prefix,
+    [Parameter(Mandatory=$False,ValueFromPipeline=$False,ValueFromPipelinebyPropertyName=$True)]
+    [string] $Suffix,
     [Parameter(Mandatory=$False,ValueFromPipeline=$False,ValueFromPipelinebyPropertyName=$True)]
     [switch] $Overwrite,
     [Parameter(Mandatory=$False,ValueFromPipeline=$False,ValueFromPipelinebyPropertyName=$True)]
@@ -142,6 +162,18 @@ param
             $stringHeader = [System.Net.Http.Headers.ContentDispositionHeaderValue]::new("form-data")
             $stringHeader.Name = "overwrite"
             $StringContent = [System.Net.Http.StringContent]::new( ($Overwrite -eq $True) )
+            $stringContent.Headers.ContentDisposition = $stringHeader
+            $multipartContent.Add( $stringContent )
+
+            $stringHeader = [System.Net.Http.Headers.ContentDispositionHeaderValue]::new("form-data")
+            $stringHeader.Name = "prefix"
+            $StringContent = [System.Net.Http.StringContent]::new( $Prefix )
+            $stringContent.Headers.ContentDisposition = $stringHeader
+            $multipartContent.Add( $stringContent )
+
+            $stringHeader = [System.Net.Http.Headers.ContentDispositionHeaderValue]::new("form-data")
+            $stringHeader.Name = "suffix"
+            $StringContent = [System.Net.Http.StringContent]::new( $Suffix )
             $stringContent.Headers.ContentDisposition = $stringHeader
             $multipartContent.Add( $stringContent )
 

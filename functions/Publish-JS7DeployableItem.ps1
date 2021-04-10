@@ -27,10 +27,14 @@ Specifies the object type which is one of:
 * JOBCLASS
 * LOCK
 * JUNCTION
+* FILEORDERSOURCE
 
 .PARAMETER Folder
 Optionally specifies the folder for which included inventory objects should be published.
 This parameter is used alternatively to the -Path parameter that specifies to publish an individual inventory object.
+
+.PARAMETER Recursive
+Specifies that any sub-folders should be looked up. By default no sub-folders will be considered.
 
 .PARAMETER ControllerId
 Specifies one or more Controllers to which the indicated objects should be deployed.
@@ -58,7 +62,7 @@ This information is visible with the Audit Log view of JOC Cockpit.
 It can be useful when integrated with a ticket system that logs interventions with JobScheduler.
 
 .INPUTS
-This cmdlet accepts pipelined job objects that are e.g. returned from a Get-JS7Workflow cmdlet.
+This cmdlet accepts pipelined objects that are e.g. returned from a Get-JS7Workflow cmdlet.
 
 .OUTPUTS
 This cmdlet returns no output.
@@ -126,7 +130,7 @@ param
         $storeObjects = @()
         $deleteObjects = @()
 
-        $deployableTypes = @('FOLDER','WORKFLOW','JOBCLASS','LOCK','JUNCTION')
+        $deployableTypes = @('FOLDER','WORKFLOW','JOBCLASS','LOCK','JUNCTION','FILEORDERSOURCE')
     }
 
     Process
@@ -224,7 +228,7 @@ param
 
             if ( $response.StatusCode -eq 200 )
             {
-                $deployableObjects = ( $response.Content | ConvertFrom-JSON ).deployables
+                $deployableObjects = ( $response.Content | ConvertFrom-Json ).deployables
             } else {
                 throw ( $response | Format-List -Force | Out-String )
             }
@@ -300,7 +304,6 @@ param
 
             if ( $deployConfigurations.count -or $draftConfigurations.count )
             {
-
                 $storeObject = New-Object PSObject
 
                 if ( $draftConfigurations.count )
@@ -332,10 +335,9 @@ param
                 }
             }
 
-            $deleteObject = New-Object PSObject
-
             if ( $deployConfigurations.count )
             {
+                $deleteObject = New-Object PSObject
                 Add-Member -Membertype NoteProperty -Name 'deployConfigurations' -value $deployConfigurations -InputObject $deleteObject
                 Add-Member -Membertype NoteProperty -Name 'delete' -value $deleteObject -InputObject $body
             }
@@ -364,7 +366,7 @@ param
 
             if ( $response.StatusCode -eq 200 )
             {
-                $requestResult = ( $response.Content | ConvertFrom-JSON )
+                $requestResult = ( $response.Content | ConvertFrom-Json )
 
                 if ( !$requestResult.ok )
                 {

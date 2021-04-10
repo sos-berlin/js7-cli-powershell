@@ -14,6 +14,9 @@ Specifies the identifier of an order.
 Specifies the position in the workflow for which the order should be resumed,
 i.e. the order will continue to execute with the instruction indicated by the position.
 
+The position is specified as an array, e.g. @(2, "then", 0) which translates to the
+3rd instruction of the workflow, that is an If-Instruction, and the first instruction in the "then" branch.
+
 .PARAMETER Arguments
 Specifies the arguments for the order. Arguments are created from a hashmap,
 i.e. a list of names and values.
@@ -43,12 +46,17 @@ It can be useful when integrated with a ticket system that logs interventions wi
 This cmdlet accepts pipelined order objects that are e.g. returned from a Get-JS7Order cmdlet.
 
 .OUTPUTS
-This cmdlet returns an array of order objects.
+This cmdlet returns no output.
 
 .EXAMPLE
-Resume-JS7Order -OrderId #2020-11-22#T072521128-Reporting
+Resume-JS7Order -OrderId "#2020-11-22#T072521128-Reporting"
 
-Resumes the order with the given ID.
+Resumes the order with the given ID from its current position.
+
+.EXAMPLE
+Resume-JS7Order -OrderId "#2020-11-22#T072521128-Reporting" -Position @(2)
+
+Resumes the order with the given ID from the 3rd instruction in the workflow.
 
 .EXAMPLE
 Get-JS7Order -Suspended | Resume-JS7Order
@@ -56,7 +64,7 @@ Get-JS7Order -Suspended | Resume-JS7Order
 Resumes all suspended orders for all workflows.
 
 .EXAMPLE
-Get-JS7Order -Folder / | Resume-JS7Order
+Get-JS7Order -Suspended -Folder / | Resume-JS7Order
 
 Resumes orders that are configured with the root folder
 without consideration of sub-folders.
@@ -81,7 +89,7 @@ param
     [Parameter(Mandatory=$True,ValueFromPipeline=$True,ValueFromPipelinebyPropertyName=$True)]
     [string] $OrderId,
     [Parameter(Mandatory=$False,ValueFromPipeline=$False,ValueFromPipelinebyPropertyName=$True)]
-    [string] $Position,
+    [object[]] $Position,
     [Parameter(Mandatory=$False,ValueFromPipeline=$False,ValueFromPipelinebyPropertyName=$True)]
     [hashtable] $Arguments,
     [Parameter(Mandatory=$False,ValueFromPipeline=$False,ValueFromPipelinebyPropertyName=$True)]
@@ -102,17 +110,11 @@ param
         }
 
         $orders = @()
-        $positions = @()
     }
 
     Process
     {
         $orders += $OrderId
-
-        if ( $Position )
-        {
-            $positions += $Position
-        }
     }
 
     End
@@ -123,9 +125,9 @@ param
             Add-Member -Membertype NoteProperty -Name 'controllerId' -value $script:jsWebService.ControllerId -InputObject $body
             Add-Member -Membertype NoteProperty -Name 'orderIds' -value $orders -InputObject $body
 
-            if ( $positions.count )
+            if ( $Position )
             {
-                Add-Member -Membertype NoteProperty -Name 'position' -value $positions -InputObject $body
+                Add-Member -Membertype NoteProperty -Name 'position' -value $Position -InputObject $body
             }
 
             if ( $Arguments )
@@ -156,7 +158,7 @@ param
 
             if ( $response.StatusCode -eq 200 )
             {
-                $requestResult = ( $response.Content | ConvertFrom-JSON )
+                $requestResult = ( $response.Content | ConvertFrom-Json )
 
                 if ( !$requestResult.ok )
                 {
