@@ -78,7 +78,7 @@ Imports any objects included with the import file "export.zip". Objects existing
 the JOC Cockpit inventory will not be overwritten.
 
 .EXAMPLE
-Import-JS7InventoryItem -Folder /import -FilePath /tmp/export.tar.gz -Format TAR.GZ -Overwrite
+Import-JS7InventoryItem -TargetFolder /import -FilePath /tmp/export.tar.gz -Format TAR.GZ -Overwrite
 
 Imports any objects from the given import file. As a compressed tar file is used the respective archive format
 is specified. Objects are added to the path /some_folder such as e.g. an object /myPath/myWorkflow will be added to

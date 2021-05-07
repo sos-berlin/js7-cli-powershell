@@ -79,6 +79,7 @@ FunctionsToExport = @(
     'Restore-JS7Folder',
     'Restore-JS7InventoryItem',
     'Resume-JS7Order',
+	'Send-JS7Mail',
     'Set-JS7Agent',
     'Set-JS7Controller',
     'Set-JS7Credentials',
