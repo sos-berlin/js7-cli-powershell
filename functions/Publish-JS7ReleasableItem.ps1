@@ -289,7 +289,7 @@ param
 
             if ( $response.StatusCode -eq 200 )
             {
-                $requestResult = ( $response.Content | ConvertFrom-JSON )
+                $requestResult = ( $response.Content | ConvertFrom-Json )
 
                 if ( !$requestResult.ok )
                 {

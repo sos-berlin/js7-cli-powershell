@@ -61,7 +61,7 @@ Add-JS7InventoryItem -Path /some/directory/sampleLock -Type 'LOCK' -Item ( '{ "l
 On-the-fly adds a resource lock to the invnetory. The JSON document for the resource lock is specified with the -Item parameter.
 
 .EXAMPLE
-Add-JS7InventoryItem -Path /some/directory/sampleLock -Type 'LOCK' -Item (Get-Content /tmp/myForkExample.workflow.json -Raw)
+Add-JS7InventoryItem -Path /some/directory/sampleLock -Type 'LOCK' -Item (Get-Content /tmp/myForkExample.workflow.json -Raw | ConvertFrom-Json -Depth 100)
 
 Reads a resource lock from a file and adds it to the invnetory.
 

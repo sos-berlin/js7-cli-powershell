@@ -190,7 +190,7 @@ param
                 $body = New-Object PSObject
                 Add-Member -Membertype NoteProperty -Name 'objectType' -value $Type[0] -InputObject $body
                 Add-Member -Membertype NoteProperty -Name 'path' -value $Path -InputObject $body
-                Add-Member -Membertype NoteProperty -Name 'onlyValidObjects' -value $False -InputObject $body
+                Add-Member -Membertype NoteProperty -Name 'onlyValidObjects' -value $True -InputObject $body
                 Add-Member -Membertype NoteProperty -Name 'withoutDeployed' -value $False -InputObject $body
 
                 [string] $requestBody = $body | ConvertTo-Json -Depth 100
@@ -198,7 +198,7 @@ param
 
                 if ( $response.StatusCode -eq 200 )
                 {
-                    $deployableObject = ( $response.Content | ConvertFrom-JSON ).deployable
+                    $deployableObject = ( $response.Content | ConvertFrom-Json ).deployable
 
                     if ( !$deployableObject.id )
                     {
@@ -220,7 +220,7 @@ param
             Add-Member -Membertype NoteProperty -Name 'folder' -value $Folder -InputObject $body
             Add-Member -Membertype NoteProperty -Name 'recursive' -value ($Recursive -eq $True) -InputObject $body
             Add-Member -Membertype NoteProperty -Name 'objectTypes' -value $Type -InputObject $body
-            Add-Member -Membertype NoteProperty -Name 'onlyValidObjects' -value $False -InputObject $body
+            Add-Member -Membertype NoteProperty -Name 'onlyValidObjects' -value $True -InputObject $body
             Add-Member -Membertype NoteProperty -Name 'withVersions' -value $False -InputObject $body
 
             [string] $requestBody = $body | ConvertTo-Json -Depth 100
@@ -235,20 +235,22 @@ param
 
             foreach( $deployableObject in $deployableObjects )
             {
-               # if ( $deployableObject.deployablesVersions.count -and ( $deployableObject.deploymentId -eq $deployableObject.deployablesVersions[0].deploymentId ) )
-               # {
-                    if ( $deployableObject.folder -and !$deployableObject.folder.endsWith( '/' ) )
-                    {
-                        $deployableObject.folder += '/'
-                    }
+                if ( $deployableObject.objectType -eq 'FOLDER' )
+                {
+                    continue
+                }
 
-                    if ( $Delete )
-                    {
-                        $deleteObjects += @{ 'path' = "$($deployableObject.folder)$($deployableObject.objectName)"; 'type' = $deployableObject.objectType; 'valid' = $deployableObject.valid; 'deployed' = $deployableObject.deployed }
-                    } else {
-                        $storeObjects += @{ 'path' = "$($deployableObject.folder)$($deployableObject.objectName)"; 'type' = $deployableObject.objectType; 'valid' = $deployableObject.valid; 'deployed' = $deployableObject.deployed }
-                    }
-               # }
+                if ( $deployableObject.folder -and !$deployableObject.folder.endsWith( '/' ) )
+                {
+                    $deployableObject.folder += '/'
+                }
+
+                if ( $Delete )
+                {
+                    $deleteObjects += @{ 'path' = "$($deployableObject.folder)$($deployableObject.objectName)"; 'type' = $deployableObject.objectType; 'valid' = $deployableObject.valid; 'deployed' = $deployableObject.deployed }
+                } else {
+                    $storeObjects += @{ 'path' = "$($deployableObject.folder)$($deployableObject.objectName)"; 'type' = $deployableObject.objectType; 'valid' = $deployableObject.valid; 'deployed' = $deployableObject.deployed }
+                }
             }
 
             if ( $Type[0] -eq 'FOLDER' -and $Delete -and $Folder )
@@ -382,5 +384,6 @@ param
         }
 
         Trace-JS7StopWatch -CommandName $MyInvocation.MyCommand.Name -StopWatch $stopWatch
+        Update-JS7Session
     }
 }

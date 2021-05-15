@@ -128,13 +128,31 @@ used by the current account. This parameter can be used for Windows and Unix ope
 
 This parameter cannot be used with the -Certificate parameter or -CertificateThumbprint parameter.
 
+.PARAMETER KeyStoreCredentials
+Specifies the credentials for access to a keystore that is indicated with the -KeyStorePath parameter.
+
+A credentials object can be created in a number of ways, e.g.:
+
+$keyStoreCredentials = ( New-Object -typename System.Management.Automation.PSCredential -ArgumentList 'keystore', ( 'jobscheduler' | ConvertTo-SecureString -AsPlainText -Force) )
+
+The first argument 'keystore' is arbitrary, the second argument 'jobscheduler' specifies the password to the keystore.
+
 .PARAMETER RootCertificatePath
 Specifies the location of a file that holds the root certificate that was used when signing the JOC Cockpit
 SSL certificate.
 
 * For Windows environments the root certificate by default is looked up in the Windows Certificate Store, however,
   this parameter can be used to apply a root certificate from a location in the file system.
-* For Linux environments a path is specified to the root certificate file.
+* For Linux environments a path is specified to the root certificate file, e.g. *.pem, *.crt file, or to a truststore, e.g. *.jks, *.p12 file.
+
+.PARAMETER RootCertificateCredentials
+Specifies the credentials for access to a truststore that holds the root certificate.
+
+A credentials object can be created in a number of ways, e.g.:
+
+$trustStoreCredentials = ( New-Object -typename System.Management.Automation.PSCredential -ArgumentList 'truststore', ( 'jobscheduler' | ConvertTo-SecureString -AsPlainText -Force) )
+
+The first argument 'truststore' is arbitrary, the second argument 'jobscheduler' specifies the password to the truststore.
 
 .PARAMETER SkipCertificateCheck
 Specifies that the JOC Cockpit SSL certificate will not be checked, i.e. the identify of the JOC Cockpit instance is not verified.
@@ -146,16 +164,22 @@ Returns details about each Controller such as host, port, active role etc.
 The details are provided with the "ControllerInstances" data structure in the response.
 
 .EXAMPLE
-Connect-JS7 http://localhost4446 -AskForCredentials
+Connect-JS7 -Url http://localhost:4446 -AskForCredentials
 
-Connects to the JS7 Web Service at the indicated address and asks the user interactively to enter credentials.
+Connects to the JS7 Web Service at the indicated address and asks the user interactively for credentials.
 
 .EXAMPLE
-$credential = ( New-Object -typename System.Management.Automation.PSCredential -ArgumentList 'root', ( 'root' | ConvertTo-SecureString -AsPlainText -Force) )
-Connect-JS7 http://localhost:4446 $credential scheduler
+Connect-JS7 -Url https://js7-joc-promary:4443 -AskForCredentials -RootCertificatePath /home/sos/root-ca.crt
+
+Connects to the JS7 Web Service with a secure HTTPS connection at the indicated address and asks the user interactively for credentials.
+In order to verfy the JOC Cockpit server certificate the corresponding root certificate is specified that was used when signing the server certificate.
+
+.EXAMPLE
+$credentials = ( New-Object -typename System.Management.Automation.PSCredential -ArgumentList 'root', ( 'root' | ConvertTo-SecureString -AsPlainText -Force) )
+Connect-JS7 -Url http://localhost:4446 -Credentials $credentials -Id jobscheduler
 
 A variable $credential is created that holds the credentials for the default root account of JOC Cockpit.
-When calling the cmdlet the URL is specified, the JS7ID that was used during installationn and the credential object.
+When calling the cmdlet the URL is specified, the Controller ID that was used during installationn and the credential object.
 
 .EXAMPLE
 cmdkey /generic:JS7 Web Service /user:root /pass:root
@@ -164,6 +188,17 @@ Connect-JS7 -Url http://localhost:4446 -Credentials $credentials
 
 Prior to use with PowerShell with some external command ("cmdkey") a credential set is generated for the current user.
 The credentials are retrieved by use of the Get-JS7SystemCredentials cmdlet and are forwarded to the Connect-JS7 cmdlet.
+
+.EXAMPLE
+$trustStoreCredentials = ( New-Object -typename System.Management.Automation.PSCredential -ArgumentList 'truststore', ( 'jobscheduler' | ConvertTo-SecureString -AsPlainText -Force) )
+$keyStoreCredentials = ( New-Object -typename System.Management.Automation.PSCredential -ArgumentList 'keystore', ( 'jobscheduler' | ConvertTo-SecureString -AsPlainText -Force) )
+Connect-JS7 -Url https://js7-joc-primary:4443 -Id jobscheduler -RootCertificatePath /home/sos/https-truststore.p12 -RootCertificateCredentials $trustStoreCredentials -KeyStorePath /home/sos/https-keystore.p12 -KeyStorePassword $keyStoreCredentials
+
+This example assumes a secure HTTPS connection to JOC Cockpit with mutual authentication:
+* The -RootCertificatePath is specified that holds the root certificate that was used when signing the JOC Cockpit SSL server certificate.
+* The -KeyStorePath is specified that hold the private key and certificate for mutual authentication with JOC Cockpit.
+* A variable $trustStoreCredentials is created that holds the password for access to the the truststore with the root certificate.
+* A variable $keyStoreCredentials is created that holds the credentials for access to they keystore for mutual authentication.
 
 .OUTPUTS
 The cmdlet returns an object with access information including the access token for the JS7 Web Service.
@@ -203,8 +238,12 @@ param
     [string] $CertificateThumbprint,
     [Parameter(Mandatory=$False,ValueFromPipeline=$True,ValueFromPipelinebyPropertyName=$True)]
     [string] $KeyStorePath,
+    [Parameter(Mandatory=$False,ValueFromPipeline=$False,ValueFromPipelinebyPropertyName=$True)]
+    [System.Management.Automation.PSCredential] $KeyStoreCredentials,
     [Parameter(Mandatory=$False,ValueFromPipeline=$True,ValueFromPipelinebyPropertyName=$True)]
     [string] $RootCertificatePath,
+    [Parameter(Mandatory=$False,ValueFromPipeline=$False,ValueFromPipelinebyPropertyName=$True)]
+    [System.Management.Automation.PSCredential] $RootCertificateCredentials,
     [Parameter(Mandatory=$False,ValueFromPipeline=$True,ValueFromPipelinebyPropertyName=$True)]
     [switch] $SkipCertificateCheck,
     [Parameter(Mandatory=$False,ValueFromPipeline=$True,ValueFromPipelinebyPropertyName=$True)]
@@ -341,7 +380,13 @@ param
             $store = [System.Security.Cryptography.X509Certificates.X509Store]::new( $storeName::My, $storeLocation::CurrentUser )
 
             $certPath = ( Resolve-Path $KeyStorePath ).Path
-            $Certificate = New-Object System.Security.Cryptography.X509Certificates.X509Certificate2( $certPath )
+
+            if ( $KeyStoreCredentials )
+            {
+                $Certificate = New-Object System.Security.Cryptography.X509Certificates.X509Certificate2( $certPath, $KeyStoreCredentials.Password )
+            } else {
+                $Certificate = New-Object System.Security.Cryptography.X509Certificates.X509Certificate2( $certPath )
+            }
 
             $store.Open( $openFlags::ReadWrite )
             $store.Add( $Certificate )
@@ -359,7 +404,13 @@ param
             $store = [System.Security.Cryptography.X509Certificates.X509Store]::new( $storeName::Root, $storeLocation::CurrentUser )
 
             $certPath = ( Resolve-Path $RootCertificatePath ).Path
-            $cert = New-Object System.Security.Cryptography.X509Certificates.X509Certificate2( $certPath )
+
+            if ( $RootCertificateCredentials )
+            {
+                $cert = New-Object System.Security.Cryptography.X509Certificates.X509Certificate2( $certPath, $RootCertificateCredentials.Password )
+            } else {
+                $cert = New-Object System.Security.Cryptography.X509Certificates.X509Certificate2( $certPath )
+            }
 
             $store.Open( $openFlags::ReadWrite )
             $store.Add( $cert )
