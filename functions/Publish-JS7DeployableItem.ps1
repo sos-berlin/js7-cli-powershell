@@ -25,6 +25,7 @@ Specifies the object type which is one of:
 * FOLDER
 * WORKFLOW
 * JOBCLASS
+* JOBRESOURCE
 * LOCK
 * JUNCTION
 * FILEORDERSOURCE
@@ -99,7 +100,7 @@ param
     [Parameter(Mandatory=$False,ValueFromPipeline=$True,ValueFromPipelinebyPropertyName=$True)]
     [string] $Path,
     [Parameter(Mandatory=$False,ValueFromPipeline=$False,ValueFromPipelinebyPropertyName=$True)]
-    [ValidateSet('FOLDER','WORKFLOW','JOBCLASS','LOCK','JUNCTION','FILEORDERSOURCE')]
+    [ValidateSet('FOLDER','WORKFLOW','JOBCLASS','JOBRESOUROCE','LOCK','JUNCTION','FILEORDERSOURCE')]
     [string[]] $Type,
     [Parameter(Mandatory=$False,ValueFromPipeline=$False,ValueFromPipelinebyPropertyName=$True)]
     [string] $Folder = '/',
@@ -109,6 +110,12 @@ param
     [string] $ControllerId,
     [Parameter(Mandatory=$False,ValueFromPipeline=$False,ValueFromPipelinebyPropertyName=$True)]
     [switch] $Delete,
+    [Parameter(Mandatory=$False,ValueFromPipeline=$False,ValueFromPipelinebyPropertyName=$True)]
+    [switch] $NoDraft,
+    [Parameter(Mandatory=$False,ValueFromPipeline=$False,ValueFromPipelinebyPropertyName=$True)]
+    [switch] $NoDeployed,
+    [Parameter(Mandatory=$False,ValueFromPipeline=$False,ValueFromPipelinebyPropertyName=$True)]
+    [switch] $Latest,
     [Parameter(Mandatory=$False,ValueFromPipeline=$False,ValueFromPipelinebyPropertyName=$True)]
     [string] $AuditComment,
     [Parameter(Mandatory=$False,ValueFromPipeline=$False,ValueFromPipelinebyPropertyName=$True)]
@@ -130,7 +137,7 @@ param
         $storeObjects = @()
         $deleteObjects = @()
 
-        $deployableTypes = @('FOLDER','WORKFLOW','JOBCLASS','LOCK','JUNCTION','FILEORDERSOURCE')
+        $deployableTypes = @('FOLDER','WORKFLOW','JOBCLASS','JOBRESOURCE','LOCK','JUNCTION','FILEORDERSOURCE')
     }
 
     Process
@@ -174,6 +181,8 @@ param
         if ( !$Type )
         {
             $Type = $deployableTypes
+        } else {
+            $Type[0] = $Type[0].toUpper()
         }
 
         if ( $Path )
@@ -182,16 +191,18 @@ param
             {
                 if ( $Delete )
                 {
-                    $deleteObjects += @{ 'path' = $Path; 'type' = $Type[0]; 'valid' = $True; 'deployed' = $True }
+                    $deleteObjects += @{ 'path' = $Path; 'type' = $Type[0]; 'valid' = $True; 'deployed' = ($NoDeployed -eq $False) }
                 } else {
-                    $storeObjects += @{ 'path' = $Path; 'type' = $Type[0]; 'valid' = $True; 'deployed' = $True }
+                    $storeObjects += @{ 'path' = $Path; 'type' = $Type[0]; 'valid' = $True; 'deployed' = ($NoDeployed -eq $True) }
                 }
             } else {
                 $body = New-Object PSObject
                 Add-Member -Membertype NoteProperty -Name 'objectType' -value $Type[0] -InputObject $body
                 Add-Member -Membertype NoteProperty -Name 'path' -value $Path -InputObject $body
                 Add-Member -Membertype NoteProperty -Name 'onlyValidObjects' -value $True -InputObject $body
-                Add-Member -Membertype NoteProperty -Name 'withoutDeployed' -value $False -InputObject $body
+                Add-Member -Membertype NoteProperty -Name 'withoutDeployed' -value ($NoDeployed -eq $True) -InputObject $body
+                Add-Member -Membertype NoteProperty -Name 'withoutDrafts' -value ($NoDraft -eq $True) -InputObject $body
+                Add-Member -Membertype NoteProperty -Name 'latest' -value ($Latest -eq $True) -InputObject $body
 
                 [string] $requestBody = $body | ConvertTo-Json -Depth 100
                 $response = Invoke-JS7WebRequest -Path '/inventory/deployable' -Body $requestBody
@@ -221,7 +232,9 @@ param
             Add-Member -Membertype NoteProperty -Name 'recursive' -value ($Recursive -eq $True) -InputObject $body
             Add-Member -Membertype NoteProperty -Name 'objectTypes' -value $Type -InputObject $body
             Add-Member -Membertype NoteProperty -Name 'onlyValidObjects' -value $True -InputObject $body
-            Add-Member -Membertype NoteProperty -Name 'withVersions' -value $False -InputObject $body
+            Add-Member -Membertype NoteProperty -Name 'withoutDeployed' -value ($NoDeployed -eq $True) -InputObject $body
+            Add-Member -Membertype NoteProperty -Name 'withoutDrafts' -value ($NoDraft -eq $True) -InputObject $body
+            Add-Member -Membertype NoteProperty -Name 'latest' -value ($Latest -eq $True) -InputObject $body
 
             [string] $requestBody = $body | ConvertTo-Json -Depth 100
             $response = Invoke-JS7WebRequest -Path '/inventory/deployables' -Body $requestBody
@@ -286,6 +299,7 @@ param
                     $deployConfiguration = New-Object PSObject
                     Add-Member -Membertype NoteProperty -Name 'path' -value $object.path -InputObject $deployConfiguration
                     Add-Member -Membertype NoteProperty -Name 'objectType' -value $object.type -InputObject $deployConfiguration
+                    Add-Member -Membertype NoteProperty -Name 'recursive' -value ($Recursive -eq $True) -InputObject $deployConfiguration
                     # Add-Member -Membertype NoteProperty -Name 'commitId' -value $object.commitId -InputObject $deployConfiguration
 
                     $deployConfigurationItem = New-Object PSObject
@@ -296,6 +310,7 @@ param
                     $draftConfiguration = New-Object PSObject
                     Add-Member -Membertype NoteProperty -Name 'path' -value $object.path -InputObject $draftConfiguration
                     Add-Member -Membertype NoteProperty -Name 'objectType' -value $object.type -InputObject $draftConfiguration
+                    Add-Member -Membertype NoteProperty -Name 'recursive' -value ($Recursive -eq $True) -InputObject $draftConfiguration
 
                     $draftConfigurationItem = New-Object PSObject
                     Add-Member -Membertype NoteProperty -Name 'configuration' -value $draftConfiguration -InputObject $draftConfigurationItem
