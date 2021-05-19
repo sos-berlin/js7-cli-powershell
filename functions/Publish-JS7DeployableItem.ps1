@@ -44,6 +44,17 @@ Specifies one or more Controllers to which the indicated objects should be deplo
 Specifies the action to permanently delete objects from a Controller. Without this switch objects
 are published for use with a Controller.
 
+.PARAMETER NoDraft
+Specifies that no draft objects should be deployed. This boils down to the fact that only previously deployed objects will be deployed.
+Possible use cases include to deploy to a different Controller or to redeploy to the same Controller.
+
+.PARAMETER NoDeployed
+Specifies that no previously deployed objects should be deployed. This is usefule to prevent redeployment of objects.
+
+.PARAMETER Latest
+If used with the -Path parameter then -Latest specifies that only the latest deployed object will be considered for redeployment.
+This parameter is not considered if the -NoDeployed parameter is used.
+
 .PARAMETER AuditComment
 Specifies a free text that indicates the reason for the current intervention, e.g. "business requirement", "maintenance window" etc.
 
@@ -101,7 +112,7 @@ param
     [string] $Path,
     [Parameter(Mandatory=$False,ValueFromPipeline=$False,ValueFromPipelinebyPropertyName=$True)]
     [ValidateSet('FOLDER','WORKFLOW','JOBCLASS','JOBRESOUROCE','LOCK','JUNCTION','FILEORDERSOURCE')]
-    [string[]] $Type,
+    [string[]] $Type = 'FOLDER',
     [Parameter(Mandatory=$False,ValueFromPipeline=$False,ValueFromPipelinebyPropertyName=$True)]
     [string] $Folder = '/',
     [Parameter(Mandatory=$False,ValueFromPipeline=$False,ValueFromPipelinebyPropertyName=$True)]
@@ -167,13 +178,20 @@ param
             $Recursive = $True
         }
 
+        if ( !$Path )
+        {
+            $Path = $Folder
+        }
+
         if ( $Type )
         {
-            foreach( $typeItem in $Type )
+            for( $i=0; $i -lt $Type.length; $i++ )
             {
-                if ( $deployableTypes -notcontains $typeItem )
+                if ( $deployableTypes -notcontains $Type[$i] )
                 {
-                    throw "$($MyInvocation.MyCommand.Name): value of -Type parameter not allowed ($($deployableTypes)): $typeItem"
+                    throw "$($MyInvocation.MyCommand.Name): value of -Type parameter not allowed ($($deployableTypes)): $($Type[$i])"
+                } else {
+                    $Type[$i] = $Type[$i].toUpper()
                 }
             }
         }
@@ -181,8 +199,6 @@ param
         if ( !$Type )
         {
             $Type = $deployableTypes
-        } else {
-            $Type[0] = $Type[0].toUpper()
         }
 
         if ( $Path )
@@ -231,7 +247,7 @@ param
             Add-Member -Membertype NoteProperty -Name 'folder' -value $Folder -InputObject $body
             Add-Member -Membertype NoteProperty -Name 'recursive' -value ($Recursive -eq $True) -InputObject $body
             Add-Member -Membertype NoteProperty -Name 'objectTypes' -value $Type -InputObject $body
-            Add-Member -Membertype NoteProperty -Name 'onlyValidObjects' -value $True -InputObject $body
+            Add-Member -Membertype NoteProperty -Name 'onlyValidObjects' -value $False -InputObject $body
             Add-Member -Membertype NoteProperty -Name 'withoutDeployed' -value ($NoDeployed -eq $True) -InputObject $body
             Add-Member -Membertype NoteProperty -Name 'withoutDrafts' -value ($NoDraft -eq $True) -InputObject $body
             Add-Member -Membertype NoteProperty -Name 'latest' -value ($Latest -eq $True) -InputObject $body
@@ -250,6 +266,13 @@ param
             {
                 if ( $deployableObject.objectType -eq 'FOLDER' )
                 {
+                    if ( $Delete )
+                    {
+                        $deleteObjects += @{ 'path' = "$($deployableObject.folder)$($deployableObject.objectName)"; 'type' = $deployableObject.objectType; 'valid' = $deployableObject.valid; 'deployed' = $True }
+                    } else {
+                        $storeObjects += @{ 'path' = "$($deployableObject.folder)$($deployableObject.objectName)"; 'type' = $deployableObject.objectType; 'valid' = $deployableObject.valid; 'deployed' = $False }
+                    }
+
                     continue
                 }
 
@@ -266,10 +289,10 @@ param
                 }
             }
 
-            if ( $Type[0] -eq 'FOLDER' -and $Delete -and $Folder )
-            {
-                $deleteObjects += @{ 'path' = "$($Folder)"; 'type' = 'FOLDER'; 'valid' = $True; 'deployed' = $True }
-            }
+            # if ( $Type[0] -eq 'FOLDER' -and $Delete -and $Folder )
+            # {
+            #     $deleteObjects += @{ 'path' = "$($Folder)"; 'type' = 'FOLDER'; 'valid' = $True; 'deployed' = $True }
+            # }
         }
 
         if ( $ControllerId )
