@@ -2,15 +2,11 @@ function Invoke-JS7ApiRequest
 {
 <#
 .SYNOPSIS
-Sends a JSON request or XMl command to the JobScheduler Web Service.
+Sends a request to the JS7 REST Web Service.
 
 .DESCRIPTION
-The JobScheduler Web Service accepts JSON requests and a number of XML commands.
-
-This cmdlet accepts
-
-* JSON requests and forwards them to the JOC Cockpit REST Web Service.
-* XML commands and forwards them to the JobScheduler REST Web Service.
+The JS7 REST Web Service accepts JSON based requests. This cmdlet therefore is generic to allow
+any requests to be forwarded to JS7.
 
 .PARAMETER Path
 The Path specifies the part of URL that states the operation that is used for the request,
@@ -19,52 +15,33 @@ see http://test.sos-berlin.com/JOC/raml-doc/JOC-API/ for a complete list of Path
 The Path is prefixed by the Base parameter.
 
 * Example: http://localhost:4446/joc/api/tasks/history
-* The URL scheme (http) and authority (localhost:4446) are used from the connection
-  that is specified to the Web Service by the Connect-JobScheduler cmdlet.
-* The Base (/joc/api) is used for all web service requests.
-* The Path (/tasks/history) is used to query the JobScheduler task history.
+* The URL scheme 'http' and authority 'localhost:4446' are used from the connection
+  that is specified to the Web Service by the Connect-JS7 cmdlet.
+* The Base '/joc/api' is used for all REST Web Service requests.
+* The Path '/tasks/history' is used to query the JS7 task history.
 
 .PARAMETER Body
-Specifies the JSON elements or XML command that are sent to the Web Service.
+Specifies the request body that is sent to the RESTWeb Service. The body is a PowerShell object that is converted to
+a JSON object by the cmdlet:
 
-* Example JSON request
-** URL: http://localhost:4446/joc/api/tasks/history
-** JSON Body
-{
-    "jobschedulerId": "jobscheduler_prod",
-    "compact": "true",
-    "limit": 1000
-}
-** The JobScheduler ID is specified to which the request is addressed. The request queries the recent task history for a maximum of 1000 entries.
-* Example XML command
-** URL: http://localhost:4446/joc/api/jobscheduler/commands
-** XML Body
-<show_state/>
-** XML Body
-<jobscheduler_commands jobschedulerId="jobscheduler_prod"><show_state/></jobscheduler_commands>
-** The XML body can use the <jobscheduler_commands> element to specify the JobScheduler ID,
-otherwise the JobScheduler ID is used from the Connect-JobScheduler cmdlet or from the -Id parameter.
+    $body = New-Object PSObject
+    Add-Member -Membertype NoteProperty -Name 'controllerId' -value 'jobscheduler' -InputObject $body
+    Add-Member -Membertype NoteProperty -Name 'states' -value @('COUPLED', 'DECOUPLED', 'COUPLINGFAILED') -InputObject $body
+    $response = Invoke-JS7ApiRequest -Path '/agents' -Body $body
+
+This request returns information about Agents filtered by the indicated states.
 
 .PARAMETER Method
 This parameter specifies the HTTP method in use.
 
-There should be no reason to modify the default value.
-
-Default: POST
+There should be no reason to modify the default value 'POST'.
 
 .PARAMETER ContentType
-The HTTP content type is
-
-* application/json for JSON requests
-* application/xml for XML commands
-
-The content type is automatically adjusted by the cmdlet if XML commands are used.
-
-Default: application/json
+The HTTP content type is 'application/json' for JSON based requests.
 
 .PARAMETER Headers
-A hashmap can be specified with name/value pairs for HTTP headers.
-Typicall the Accept header is required for use of the REST API.
+A hashtable can be specified with name/value pairs for HTTP headers.
+Typically the 'Accept' header is required for use of the REST API.
 
 .PARAMETER AuditComment
 Specifies a free text that indicates the reason for the current intervention,
@@ -90,17 +67,20 @@ It can be useful when integrated with a ticket system that logs interventions wi
 This cmdlet returns the REST Web Service response.
 
 .EXAMPLE
-$response = Send-JobSchedulerRequest -Path '/tasks/history' -Body '{"jobschedulerId": "jobscheduler_prod", "compact": "true", "limit": 1000}' -Headers @{'Accept' = 'application/json'}
+$body = New-Object PSObject
+Add-Member -Membertype NoteProperty -Name 'controllerId' -value 'jobscheduler' -InputObject $body
+Add-Member -Membertype NoteProperty -Name 'states' -value @('COUPLED', 'DECOUPLED', 'COUPLINGFAILED') -InputObject $body
+$response = Invoke-JS7ApiRequest -Path '/agents' -Body $body
 
-Returns the recent task history entries up to a limit of 1000 items for a JobScheduler Master with ID "jobscheduler_prod"
+Returns information about Agents filtered by the indicated states.
 
 .EXAMPLE
-$response = Send-JobSchedulerRequest -Path '/jobscheduler/commands' -Body '<show_state/>'
+$response = Invoke-JS7ApiRequest -Path '/controllers'
 
-Returns summary information and inventory of jobs and job chains.
+Returns summary information about Controllers connected to JOC Cockpit.
 
 .LINK
-about_jobscheduler
+about_js7
 
 #>
 [cmdletbinding()]
@@ -108,8 +88,8 @@ param
 (
     [Parameter(Mandatory=$True,ValueFromPipeline=$True,ValueFromPipelinebyPropertyName=$True)]
     [string] $Path,
-    [Parameter(Mandatory=$False,ValueFromPipeline=$True,ValueFromPipelinebyPropertyName=$True)]
-    [string] $Body,
+    [Parameter(Mandatory=$False,ValueFromPipeline=$False,ValueFromPipelinebyPropertyName=$True)]
+    [PSObject] $Body,
     [Parameter(Mandatory=$False,ValueFromPipeline=$False,ValueFromPipelinebyPropertyName=$True)]
     [string] $Method = 'POST',
     [Parameter(Mandatory=$False,ValueFromPipeline=$False,ValueFromPipelinebyPropertyName=$True)]
@@ -142,7 +122,38 @@ param
             $Path = '/' + $Path
         }
 
-        Invoke-JS7WebRequest -Path $Path -Method $Method -ContentType $ContentType -Body $Body -Headers $Headers
+        if ( $AuditComment -or $AuditTimeSpent -or $AuditTicketLink )
+        {
+            $objAuditLog = New-Object PSObject
+            Add-Member -Membertype NoteProperty -Name 'comment' -value $AuditComment -InputObject $objAuditLog
+
+            if ( $AuditTimeSpent )
+            {
+                Add-Member -Membertype NoteProperty -Name 'timeSpent' -value $AuditTimeSpent -InputObject $objAuditLog
+            }
+
+            if ( $AuditTicketLink )
+            {
+                Add-Member -Membertype NoteProperty -Name 'ticketLink' -value $AuditTicketLink -InputObject $objAuditLog
+            }
+
+            Add-Member -Membertype NoteProperty -Name 'auditLog' -value $objAuditLog -InputObject $Body
+        }
+
+        if ( $Body )
+        {
+            [string] $requestBody = $body | ConvertTo-Json -Depth 100
+            $response = Invoke-JS7WebRequest -Path $Path -Body $requestBody -Method $Method -ContentType $ContentType -Headers $Headers
+        } else {
+            $response = Invoke-JS7WebRequest -Path $Path -Method $Method -ContentType $ContentType -Headers $Headers
+        }
+
+        if ( $response.StatusCode -ne 200 )
+        {
+            throw ( $response | Format-List -Force | Out-String )
+        }
+
+        $response
     }
 
     End
