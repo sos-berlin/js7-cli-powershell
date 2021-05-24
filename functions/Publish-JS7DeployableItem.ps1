@@ -288,11 +288,6 @@ param
                     $storeObjects += @{ 'path' = "$($deployableObject.folder)$($deployableObject.objectName)"; 'type' = $deployableObject.objectType; 'valid' = $deployableObject.valid; 'deployed' = $deployableObject.deployed }
                 }
             }
-
-            # if ( $Type[0] -eq 'FOLDER' -and $Delete -and $Folder )
-            # {
-            #     $deleteObjects += @{ 'path' = "$($Folder)"; 'type' = 'FOLDER'; 'valid' = $True; 'deployed' = $True }
-            # }
         }
 
         if ( $ControllerId )

@@ -30,6 +30,12 @@ Specifies that any sub-folders should be looked up. By default no sub-folders wi
 Specifies the action to permanently delete previously removed objects.
 Without this switch objects are released for use with any JS7 Controller.
 
+.PARAMETER NoDraft
+Specifies that no draft objects should be released. This boils down to the fact that only previously released objects will be released.
+
+.PARAMETER NoReleased
+Specifies that no previously released objects should be releaed.
+
 .PARAMETER AuditComment
 Specifies a free text that indicates the reason for the current intervention, e.g. "business requirement", "maintenance window" etc.
 
@@ -75,13 +81,17 @@ param
     [string] $Path,
     [Parameter(Mandatory=$False,ValueFromPipeline=$False,ValueFromPipelinebyPropertyName=$True)]
     [ValidateSet('FOLDER','SCHEDULE','WORKINGDAYSCALENDAR','NONWORKINGDAYSCALENDAR')]
-    [string[]] $Type,
+    [string[]] $Type = 'FOLDER',
     [Parameter(Mandatory=$False,ValueFromPipeline=$False,ValueFromPipelinebyPropertyName=$True)]
     [string] $Folder = '/',
     [Parameter(Mandatory=$False,ValueFromPipeline=$False,ValueFromPipelinebyPropertyName=$True)]
     [switch] $Recursive,
     [Parameter(Mandatory=$False,ValueFromPipeline=$False,ValueFromPipelinebyPropertyName=$True)]
     [switch] $Delete,
+    [Parameter(Mandatory=$False,ValueFromPipeline=$False,ValueFromPipelinebyPropertyName=$True)]
+    [switch] $NoDraft,
+    [Parameter(Mandatory=$False,ValueFromPipeline=$False,ValueFromPipelinebyPropertyName=$True)]
+    [switch] $NoReleased,
     [Parameter(Mandatory=$False,ValueFromPipeline=$False,ValueFromPipelinebyPropertyName=$True)]
     [string] $AuditComment,
     [Parameter(Mandatory=$False,ValueFromPipeline=$False,ValueFromPipelinebyPropertyName=$True)]
@@ -134,11 +144,13 @@ param
 
         if ( $Type )
         {
-            foreach( $typeItem in $Type )
+            for( $i=0; $i -lt $Type.length; $i++ )
             {
-                if ( $releasableTypes -notcontains $typeItem )
+                if ( $releasableTypes -notcontains $Type[$i] )
                 {
                     throw "$($MyInvocation.MyCommand.Name): value of -Type parameter not allowed ($($releasableTypes)): $typeItem"
+                } else {
+                    $Type[$i] = $Type[$i].toUpper()
                 }
             }
         }
@@ -163,7 +175,8 @@ param
                 Add-Member -Membertype NoteProperty -Name 'objectType' -value $Type[0] -InputObject $body
                 Add-Member -Membertype NoteProperty -Name 'path' -value $Path -InputObject $body
                 Add-Member -Membertype NoteProperty -Name 'onlyValidObjects' -value $True -InputObject $body
-                Add-Member -Membertype NoteProperty -Name 'withoutReleased' -value $True -InputObject $body
+                Add-Member -Membertype NoteProperty -Name 'withoutDrafts' -value ($NoDraft -eq $True) -InputObject $body
+                Add-Member -Membertype NoteProperty -Name 'withoutReleased' -value ($NoReleased -eq $True) -InputObject $body
 
                 [string] $requestBody = $body | ConvertTo-Json -Depth 100
                 $response = Invoke-JS7WebRequest -Path '/inventory/releasable' -Body $requestBody
@@ -193,7 +206,8 @@ param
             Add-Member -Membertype NoteProperty -Name 'recursive' -value $True -InputObject $body
             Add-Member -Membertype NoteProperty -Name 'objectTypes' -value $Type -InputObject $body
             Add-Member -Membertype NoteProperty -Name 'onlyValidObjects' -value $True -InputObject $body
-            Add-Member -Membertype NoteProperty -Name 'withoutReleased' -value $True -InputObject $body
+            Add-Member -Membertype NoteProperty -Name 'withoutDrafts' -value ($NoDraft -eq $True) -InputObject $body
+            Add-Member -Membertype NoteProperty -Name 'withoutReleased' -value ($NoReleased -eq $True) -InputObject $body
 
             [string] $requestBody = $body | ConvertTo-Json -Depth 100
             $response = Invoke-JS7WebRequest -Path '/inventory/releasables' -Body $requestBody
@@ -207,25 +221,32 @@ param
 
             foreach( $releasableObject in $releasableObjects )
             {
-                if ( $Delete -eq $False -or $releasableObject.released )
+                if ( $releasableObject.objectType -eq 'FOLDER' )
                 {
-                    if ( $releasableObject.folder -and !$releasableObject.folder.endsWith( '/' ) )
-                    {
-                        $releasableObject.folder += '/'
-                    }
+                    # we cannto release folders
+                    continue
 
-                    if ( $Delete )
-                    {
-                        $deleteObjects += @{ 'path' = "$($releasableObject.folder)$($releasableObject.objectName)"; 'type' = $releasableObject.objectType; 'valid' = $releasableObject.valid; 'released' = $releasableObject.released }
-                    } else {
-                        $storeObjects += @{ 'path' = "$($releasableObject.folder)$($releasableObject.objectName)"; 'type' = $releasableObject.objectType; 'valid' = $releasableObject.valid; 'released' = $releasableObject.released }
-                    }
+                    # if ( $Delete )
+                    # {
+                    #     $deleteObjects += @{ 'path' = "$($releasableObject.folder)$($releasableObject.objectName)"; 'type' = $releasableObject.objectType; 'valid' = $releasableObject.valid; 'released' = $True }
+                    # } else {
+                    #     $storeObjects += @{ 'path' = "$($releasableObject.folder)$($releasableObject.objectName)"; 'type' = $releasableObject.objectType; 'valid' = $releasableObject.valid; 'released' = $False }
+                    # }
+
+                    # continue
                 }
-            }
 
-            if ( $Type[0] -eq 'FOLDER' -and $Delete -and $Folder )
-            {
-                $deleteObjects += @{ 'path' = "$($Folder)"; 'type' = 'FOLDER'; 'valid' = $True; 'released' = $True }
+                if ( $releasableObject.folder -and !$releasableObject.folder.endsWith( '/' ) )
+                {
+                    $releasableObject.folder += '/'
+                }
+
+                if ( $Delete )
+                {
+                    $deleteObjects += @{ 'path' = "$($releasableObject.folder)$($releasableObject.objectName)"; 'type' = $releasableObject.objectType; 'valid' = $releasableObject.valid; 'released' = $releasableObject.released }
+                } else {
+                    $storeObjects += @{ 'path' = "$($releasableObject.folder)$($releasableObject.objectName)"; 'type' = $releasableObject.objectType; 'valid' = $releasableObject.valid; 'released' = $releasableObject.released }
+                }
             }
         }
     }
