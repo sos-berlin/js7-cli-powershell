@@ -4,7 +4,7 @@
 RootModule = 'JS7.psm1'
 
 # Version number of this module.
-ModuleVersion = '2.0.3'
+ModuleVersion = '2.0.4'
 
 # ID used to uniquely identify this module
 GUID = '904a35e3-39b4-40bf-ab5f-e8c4ad5ae38d'
@@ -61,6 +61,7 @@ FunctionsToExport = @(
     'Get-JS7TaskHistory',
     'Get-JS7TaskLog',
     'Get-JS7Workflow',
+    'Invoke-JS7ApiRequest',
     'Invoke-JS7TestRun',
     'New-JS7ControllerInstance',
     'New-JS7DailyPlanOrder',
