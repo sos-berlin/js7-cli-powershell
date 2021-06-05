@@ -98,7 +98,7 @@ param
     [Parameter(Mandatory=$False,ValueFromPipelinebyPropertyName=$True)]
     [string] $SchedulePath,
     [Parameter(Mandatory=$False,ValueFromPipelinebyPropertyName=$True)]
-    [string] $Folder = '/',
+    [string] $Folder,
     [Parameter(Mandatory=$False,ValueFromPipelinebyPropertyName=$True)]
     [switch] $Recursive,
     [Parameter(Mandatory=$False,ValueFromPipelinebyPropertyName=$True)]
@@ -147,8 +147,9 @@ param
             }
         }
 
-        if ( !$WorkflowPath -and !$SchedulePath -and $Folder -eq '/' -and !$Recursive )
+        if ( !$WorkflowPath -and !$SchedulePath -and !$Folder -and !$Recursive )
         {
+            $Folder = '/'
             $Recursive = $True
         }
 

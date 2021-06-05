@@ -35,9 +35,13 @@ is replaced by the respective Agent ID for the Controller to which the workflow 
 Should deployments of the same workflows be performed to a number of Controllers then for each Controller
 the same Agent Name has to be configured (pointing to a different Agent ID).
 
-.PARAMETER Url
+.PARAMETER AgentUrl
 Specifies the URL for which the Agent is available. A URL includes the protocol (http, https), hostname and port
 for which an Agent is operated.
+
+.PARAMETER ControllerId
+Specifies the Controller ID that should be used if an existing Controller is re-registered.
+When adding Controllers the ControllerID should be empty, when updating Controllers the Controller ID has to be specified.
 
 .PARAMETER AuditComment
 Specifies a free text that indicates the reason for the current intervention, e.g. "business requirement", "maintenance window" etc.
@@ -66,6 +70,11 @@ Set-JS7Controller -Controller ( New-JS7ControllerInstance -Url https://controlle
 Adds a Standalone Controller to JOC Cockpit that is identified by its Url.
 
 .EXAMPLE
+Set-JS7Controller -Controller ( New-JS7ControllerInstance -Url https://controller-standalone.sos:4443 -Title 'SOLO CONTROLLER' ) -ControllerId jobscheduler
+
+Updates an existing Standalone Controller that is identified by its Url to a different URL or title.
+
+.EXAMPLE
 $primary = New-JS7ControllerInstance -Url https://controller-primary.sos:4443 -Title 'PRIMARY CONTROLLER'
 $secondary = New-JS7ControllerInstance -Url https://controller-secondary.sos:4443 -Title 'SECONDARY CONTROLLER'
 Set-JS7Controller -Controller $primary,$secondary -AgentId 'agent_001' -AgentName 'primaryAgent' -AgentUrl https://agent-primary.sos:4443
@@ -89,6 +98,8 @@ param
     [Parameter(Mandatory=$False,ValueFromPipeline=$False,ValueFromPipelinebyPropertyName=$True)]
     [Uri] $AgentUrl,
     [Parameter(Mandatory=$False,ValueFromPipeline=$False,ValueFromPipelinebyPropertyName=$True)]
+    [string] $ControllerId,
+    [Parameter(Mandatory=$False,ValueFromPipeline=$False,ValueFromPipelinebyPropertyName=$True)]
     [string] $AuditComment,
     [Parameter(Mandatory=$False,ValueFromPipeline=$False,ValueFromPipelinebyPropertyName=$True)]
     [int] $AuditTimeSpent,
@@ -104,7 +115,7 @@ param
     {
 
         $body = New-Object PSObject
-        Add-Member -Membertype NoteProperty -Name 'controllerId' -value "" -InputObject $body
+        Add-Member -Membertype NoteProperty -Name 'controllerId' -value $ControllerId -InputObject $body
         Add-Member -Membertype NoteProperty -Name 'controllers' -value $Controller -InputObject $body
 
         if ( $AgentId )

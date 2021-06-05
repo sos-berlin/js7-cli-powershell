@@ -123,6 +123,11 @@ param
             throw "$($MyInvocation.MyCommand.Name): Audit Log comment required, use parameter -AuditComment if one of the parameters -AuditTimeSpent or -AuditTicketLink is used"
         }
 
+        if ( $Overwrite -and ($Suffix -or $Prefix) )
+        {
+            throw "$($MyInvocation.MyCommand.Name): Conflicting parameters -Overwrite and -Suffix, -Prefix"
+        }
+
         if ( !(isPowerShellVersion 6) )
         {
             throw "$($MyInvocation.MyCommand.Name): Cmdlet not supported for PowerShell versions older that 6.0"
@@ -167,13 +172,13 @@ param
 
             $stringHeader = [System.Net.Http.Headers.ContentDispositionHeaderValue]::new("form-data")
             $stringHeader.Name = "prefix"
-            $StringContent = [System.Net.Http.StringContent]::new( $Prefix )
+            $stringContent = [System.Net.Http.StringContent]::new( $Prefix )
             $stringContent.Headers.ContentDisposition = $stringHeader
             $multipartContent.Add( $stringContent )
 
             $stringHeader = [System.Net.Http.Headers.ContentDispositionHeaderValue]::new("form-data")
             $stringHeader.Name = "suffix"
-            $StringContent = [System.Net.Http.StringContent]::new( $Suffix )
+            $stringContent = [System.Net.Http.StringContent]::new( $Suffix )
             $stringContent.Headers.ContentDisposition = $stringHeader
             $multipartContent.Add( $stringContent )
 
