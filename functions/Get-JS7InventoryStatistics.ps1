@@ -44,7 +44,7 @@ param
 
         if ( $response.StatusCode -eq 200 )
         {
-            $returnStatistics = ( $response.Content | ConvertFrom-JSON )
+            $returnStatistics = ( $response.Content | ConvertFrom-Json )
         } else {
             throw ( $response | Format-List -Force | Out-String )
         }
