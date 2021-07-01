@@ -43,6 +43,9 @@ Specifies the point in time when the order should start. Values are added like t
 ** specifies that the order should start with a delay of 1800 seconds, i.e. 30 minutes later.
 * yyyy-mm-dd HH:MM[:SS]
 ** specifies that the order should start at the specified point in time.
+* never
+** specifies that the order is added without a desired start time. Users have to manually modify the start time 
+of such orders to make them start.
 
 .PARAMETER AtDate
 Specifies the date when the order should start. The time zone is used from the date provided.

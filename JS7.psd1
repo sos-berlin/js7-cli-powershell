@@ -4,7 +4,7 @@
 RootModule = 'JS7.psm1'
 
 # Version number of this module.
-ModuleVersion = '2.0.6'
+ModuleVersion = '2.0.7'
 
 # ID used to uniquely identify this module
 GUID = '904a35e3-39b4-40bf-ab5f-e8c4ad5ae38d'
@@ -30,6 +30,7 @@ FunctionsToExport = @(
     'Add-JS7InventoryItem',
     'Add-JS7Order',
     'Add-JS7SigningKey',
+    'Confirm-JS7Order',
 	'Connect-JS7',
     'Disconnect-JS7',
     'Export-JS7InventoryItem',
@@ -71,10 +72,12 @@ FunctionsToExport = @(
     'Publish-JS7ReleasableItem',
     'Rename-JS7Folder',
     'Rename-JS7InventoryItem',
+    'Remove-JS7Agent',
     'Remove-JS7DailyPlanOrder',
     'Remove-JS7Folder',
     'Remove-JS7InventoryItem',
     'Remove-JS7CompletedOrder',
+    'Reset-JS7Agent',
     'Restart-JS7ControllerInstance',
     'Restart-JS7JOCService',
     'Restore-JS7Agent',

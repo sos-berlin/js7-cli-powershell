@@ -74,8 +74,12 @@ Specifies that a regular expession is applied to the order IDs to filter results
 Specifies that fewer attributes of orders are returned.
 
 .PARAMETER Pending
-Specifies that orders in a pending state should be returned. Such orders are scheduled
-for a later start.
+Specifies that orders in a pending state should be returned. Such orders are not 
+assigned a start time.
+
+.PARAMETER Scheduled
+Specifies that orders in a scheduled state should be returned. Such orders are scheduled
+for a later start time.
 
 .PARAMETER InProgress
 Specifies that orders in progress should be returned, i.e. orders that started but that
@@ -88,6 +92,11 @@ currently being executed in a workflow.
 .PARAMETER Suspended
 Specifies that orders in suspended state should be returned. An order can be suspended
 e.g. when being affected by the Suspend-JobSchedulerOrder cmdlet or the respective manual operation from the GUI.
+
+.PARAMETER Prompting
+Specifies that orders in a prompting state should be returned. Such orders are put on hold by a
+prompt instruction in a workflow and require confirmation to futher proceed execution of the workflow. 
+For details see the Confirm-JS7Order cmddlet.
 
 .PARAMETER Waiting
 Specifies that orders in a setback state should be returned. Such orders make use of an interval
@@ -165,11 +174,15 @@ param
     [Parameter(Mandatory=$False,ValueFromPipeline=$False,ValueFromPipelinebyPropertyName=$True)]
     [switch] $Pending,
     [Parameter(Mandatory=$False,ValueFromPipeline=$False,ValueFromPipelinebyPropertyName=$True)]
+    [switch] $Scheduled,
+    [Parameter(Mandatory=$False,ValueFromPipeline=$False,ValueFromPipelinebyPropertyName=$True)]
     [switch] $InProgress,
     [Parameter(Mandatory=$False,ValueFromPipeline=$False,ValueFromPipelinebyPropertyName=$True)]
     [switch] $Running,
     [Parameter(Mandatory=$False,ValueFromPipeline=$False,ValueFromPipelinebyPropertyName=$True)]
     [switch] $Suspended,
+    [Parameter(Mandatory=$False,ValueFromPipeline=$False,ValueFromPipelinebyPropertyName=$True)]
+    [switch] $Prompting,
     [Parameter(Mandatory=$False,ValueFromPipeline=$False,ValueFromPipelinebyPropertyName=$True)]
     [switch] $Waiting,
     [Parameter(Mandatory=$False,ValueFromPipeline=$False,ValueFromPipelinebyPropertyName=$True)]
@@ -227,6 +240,11 @@ param
             $states += 'PENDING'
         }
 
+        if ( $Scheduled )
+        {
+            $states += 'SCHEDULED'
+        }
+
         if ( $InProgress )
         {
             $states += 'INPROGRESS'
@@ -240,6 +258,11 @@ param
         if ( $Suspended )
         {
             $states += 'SUSPENDED'
+        }
+
+        if ( $Prompting )
+        {
+            $states += 'PROMPTING'
         }
 
         if ( $Waiting )
@@ -323,7 +346,6 @@ param
             if ( $folders.count )
             {
                 Add-Member -Membertype NoteProperty -Name 'folders' -value $folders -InputObject $body
-                Add-Member -Membertype NoteProperty -Name 'recursive' -value ($Recursive -eq $True) -InputObject $body
             }
 
             if ( $DateTo -or $RelativeDateTo )
