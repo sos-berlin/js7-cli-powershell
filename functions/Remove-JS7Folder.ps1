@@ -82,7 +82,7 @@ param
         $body = New-Object PSObject
         Add-Member -Membertype NoteProperty -Name 'path' -value $Path -InputObject $body
 
-        if ( $PSCmdlet.ShouldProcess( $Path, '/inventory/remove' ) )
+        if ( $PSCmdlet.ShouldProcess( $Path, '/inventory/remove/folder' ) )
         {
             [string] $requestBody = $body | ConvertTo-Json -Depth 100
             $response = Invoke-JS7WebRequest -Path '/inventory/remove/folder' -Body $requestBody

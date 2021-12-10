@@ -5,7 +5,7 @@ function Reset-JS7Agent
 Resets an Agent to revoke current orders, workflows etc. and to initialize the Agent
 
 .DESCRIPTION
-This cmdlet resets an Agent. In a first step any orders, workflows and other deployable objects are revoked from an Agent.  
+This cmdlet resets an Agent. In a first step any orders, workflows and other deployable objects are revoked from an Agent.
 In a second step the Agent performs a restart and initialiszes its journal.
 In a final step the Controller reconnects to the Agent and deploys any required deployable objects.
 

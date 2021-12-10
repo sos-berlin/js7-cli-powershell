@@ -301,6 +301,8 @@ param
                         $cur++
                         Write-Verbose ".. batches: $cur, object loops: $i, executing: 1..$testCountInner | Add-JS7Order -WorkflowPath $($workflow.path) -OrderName $TestRun -AtDate $AtDate"
                         1..$testCountInner | Add-JS7Order -WorkflowPath $workflow.path -Variables $variables @addOrderParams | Out-Null
+#                       1..$testCountInner | Add-JS7Order -WorkflowPath $workflow.path -Variables $variables -OrderName "$($TestRun)-$([DateTimeOffset]::Now.ToUnixTimeMilliSeconds())" @addOrderParams | Out-Null
+#                       1..$testCountInner | Add-JS7Order -WorkflowPath $workflow.path -Variables $variables -OrderName "$($TestRun)-$(Get-Random)" @addOrderParams | Out-Null
                         if ( $Progress )
                         {
                             Write-Progress -Id 1 -Activity "JS7 Test Run: $TestRun" -CurrentOperation "adding orders ..." -Status "$($cur*$testCountInner) of $sum orders added" -PercentComplete (($cur/$sum)*100) -SecondsRemaining -1

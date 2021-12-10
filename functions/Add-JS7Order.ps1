@@ -44,7 +44,7 @@ Specifies the point in time when the order should start. Values are added like t
 * yyyy-mm-dd HH:MM[:SS]
 ** specifies that the order should start at the specified point in time.
 * never
-** specifies that the order is added without a desired start time. Users have to manually modify the start time 
+** specifies that the order is added without a desired start time. Users have to manually modify the start time
 of such orders to make them start.
 
 .PARAMETER AtDate
@@ -196,7 +196,14 @@ param
 
         if ( $OrderName )
         {
-            Add-Member -Membertype NoteProperty -Name 'orderName' -value $OrderName -InputObject $objOrder
+            if ( $RunningNumber )
+            {
+                Add-Member -Membertype NoteProperty -Name 'orderName' -value "$($OrderName)-$($RunningNumber)" -InputObject $objOrder
+            } else {
+                Add-Member -Membertype NoteProperty -Name 'orderName' -value $OrderName -InputObject $objOrder
+            }
+        } elseif ( $RunningNumber ) {
+            Add-Member -Membertype NoteProperty -Name 'orderName' -value $RunningNumber -InputObject $objOrder
         }
 
         if ( $scheduledFor )

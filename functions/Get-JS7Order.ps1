@@ -74,7 +74,7 @@ Specifies that a regular expession is applied to the order IDs to filter results
 Specifies that fewer attributes of orders are returned.
 
 .PARAMETER Pending
-Specifies that orders in a pending state should be returned. Such orders are not 
+Specifies that orders in a pending state should be returned. Such orders are not
 assigned a start time.
 
 .PARAMETER Scheduled
@@ -95,7 +95,7 @@ e.g. when being affected by the Suspend-JobSchedulerOrder cmdlet or the respecti
 
 .PARAMETER Prompting
 Specifies that orders in a prompting state should be returned. Such orders are put on hold by a
-prompt instruction in a workflow and require confirmation to futher proceed execution of the workflow. 
+prompt instruction in a workflow and require confirmation to futher proceed execution of the workflow.
 For details see the Confirm-JS7Order cmddlet.
 
 .PARAMETER Waiting
