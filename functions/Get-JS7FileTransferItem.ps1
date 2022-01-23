@@ -28,6 +28,7 @@ about_js7
 
 #>
 [cmdletbinding()]
+[OutputType([Hashtable])]
 [OutputType([XML])]
 param
 (
