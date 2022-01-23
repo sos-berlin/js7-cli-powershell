@@ -111,7 +111,7 @@ param
     [Parameter(Mandatory=$False,ValueFromPipeline=$True,ValueFromPipelinebyPropertyName=$True)]
     [string] $Path,
     [Parameter(Mandatory=$False,ValueFromPipeline=$False,ValueFromPipelinebyPropertyName=$True)]
-    [ValidateSet('FOLDER','WORKFLOW','JOBCLASS','JOBRESOUROCE','LOCK','JUNCTION','FILEORDERSOURCE')]
+    [ValidateSet('FOLDER','WORKFLOW','JOBCLASS','JOBRESOURCE','LOCK','JUNCTION','FILEORDERSOURCE')]
     [string[]] $Type = 'FOLDER',
     [Parameter(Mandatory=$False,ValueFromPipeline=$False,ValueFromPipelinebyPropertyName=$True)]
     [string] $Folder = '/',

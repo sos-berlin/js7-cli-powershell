@@ -2,7 +2,7 @@ function Set-JS7InventoryItem
 {
 <#
 .SYNOPSIS
-Returns the configuration of a JOC Cockpit inventory item, e.g. a workflow
+Adds or updates the configuration of a JOC Cockpit inventory item, e.g. a workflow
 
 .DESCRIPTION
 Any inventory objects can be stored to JOC Cockpit. the objects are passed on as PowerShell
