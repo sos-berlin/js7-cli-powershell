@@ -103,34 +103,34 @@ param
                     Add-Member -Membertype NoteProperty -Name 'controllerId' -value $script:jsWebService.ControllerId -InputObject $body
                     Add-Member -Membertype NoteProperty -Name 'id' -value $fileTransferItem.id -InputObject $body
                     Add-Member -Membertype NoteProperty -Name 'objectType' -value 'YADE' -InputObject $body
-            
+
                     if ( $AuditComment -or $AuditTimeSpent -or $AuditTicketLink )
                     {
                         $objAuditLog = New-Object PSObject
                         Add-Member -Membertype NoteProperty -Name 'comment' -value $AuditComment -InputObject $objAuditLog
-            
+
                         if ( $AuditTimeSpent )
                         {
                             Add-Member -Membertype NoteProperty -Name 'timeSpent' -value $AuditTimeSpent -InputObject $objAuditLog
                         }
-            
+
                         if ( $AuditTicketLink )
                         {
                             Add-Member -Membertype NoteProperty -Name 'ticketLink' -value $AuditTicketLink -InputObject $objAuditLog
                         }
-            
+
                         Add-Member -Membertype NoteProperty -Name 'auditLog' -value $objAuditLog -InputObject $body
                     }
-            
+
                     if ( $PSCmdlet.ShouldProcess( $fileTransferItem.name, '/xmleditor/remove' ) )
                     {
                         [string] $requestBody = $body | ConvertTo-Json -Depth 100
                         $response = Invoke-JS7WebRequest -Path '/xmleditor/remove' -Body $requestBody
-            
+
                         if ( $response.StatusCode -eq 200 )
                         {
                             $requestResult = ( $response.Content | ConvertFrom-Json )
-            
+
                             if ( !$requestResult.removed )
                             {
                                 throw ( $response | Format-List -Force | Out-String )
@@ -138,7 +138,7 @@ param
                         } else {
                             throw ( $response | Format-List -Force | Out-String )
                         }
-            
+
                         Write-Verbose ".. $($MyInvocation.MyCommand.Name): file transfer configuration removed: $($fileTransferItem.name)"
                     }
 

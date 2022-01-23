@@ -97,30 +97,30 @@ param
             Add-Member -Membertype NoteProperty -Name 'controllerId' -value $script:jsWebService.ControllerId -InputObject $body
             Add-Member -Membertype NoteProperty -Name 'objectType' -value 'YADE' -InputObject $body
             Add-Member -Membertype NoteProperty -Name 'uri' -value $Schema -InputObject $body
-    
+
             if ( $AuditComment -or $AuditTimeSpent -or $AuditTicketLink )
             {
                 $objAuditLog = New-Object PSObject
                 Add-Member -Membertype NoteProperty -Name 'comment' -value $AuditComment -InputObject $objAuditLog
-    
+
                 if ( $AuditTimeSpent )
                 {
                     Add-Member -Membertype NoteProperty -Name 'timeSpent' -value $AuditTimeSpent -InputObject $objAuditLog
                 }
-    
+
                 if ( $AuditTicketLink )
                 {
                     Add-Member -Membertype NoteProperty -Name 'ticketLink' -value $AuditTicketLink -InputObject $objAuditLog
                 }
-    
+
                 Add-Member -Membertype NoteProperty -Name 'auditLog' -value $objAuditLog -InputObject $body
             }
-        
+
             if ( $PSCmdlet.ShouldProcess( 'file transfer schema assign', '/xmleditor/schema/assign' ) )
             {
                 [string] $requestBody = $body | ConvertTo-Json -Depth 100
                 $response = Invoke-JS7WebRequest -Path '/xmleditor/schema/assign' -Body $requestBody
-    
+
                 if ( $response.StatusCode -eq 200 )
                 {
                     $schemaObject = ( $response.Content | ConvertFrom-Json )
@@ -138,30 +138,30 @@ param
             Add-Member -Membertype NoteProperty -Name 'objectType' -value 'YADE' -InputObject $body
             Add-Member -Membertype NoteProperty -Name 'schema' -value $Schema -InputObject $body
             Add-Member -Membertype NoteProperty -Name 'schemaIdentifier' -value $schemaObject.schemaIdentifier -InputObject $body
-    
+
             if ( $AuditComment -or $AuditTimeSpent -or $AuditTicketLink )
             {
                 $objAuditLog = New-Object PSObject
                 Add-Member -Membertype NoteProperty -Name 'comment' -value $AuditComment -InputObject $objAuditLog
-    
+
                 if ( $AuditTimeSpent )
                 {
                     Add-Member -Membertype NoteProperty -Name 'timeSpent' -value $AuditTimeSpent -InputObject $objAuditLog
                 }
-    
+
                 if ( $AuditTicketLink )
                 {
                     Add-Member -Membertype NoteProperty -Name 'ticketLink' -value $AuditTicketLink -InputObject $objAuditLog
                 }
-    
+
                 Add-Member -Membertype NoteProperty -Name 'auditLog' -value $objAuditLog -InputObject $body
             }
-    
+
             if ( $PSCmdlet.ShouldProcess( 'file transfer store', '/xmleditor/store' ) )
             {
                 [string] $requestBody = $body | ConvertTo-Json -Depth 100
                 $response = Invoke-JS7WebRequest -Path '/xmleditor/store' -Body $requestBody
-    
+
                 if ( $response.StatusCode -eq 200 )
                 {
                     $configurationId = ( $response.Content | ConvertFrom-Json ).id

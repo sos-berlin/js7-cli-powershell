@@ -28,6 +28,7 @@ about_js7
 
 #>
 [cmdletbinding()]
+[OutputType([XML])]
 param
 (
     [Parameter(Mandatory=$False,ValueFromPipeline=$True,ValueFromPipelinebyPropertyName=$True)]
@@ -71,29 +72,29 @@ param
                     break
                 }
             }
-            
+
             if ( $found )
             {
                 Write-Verbose ".. $($MyInvocation.MyCommand.Name): File Transfer Item found: $Name"
-            
+
                 $body = New-Object PSObject
                 Add-Member -Membertype NoteProperty -Name 'controllerId' -value $script:jsWebService.ControllerId -InputObject $body
                 Add-Member -Membertype NoteProperty -Name 'objectType' -value 'YADE' -InputObject $body
                 Add-Member -Membertype NoteProperty -Name 'id' -value $fileTransferItem.id -InputObject $body
-    
+
                 [string] $requestBody = $body | ConvertTo-Json -Depth 100
                 $response = Invoke-JS7WebRequest -Path '/xmleditor/read' -Body $requestBody
-    
+
                 if ( $response.StatusCode -eq 200 )
                 {
                     $fileTransferItem = ( $response.Content | ConvertFrom-Json ).configuration
                 } else {
                     throw ( $response | Format-List -Force | Out-String )
                 }
-                
+
                 [xml] $fileTransferItem.configuration
             } else {
-                Write-Verbose ".. $($MyInvocation.MyCommand.Name): No File Transfer Item found for name: $Name"            
+                Write-Verbose ".. $($MyInvocation.MyCommand.Name): No File Transfer Item found for name: $Name"
             }
         } else {
             $fileTransferItems

@@ -305,14 +305,14 @@ param
         $jsWebService | Add-Member -Membertype NoteProperty -Name Base -Value ''
         $jsWebService | Add-Member -Membertype NoteProperty -Name Timeout -Value $script:jsOptionWebRequestTimeout
         $jsWebService | Add-Member -Membertype NoteProperty -Name SkipCertificateCheck -Value $false
-        
+
         if ( isPowerShellVersion 7 )
         {
             $jsWebService | Add-Member -Membertype NoteProperty -Name SSLProtocol -Value 'Tls12'
         } else {
             $jsWebService | Add-Member -Membertype NoteProperty -Name SSLProtocol -Value ''
         }
-        
+
         $jsWebService | Add-Member -Membertype NoteProperty -Name Certificate -Value ''
         $jsWebService | Add-Member -Membertype NoteProperty -Name ControllerId -Value ''
         $jsWebService | Add-Member -Membertype NoteProperty -Name AccessToken -Value ''
