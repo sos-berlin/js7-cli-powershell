@@ -13,23 +13,23 @@ Optionally specifies the order ID of the daily plan order that should be submitt
 .PARAMETER WorkflowPath
 Optionally specifies the path and name of a workflow for which daily plan orders should be submitted.
 
+.PARAMETER WorkflowFolder
+Optionally specifies the folder with workflows for which daily plan orders should be submitted.
+
 .PARAMETER SchedulePath
 Optionally specifies the path and name of a schedule for which daily plan orders should be submitted.
 
-.PARAMETER Folder
-Optionally specifies the folder with workflows for which daily plan orders should be submitted.
+.PARAMETER ScheduleFolder
+Optionally specifies the folder with schedules for which daily plan orders should be submitted.
 
 .PARAMETER Recursive
-When used with the -Folder parameter then any sub-folders of the specified folder will be looked up.
+When used with the -WorkflowFolder or -ScheduleFolder parameters then any sub-folders of the specified folder will be looked up.
 
 .PARAMETER ControllerId
 Specifies the Controller to which daily plan orders have been submitted and should be submitted.
 
 Without this parameter daily plan orders are submitted to any Controllers that are deployed the
 workflows that are indicated with the respective parameters.
-
-.PARAMETER Late
-Specifies that daily plan orders are submitted that are late or that started later than expected.
 
 .PARAMETER DateFrom
 Optionally specifies the date starting from which daily plan orders should be submitted.
@@ -128,15 +128,15 @@ param
     [Parameter(Mandatory=$False,ValueFromPipelinebyPropertyName=$True)]
     [string] $WorkflowPath,
     [Parameter(Mandatory=$False,ValueFromPipelinebyPropertyName=$True)]
+    [string] $WorkflowFolder,
+    [Parameter(Mandatory=$False,ValueFromPipelinebyPropertyName=$True)]
     [string] $SchedulePath,
     [Parameter(Mandatory=$False,ValueFromPipeline=$False,ValueFromPipelinebyPropertyName=$True)]
-    [string] $Folder = '/',
+    [string] $ScheduleFolder,
     [Parameter(Mandatory=$False,ValueFromPipeline=$False,ValueFromPipelinebyPropertyName=$True)]
     [switch] $Recursive,
     [Parameter(Mandatory=$False,ValueFromPipelinebyPropertyName=$True)]
     [string] $ControllerId,
-    [Parameter(Mandatory=$False,ValueFromPipelinebyPropertyName=$True)]
-    [switch] $Late,
     [Parameter(Mandatory=$False,ValueFromPipelinebyPropertyName=$True)]
     [DateTime] $DateFrom = (Get-Date (Get-Date).ToUniversalTime() -Format 'yyyy-MM-dd'),
     [Parameter(Mandatory=$False,ValueFromPipelinebyPropertyName=$True)]
@@ -159,30 +159,38 @@ param
 
         $orderIds = @()
         $workflowPaths = @()
+        $workflowFolders = @()
         $schedulePaths = @()
-        $folders = @()
+        $scheduleFolders = @()
         $controllerIds = @()
     }
 
     Process
     {
-        Write-Debug ".. $($MyInvocation.MyCommand.Name): parameter Folder=$Folder, OrderId=$OrderId, WorkflowPath=$WorkflowPath, SchedulePath=$SchedulePath"
+        Write-Debug ".. $($MyInvocation.MyCommand.Name): parameter WorkflowFolder=$WorkflowFolder, OrderId=$OrderId, WorkflowPath=$WorkflowPath, SchedulePath=$SchedulePath, ScheduleFolder=$ScheduleFolder"
 
-        if ( $Folder -and $Folder -ne '/' )
+        if ( $WorkflowFolder -and $WorkflowFolder -ne '/' )
         {
-            if ( !$Folder.startsWith( '/' ) ) {
-                $Folder = '/' + $Folder
+            if ( !$WorkflowFolder.startsWith( '/' ) ) {
+                $WorkflowFolder = '/' + $WorkflowFolder
             }
 
-            if ( $Folder.endsWith( '/' ) )
+            if ( $WorkflowFolder.endsWith( '/' ) )
             {
-                $Folder = $Folder.Substring( 0, $Folder.Length-1 )
+                $WorkflowFolder = $WorkflowFolder.Substring( 0, $WorkflowFolder.Length-1 )
             }
         }
 
-        if ( $Folder -eq '/' -and !$WorkflowPath -and !$SchedulePath -and !$Late -and !$Recursive )
+        if ( $ScheduleFolder -and $ScheduleFolder -ne '/' )
         {
-            $Recursive = $True
+            if ( !$ScheduleFolder.startsWith( '/' ) ) {
+                $ScheduleFolder = '/' + $ScheduleFolder
+            }
+
+            if ( $ScheduleFolder.endsWith( '/' ) )
+            {
+                $ScheduleFolder = $ScheduleFolder.Substring( 0, $ScheduleFolder.Length-1 )
+            }
         }
 
 
@@ -196,17 +204,27 @@ param
             $workflowPaths += $WorkflowPath
         }
 
+        if ( $WorkflowFolder )
+        {
+            $objFolder = New-Object PSObject
+            Add-Member -Membertype NoteProperty -Name 'folder' -value $WorkflowFolder -InputObject $objFolder
+            Add-Member -Membertype NoteProperty -Name 'recursive' -value ($Recursive -eq $True) -InputObject $objFolder
+
+            $workflowFolders += $objFolder
+        }
+
         if ( $SchedulePath )
         {
             $schedulePaths += $SchedulePath
         }
 
-        if ( $Folder -ne '/' )
+        if ( $ScheduleFolder )
         {
             $objFolder = New-Object PSObject
-            Add-Member -Membertype NoteProperty -Name 'folder' -value $Folder -InputObject $objFoldere
+            Add-Member -Membertype NoteProperty -Name 'folder' -value $ScheduleFolder -InputObject $objFolder
             Add-Member -Membertype NoteProperty -Name 'recursive' -value ($Recursive -eq $True) -InputObject $objFolder
-            $folders += $objFolder
+
+            $scheduleFolders += $objFolder
         }
 
         if ( $ControllerId )
@@ -277,29 +295,24 @@ param
                 Add-Member -Membertype NoteProperty -Name 'workflowPaths' -value $workflowPaths -InputObject $filter
             }
 
+            if ( $workflowFolders )
+            {
+                Add-Member -Membertype NoteProperty -Name 'workflowFolders' -value $workflowFolders -InputObject $filter
+            }
+
             if ( $schedulePaths )
             {
                 Add-Member -Membertype NoteProperty -Name 'schedulePaths' -value $schedulePaths -InputObject $filter
             }
 
-            if ( $folders )
+            if ( $scheduleFolders )
             {
-                Add-Member -Membertype NoteProperty -Name 'folders' -value $folders -InputObject $filter
+                Add-Member -Membertype NoteProperty -Name 'scheduleFolders' -value $scheduleFolders -InputObject $filter
             }
 
             if ( $controllerIds )
             {
                 Add-Member -Membertype NoteProperty -Name 'controllerIds' -value $controllerIds -InputObject $filter
-            }
-
-            if ( $Late )
-            {
-                Add-Member -Membertype NoteProperty -Name 'late' -value ( $Late -eq $True ) -InputObject $filter
-            }
-
-            if ( $states )
-            {
-                Add-Member -Membertype NoteProperty -Name 'states' -value $States -InputObject $filter
             }
 
             if ( $filter )

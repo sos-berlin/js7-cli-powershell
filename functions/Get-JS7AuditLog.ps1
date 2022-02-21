@@ -2,7 +2,7 @@ function Get-JS7AuditLog
 {
 <#
 .SYNOPSIS
-Returns the Audit Log entries
+Returns Audit Log entries
 
 .DESCRIPTION
 Audit log information is returned from a JOC Cockpit instance.
@@ -10,25 +10,45 @@ Audit log entries can be selected by workflow path, order ID, folder etc.
 
 The audit log information returned includes point in time, request, object etc.
 
-.PARAMETER OrderId
-Optionally specifies the identifier of an order for which audit log entries should be returned.
-
-.PARAMETER Job
-Optionally specifies the name of a job for which audit log entries should be returned.
-
-.PARAMETER WorkflowPath
-Optionally specifies the path and name of a workflow for which audit log information should be returned.
-
 .PARAMETER Folder
-Optionally specifies the folder that includes workflows for which audit log entries should be returned.
+Optionally specifies the folder that includes objects for which audit log entries should be returned.
 
 .PARAMETER Recursive
 Specifies that any sub-folders should be looked up when used with the -Folder parameter.
 By default no sub-folders will be looked up for workflow paths.
 
-.PARAMETER RegularExpression
-Specifies a regular expression that filters audit log entries to be returned.
-The regular expression is applied to the order ID or job.
+.PARAMETER Type
+Specifies the object types for which audit log entries should be returned. Multiyple values can be specifed by
+use of comma, for example -Type WORKFLOW,SCHEDULE
+
+* WORKFLOW
+* JOBRESOURCE
+* LOCK
+* FILEORDERSOURCE
+* NOTICEBOARD
+* WORKINGDAYSCALENDAR
+* NONWORKINGDAYSCALENDAR
+* SCHEDULE
+* INCLUDESCRIPT
+* DOCUMENTATION
+* ORDER
+
+.PARAMETER ObjectName
+Specifies the name of an object that matches one or more of the object types specified with the -Type parameter.
+The object name can include * and ? wildcard characters with
+
+* : match zero or more characters
+? : match any single character
+
+.PARAMETER Category
+Specfies a category that further limits results of audit log entries.
+
+* INVENTORY
+* CONTROLLER
+* DAILYPLAN
+* DEPLOYMENT
+* DOCUMENTATIONS
+* CERTIFICATES
 
 .PARAMETER DateFrom
 Specifies the date starting from which audit log entries should be returned.
@@ -98,6 +118,10 @@ Limits results to entries that inlcude the specified ticket link.
 Specifies the max. number of audit log entries to be returned.
 The default value is 10000, for an unlimited number of items the value -1 can be specified.
 
+.PARAMETER Detailed
+Specifies that the original request should be returned that caused the change related to the respective audit log entry.
+Consider that the -Detailed parameter can return large amounts of data and will slow down processing.
+
 .OUTPUTS
 This cmdlet returns an array of audit log entries.
 
@@ -107,9 +131,14 @@ $items = Get-JS7AuditLog
 Returns today's audit log entries.
 
 .EXAMPLE
-$items = Get-JS7AuditLog -RegularExpression "sos$'
+$items = Get-JS7AuditLog -Category 'DEPLOYMENT'
 
-Returns today's audit log entries for any order IDs, workflow paths or job names end with the string "sos".
+Returns today's audit log entries for any deployment related changes.
+
+.EXAMPLE
+$items = Get-JS7AuditLog -Category 'DEPLOYMENT' -Detailed
+
+Returns today's audit log entries for any deployment related changes including details about each object.
 
 .EXAMPLE
 $items = Get-JS7AuditLog -Timezone (Get-Timezone)
@@ -122,9 +151,9 @@ $items = Get-JS7AuditLog -Timezone (Get-Timezone -Id 'GMT Standard Time')
 Returns today's audit log entries with dates being converted to the GMT timezone.
 
 .EXAMPLE
-$items = Get-JS7AuditLog -WorkflowPath /some_path/some_workflow
+$items = Get-JS7AuditLog -Folder /ProductDemo -Recursive
 
-Returns today's audit log entries for a given workflow.
+Returns today's audit log entries for a given folder and any sub-folders.
 
 .EXAMPLE
 $items = Get-JS7AuditLog -DateFrom "2020-08-11 14:00:00Z"
@@ -167,19 +196,19 @@ about_js7
 param
 (
     [Parameter(Mandatory=$False,ValueFromPipeline=$True,ValueFromPipelinebyPropertyName=$True)]
-    [string] $OrderId,
-    [Parameter(Mandatory=$False,ValueFromPipeline=$True,ValueFromPipelinebyPropertyName=$True)]
-    [string] $Job,
+    [string] $ControllerId,
     [Parameter(Mandatory=$False,ValueFromPipeline=$False,ValueFromPipelinebyPropertyName=$True)]
-    [string] $WorkflowPath,
-    [Parameter(Mandatory=$False,ValueFromPipeline=$False,ValueFromPipelinebyPropertyName=$True)]
-    [string] $CalendarPath,
-    [Parameter(Mandatory=$False,ValueFromPipeline=$False,ValueFromPipelinebyPropertyName=$True)]
-    [string] $Folder = '/',
+    [string] $Folder,
     [Parameter(Mandatory=$False,ValueFromPipeline=$False,ValueFromPipelinebyPropertyName=$True)]
     [switch] $Recursive,
     [Parameter(Mandatory=$False,ValueFromPipeline=$False,ValueFromPipelinebyPropertyName=$True)]
-    [string] $RegularExpression,
+    [ValidateSet('WORKFLOW','JOBRESOURCE','LOCK','FILEORDERSOURCE','NOTICEBOARD','WORKINGDAYSCALENDAR','NONWORKINGDAYSCALENDAR','SCHEDULE','INCLUDESCRIPT','DOCUMENTATION','ORDER')]
+    [string[]] $Type,
+    [Parameter(Mandatory=$False,ValueFromPipeline=$False,ValueFromPipelinebyPropertyName=$True)]
+    [string] $ObjectName,
+    [Parameter(Mandatory=$False,ValueFromPipeline=$False,ValueFromPipelinebyPropertyName=$True)]
+    [ValidateSet('INVENTORY','CONTROLLER','DAILYPLAN','DEPLOYMENT','DOCUMENTATIONS','CERTIFICATES')]
+    [string[]] $Category,
     [Parameter(Mandatory=$False,ValueFromPipeline=$False,ValueFromPipelinebyPropertyName=$True)]
     [DateTime] $DateFrom = (Get-Date -Hour 0 -Minute 0 -Second 0).ToUniversalTime(),
     [Parameter(Mandatory=$False,ValueFromPipeline=$False,ValueFromPipelinebyPropertyName=$True)]
@@ -195,22 +224,25 @@ param
     [Parameter(Mandatory=$False,ValueFromPipeline=$False,ValueFromPipelinebyPropertyName=$True)]
     [string] $TicketLink,
     [Parameter(Mandatory=$False,ValueFromPipeline=$False,ValueFromPipelinebyPropertyName=$True)]
-    [int] $Limit
+    [string] $Comment,
+    [Parameter(Mandatory=$False,ValueFromPipeline=$False,ValueFromPipelinebyPropertyName=$True)]
+    [int] $Limit,
+    [Parameter(Mandatory=$False,ValueFromPipeline=$False,ValueFromPipelinebyPropertyName=$True)]
+    [switch] $Detailed
 )
     Begin
     {
         Approve-JS7Command $MyInvocation.MyCommand
         $stopWatch = Start-JS7StopWatch
 
-        $orders = @()
-        $jobs = @()
-        $calendarPaths = @()
         $folders = @()
+        $types = @()
+        $categories = @()
     }
 
     Process
     {
-        Write-Debug ".. $($MyInvocation.MyCommand.Name): parameter Folder=$Folder, WorkflowPath=$WorkflowPath, OrderId=$OrderId, Job=$Job, CalendarPath=$CalendarPath"
+        Write-Debug ".. $($MyInvocation.MyCommand.Name): parameter Folder=$Folder"
 
         if ( $Folder -and $Folder -ne '/' )
         {
@@ -225,48 +257,24 @@ param
             }
         }
 
-        if ( $Folder -eq '/' -and !$WorkflowPath -and !$OrderId -and !$Recursive )
+
+        if ( $Folder )
         {
-            $Recursive = $True
-        }
-
-        if ( $OrderId -or $WorkflowPath )
-        {
-            $objOrder = New-Object PSObject
-
-            if ( $OrderId )
-            {
-                Add-Member -Membertype NoteProperty -Name 'orderId' -value $OrderId -InputObject $objOrder
-            }
-
-            if ( $WorkflowPath )
-            {
-                Add-Member -Membertype NoteProperty -Name 'workflowPath' -value $WorkflowPath -InputObject $objOrder
-            }
-
-            $orders += $objOrder
-        } elseif ( $Job -or $WorkflowPath ) {
-            $objJob = New-Object PSObject
-
-            if ( $Job )
-            {
-                Add-Member -Membertype NoteProperty -Name 'job' -value $Job -InputObject $objJob
-            }
-
-            if ( $WorkflowPath )
-            {
-                Add-Member -Membertype NoteProperty -Name 'workflowPath' -value $WorkflowPath -InputObject $obJob
-            }
-
-            $jobs += $objJob
-        } elseif ( $CalendarPath ) {
-                $calendarPaths += $CalendarPath
-        } elseif ( $Folder -and $Folder -ne '/' ) {
             $objFolder = New-Object PSObject
             Add-Member -Membertype NoteProperty -Name 'folder' -value $Folder -InputObject $objFolder
             Add-Member -Membertype NoteProperty -Name 'recursive' -value ($Recursive -eq $True) -InputObject $objFolder
 
             $folders += $objFolder
+        }
+
+        if ( $Type )
+        {
+            $types += $Type
+        }
+
+        if ( $Category )
+        {
+            $categories += $Category
         }
     }
 
@@ -284,21 +292,12 @@ param
         [string] $timezoneOffset = "$($timezoneOffsetPrefix)$($timezoneOffsetHours.ToString().PadLeft( 2, '0' )):$($Timezone.BaseUtcOffset.Minutes.ToString().PadLeft( 2, '0' ))"
 
         $body = New-Object PSObject
-        Add-Member -Membertype NoteProperty -Name 'controllerId' -value $script:jsWebService.ControllerId -InputObject $body
 
-        if ( $orders )
+        if ( $ControllerId )
         {
-            Add-Member -Membertype NoteProperty -Name 'orders' -value $orders -InputObject $body
-        }
-
-        if ( $jobs )
-        {
-            Add-Member -Membertype NoteProperty -Name 'jobs' -value $jobs -InputObject $body
-        }
-
-        if ( $calendarPaths )
-        {
-            Add-Member -Membertype NoteProperty -Name 'calendars' -value $calendarPaths -InputObject $body
+            Add-Member -Membertype NoteProperty -Name 'controllerId' -value $script:jsWebService.ControllerId -InputObject $body
+        } else {
+            Add-Member -Membertype NoteProperty -Name 'controllerId' -value $ControllerId -InputObject $body
         }
 
         if ( $folders )
@@ -306,9 +305,19 @@ param
             Add-Member -Membertype NoteProperty -Name 'folders' -value $folders -InputObject $body
         }
 
-        if ( $RegularExpression )
+        if ( $types )
         {
-            Add-Member -Membertype NoteProperty -Name 'regex' -value $RegularExpression -InputObject $body
+            Add-Member -Membertype NoteProperty -Name 'objectTypes' -value $types -InputObject $body
+        }
+
+        if ( $ObjectName )
+        {
+            Add-Member -Membertype NoteProperty -Name 'objectName' -value $ObjectName -InputObject $body
+        }
+
+        if ( $categories )
+        {
+            Add-Member -Membertype NoteProperty -Name 'categories' -value $categories -InputObject $body
         }
 
         if ( $DateFrom -or $RelativeDateFrom )
@@ -349,6 +358,11 @@ param
             Add-Member -Membertype NoteProperty -Name 'ticketLink' -value $TicketLink -InputObject $body
         }
 
+        if ( $Comment )
+        {
+            Add-Member -Membertype NoteProperty -Name 'comment' -value $Comment -InputObject $body
+        }
+
         if ( $Limit )
         {
             Add-Member -Membertype NoteProperty -Name 'limit' -value $Limit -InputObject $body
@@ -359,7 +373,7 @@ param
 
         if ( $response.StatusCode -eq 200 )
         {
-            $returnAuditLogItems = ( $response.Content | ConvertFrom-JSON ).auditLog
+            $returnAuditLogItems = ( $response.Content | ConvertFrom-Json ).auditLog
         } else {
             throw ( $response | Format-List -Force | Out-String )
         }
@@ -370,14 +384,30 @@ param
         } else {
             $returnAuditLogItems | Select-Object -Property `
                                            account, `
-                                           request, `
+                                           category, `
+                                           controllerId, `
+                                           id, `
                                            parameters, `
-                                           workflow, `
-                                           orderId, `
-                                           comment, `
-                                           ticketLink, `
-                                           timeSpent, `
+                                           request, `
                                            @{name='created'; expression={ ( [System.TimeZoneInfo]::ConvertTimeFromUtc( [datetime]::SpecifyKind( [datetime] "$($_.created)".Substring(0, 19), 'UTC'), $Timezone ) ).ToString("yyyy-MM-dd HH:mm:ss") + $timezoneOffset }}
+        }
+
+        if ( $Detailed -and $returnAuditLogItems.count )
+        {
+            foreach( $returnAuditLogItem in $returnAuditLogItems )
+            {
+                $body = New-Object PSObject
+                Add-Member -Membertype NoteProperty -Name 'auditLogId' -value $returnAuditLogItem.Id -InputObject $body
+                [string] $requestBody = $body | ConvertTo-Json
+                $response = Invoke-JS7WebRequest -Path '/audit_log/details' -Body $requestBody
+
+                if ( $response.StatusCode -eq 200 )
+                {
+                    Add-Member -Membertype NoteProperty -Name 'details' -value ( $response.Content | ConvertFrom-Json ).auditLogDetails -InputObject $returnAuditLogItem
+                } else {
+                    throw ( $response | Format-List -Force | Out-String )
+                }
+            }
         }
 
         if ( $returnAuditLogItems.count )

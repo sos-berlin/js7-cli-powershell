@@ -2,7 +2,7 @@ function New-JS7DailyPlanOrder
 {
 <#
 .SYNOPSIS
-Create the daily plan orders for a number of JS7 Controllers
+Create daily plan orders for a number of JS7 Controllers
 
 .DESCRIPTION
 Creates daily plan orders for a number of JS7 Controllers. Orders can be submitted to any
@@ -17,15 +17,18 @@ Default: current day as a UTC date
 .PARAMETER WorkflowPath
 Optionally specifies the path and name of a workflow for which daily plan orders should be created.
 
+.PARAMETER WorkflowFolder
+Optionally specifies the a folder with schedules for which daily plan orders should be created.
+
 .PARAMETER SchedulePath
 Optionally specifies the path and name of a schedule for which daily plan orders should be created.
 
-.PARAMETER Folder
+.PARAMETER ScheduleFolder
 Optionally specifies the a folder with schedules for which daily plan orders should be created.
 
 .PARAMETER Recursive
-Optionally specifies that schedules are looked up in any sub-folders recursively
-if used with the -Folder parameter.
+When used with the -WorkflowFolder or -ScheduleFolder parameters then any sub-folders are looked up recursively
+for workflows or schedules for which to create orders.
 
 .PARAMETER ControllerId
 Specifies the Controller to which daily plan orders are submitted should the -Submit switch be used.
@@ -96,9 +99,11 @@ param
     [Parameter(Mandatory=$False,ValueFromPipelinebyPropertyName=$True)]
     [string] $WorkflowPath,
     [Parameter(Mandatory=$False,ValueFromPipelinebyPropertyName=$True)]
+    [string] $WorkflowFolder,
+    [Parameter(Mandatory=$False,ValueFromPipelinebyPropertyName=$True)]
     [string] $SchedulePath,
     [Parameter(Mandatory=$False,ValueFromPipelinebyPropertyName=$True)]
-    [string] $Folder,
+    [string] $ScheduleFolder,
     [Parameter(Mandatory=$False,ValueFromPipelinebyPropertyName=$True)]
     [switch] $Recursive,
     [Parameter(Mandatory=$False,ValueFromPipelinebyPropertyName=$True)]
@@ -124,38 +129,56 @@ param
             throw "$($MyInvocation.MyCommand.Name): Audit Log comment required, use parameter -AuditComment if one of the parameters -AuditTimeSpent or -AuditTicketLink is used"
         }
 
-        $folders = @()
-        $workflowPaths = @()
         $schedulePaths = @()
+        $scheduleFolders = @()
+        $workflowPaths = @()
+        $workflowFolders = @()
         $controllerIds = @()
     }
 
     Process
     {
-        Write-Debug ".. $($MyInvocation.MyCommand.Name): parameter Folder=$Folder, WorkflowPath=$WorkflowPath, SchedulePath=$SchedulePath"
+        Write-Debug ".. $($MyInvocation.MyCommand.Name): parameter WorkflowFolder=$WorkflowFolder, WorkflowPath=$WorkflowPath, SchedulePath=$SchedulePath, ScheduleFolder=$ScheduleFolder"
 
-        if ( $Folder -and $Folder -ne '/' )
+        if ( $WorkflowFolder -and $WorkflowFolder -ne '/' )
         {
-            if ( !$Folder.StartsWith( '/' ) )
+            if ( !$WorkflowFolder.StartsWith( '/' ) )
             {
-                $Folder = '/' + $Folder
+                $WorkflowFolder = '/' + $WorkflowFolder
             }
 
-            if ( $Folder.EndsWith( '/' ) )
+            if ( $WorkflowFolder.EndsWith( '/' ) )
             {
-                $Folder = $Folder.Substring( 0, $Folder.Length-1 )
+                $WorkflowFolder = $WorkflowFolder.Substring( 0, $WorkflowFolder.Length-1 )
             }
         }
 
-        if ( !$WorkflowPath -and !$SchedulePath -and !$Folder -and !$Recursive )
+        if ( $ScheduleFolder -and $ScheduleFolder -ne '/' )
         {
-            $Folder = '/'
-            $Recursive = $True
+            if ( !$ScheduleFolder.StartsWith( '/' ) )
+            {
+                $ScheduleFolder = '/' + $ScheduleFolder
+            }
+
+            if ( $ScheduleFolder.EndsWith( '/' ) )
+            {
+                $ScheduleFolder = $ScheduleFolder.Substring( 0, $ScheduleFolder.Length-1 )
+            }
         }
+
 
         if ( $WorkflowPath )
         {
             $workflowPaths += $WorkflowPath
+        }
+
+        if ( $WorkflowFolder )
+        {
+            $objFolder = New-Object PSObject
+            Add-Member -Membertype NoteProperty -Name 'folder' -value $WorkflowFolder -InputObject $objFolder
+            Add-Member -Membertype NoteProperty -Name 'recursive' -value ($Recursive -eq $True) -InputObject $objFolder
+
+            $workflowFolders += $objFolder
         }
 
         if ( $SchedulePath )
@@ -163,13 +186,13 @@ param
             $schedulePaths += $SchedulePath
         }
 
-        if ( $Folder )
+        if ( $ScheduleFolder )
         {
             $objFolder = New-Object PSObject
-            Add-Member -Membertype NoteProperty -Name 'folder' -value $Folder -InputObject $objFolder
+            Add-Member -Membertype NoteProperty -Name 'folder' -value $ScheduleFolder -InputObject $objFolder
             Add-Member -Membertype NoteProperty -Name 'recursive' -value ($Recursive -eq $True) -InputObject $objFolder
 
-            $folders += $objFolder
+            $scheduleFolders += $objFolder
         }
 
         if ( $ControllerId )
@@ -180,78 +203,88 @@ param
 
     End
     {
-        if ( $folders -or $schedulePaths -or $controllerIds )
-        {
-            $body = New-Object PSObject
-            Add-Member -Membertype NoteProperty -Name 'controllerId' -value $script:jsWebService.ControllerId -InputObject $body
-            Add-Member -Membertype NoteProperty -Name 'dailyPlanDate' -value (Get-Date $DailyPlanDate -Format 'yyyy-MM-dd') -InputObject $body
+        $body = New-Object PSObject
+        Add-Member -Membertype NoteProperty -Name 'controllerId' -value $script:jsWebService.ControllerId -InputObject $body
+        Add-Member -Membertype NoteProperty -Name 'dailyPlanDate' -value (Get-Date $DailyPlanDate -Format 'yyyy-MM-dd') -InputObject $body
 
-            $selector = New-Object PSObject
+        if ( $workflowPaths -or $workflowFolders )
+        {
+            $workflowPathsObj = New-Object PSObject
 
             if ( $workflowPaths )
             {
-                Add-Member -Membertype NoteProperty -Name 'workflowPaths' -value $workflowPaths -InputObject $selector
+                Add-Member -Membertype NoteProperty -Name 'singles' -value $workflowPaths -InputObject $workflowPathsObj
             }
+
+            if ( $workflowFolders )
+            {
+                Add-Member -Membertype NoteProperty -Name 'folders' -value $workflowFolders -InputObject $workflowPathsObj
+            }
+
+            Add-Member -Membertype NoteProperty -Name 'workflowPaths' -value $workflowPathsObj -InputObject $body
+        }
+
+        if ( $schedulePaths -or $scheduleFolders )
+        {
+            $schedulePathsObj = New-Object PSObject
 
             if ( $schedulePaths )
             {
-                Add-Member -Membertype NoteProperty -Name 'schedulePaths' -value $schedulePaths -InputObject $selector
+                Add-Member -Membertype NoteProperty -Name 'singles' -value $schedulePaths -InputObject $schedulePathsObj
             }
 
-            if ( $folders )
+            if ( $scheduleFolders )
             {
-                Add-Member -Membertype NoteProperty -Name 'folders' -value $folders -InputObject $selector
+                Add-Member -Membertype NoteProperty -Name 'folders' -value $scheduleFolders -InputObject $schedulePathsObj
             }
 
-            Add-Member -Membertype NoteProperty -Name 'selector' -value $selector -InputObject $body
+            Add-Member -Membertype NoteProperty -Name 'schedulePaths' -value $schedulePathsObj -InputObject $body
+        }
 
-            if ( $controllerIds )
+        if ( $controllerIds )
+        {
+            Add-Member -Membertype NoteProperty -Name 'controllerIds' -value $controllerIds -InputObject $body
+        }
+
+        Add-Member -Membertype NoteProperty -Name 'withSubmit' -value ($Submit -eq $True) -InputObject $body
+        Add-Member -Membertype NoteProperty -Name 'overwrite' -value ($Overwrite -eq $True) -InputObject $body
+
+        if ( $AuditComment -or $AuditTimeSpent -or $AuditTicketLink )
+        {
+            $objAuditLog = New-Object PSObject
+            Add-Member -Membertype NoteProperty -Name 'comment' -value $AuditComment -InputObject $objAuditLog
+
+            if ( $AuditTimeSpent )
             {
-                Add-Member -Membertype NoteProperty -Name 'controllerIds' -value $controllerIds -InputObject $body
+                Add-Member -Membertype NoteProperty -Name 'timeSpent' -value $AuditTimeSpent -InputObject $objAuditLog
             }
 
-            Add-Member -Membertype NoteProperty -Name 'withSubmit' -value ($Submit -eq $True) -InputObject $body
-            Add-Member -Membertype NoteProperty -Name 'overwrite' -value ($Overwrite -eq $True) -InputObject $body
-
-            if ( $AuditComment -or $AuditTimeSpent -or $AuditTicketLink )
+            if ( $AuditTicketLink )
             {
-                $objAuditLog = New-Object PSObject
-                Add-Member -Membertype NoteProperty -Name 'comment' -value $AuditComment -InputObject $objAuditLog
+                Add-Member -Membertype NoteProperty -Name 'ticketLink' -value $AuditTicketLink -InputObject $objAuditLog
+            }
 
-                if ( $AuditTimeSpent )
+            Add-Member -Membertype NoteProperty -Name 'auditLog' -value $objAuditLog -InputObject $body
+        }
+
+        if ( $PSCmdlet.ShouldProcess( 'orders', '/daily_plan/orders/generate' ) )
+        {
+            [string] $requestBody = $body | ConvertTo-Json -Depth 100
+            $response = Invoke-JS7WebRequest -Path '/daily_plan/orders/generate' -Body $requestBody
+
+            if ( $response.StatusCode -eq 200 )
+            {
+                $requestResult = ( $response.Content | ConvertFrom-JSON )
+
+                if ( !$requestResult.ok )
                 {
-                    Add-Member -Membertype NoteProperty -Name 'timeSpent' -value $AuditTimeSpent -InputObject $objAuditLog
-                }
-
-                if ( $AuditTicketLink )
-                {
-                    Add-Member -Membertype NoteProperty -Name 'ticketLink' -value $AuditTicketLink -InputObject $objAuditLog
-                }
-
-                Add-Member -Membertype NoteProperty -Name 'auditLog' -value $objAuditLog -InputObject $body
-            }
-
-            if ( $PSCmdlet.ShouldProcess( 'orders', '/daily_plan/orders/generate' ) )
-            {
-                [string] $requestBody = $body | ConvertTo-Json -Depth 100
-                $response = Invoke-JS7WebRequest -Path '/daily_plan/orders/generate' -Body $requestBody
-
-                if ( $response.StatusCode -eq 200 )
-                {
-                    $requestResult = ( $response.Content | ConvertFrom-JSON )
-
-                    if ( !$requestResult.ok )
-                    {
-                        throw ( $response | Format-List -Force | Out-String )
-                    }
-                } else {
                     throw ( $response | Format-List -Force | Out-String )
                 }
-
-                Write-Verbose ".. $($MyInvocation.MyCommand.Name): Daily Plan orders created"
+            } else {
+                throw ( $response | Format-List -Force | Out-String )
             }
-        } else {
-            Write-Verbose ".. $($MyInvocation.MyCommand.Name): no Daily Plan orders created"
+
+            Write-Verbose ".. $($MyInvocation.MyCommand.Name): Daily Plan orders created"
         }
 
         Trace-JS7StopWatch -CommandName $MyInvocation.MyCommand.Name -StopWatch $stopWatch

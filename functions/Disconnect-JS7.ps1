@@ -2,10 +2,10 @@ function Disconnect-JS7
 {
 <#
 .SYNOPSIS
-Disconnects from the JS7 Web Service.
+Disconnects from the JS7 REST Web Service.
 
 .DESCRIPTION
-This cmdlet can be used to disconnect from the JS7 JOC Cockpit Web Service.
+This cmdlet can be used to disconnect from the JS7 REST Web Service.
 
 .LINK
 about_js7

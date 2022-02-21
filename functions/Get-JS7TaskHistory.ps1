@@ -21,14 +21,6 @@ Optionally specifies the path and name of a workflow that includes jobs
 for which the task history is reported. The task execution history optionally can futher
 be limited by specifying the -Job parameter to limit results to a job in the given workflow.
 
-.PARAMETER OrderId
-Optionally specifies the identifier of an order to limit results to jobs that
-have been executed for the given order.
-
-.PARAMETER Position
-Optionally specifies the position in a workflow to limit results to jobs that
-correspond to the given position in a workflow. This parameter requires use of the -OrderId parameter.
-
 .PARAMETER Folder
 Optionally specifies the folder that includes workflows for which the task history should be returned.
 
@@ -37,12 +29,14 @@ Specifies that any sub-folders should be looked up when used with the -Folder pa
 By default no sub-folders will be looked up for jobs.
 
 .PARAMETER ExcludeJob
-This parameter accepts a hashmap of job names and optionally workflow paths that are excluded from the results.
+This parameter accepts a hashmap of job names and optionally workflow paths that are excluded from results.
 If a workflow path is specified then all jobs of the given workflow are excluded.
 
-.PARAMETER RegularExpression
-Specifies a regular expression that filters the jobs to be returned.
-The regular expression is applied to the job name.
+.PARAMETER JobName
+Specifies the name of a job that is looked up by use of * and ? wildcard characters:
+
+* : match zero or more characters
+? : match any single character
 
 .PARAMETER DateFrom
 Specifies the date starting from which history items should be returned.
@@ -136,9 +130,9 @@ $items = Get-JS7TaskHistory
 Returns today's task execution history for any jobs.
 
 .EXAMPLE
-$items = Get-JS7TaskHistory -RegularExpression "sos$"
+$items = Get-JS7TaskHistory -JobName "*sos*"
 
-Returns today's task execution history for any jobs with a job name that ends with "sos".
+Returns today's task execution history for any jobs with a job name that includes "sos".
 
 .EXAMPLE
 $items = Get-JS7TaskHistory -Timezone (Get-Timezone)
@@ -201,7 +195,7 @@ Returns the task execution history for the last week.
 .EXAMPLE
 $items = Get-JS7TaskHistory -Folder /sos -Recursive -Successful -Failed
 
-Returns today's task execution history for any completed tasks from the "/sos" directory
+Returns today's task execution history for any completed tasks from the "/sos" folder
 and any sub-folders recursively.
 
 .LINK
@@ -216,17 +210,13 @@ param
     [Parameter(Mandatory=$False,ValueFromPipeline=$False,ValueFromPipelinebyPropertyName=$True)]
     [string] $WorkflowPath,
     [Parameter(Mandatory=$False,ValueFromPipeline=$False,ValueFromPipelinebyPropertyName=$True)]
-    [string] $OrderId,
-    [Parameter(Mandatory=$False,ValueFromPipeline=$False,ValueFromPipelinebyPropertyName=$True)]
-    [string] $Position,
-    [Parameter(Mandatory=$False,ValueFromPipeline=$False,ValueFromPipelinebyPropertyName=$True)]
     [string] $Folder = '/',
     [Parameter(Mandatory=$False,ValueFromPipeline=$False,ValueFromPipelinebyPropertyName=$True)]
     [switch] $Recursive,
     [Parameter(Mandatory=$False,ValueFromPipeline=$False,ValueFromPipelinebyPropertyName=$True)]
     [hashtable] $ExcludeJob,
     [Parameter(Mandatory=$False,ValueFromPipeline=$False,ValueFromPipelinebyPropertyName=$True)]
-    [string] $RegularExpression,
+    [string] $JobName,
     [Parameter(Mandatory=$False,ValueFromPipeline=$False,ValueFromPipelinebyPropertyName=$True)]
     [DateTime] $DateFrom = (Get-Date -Hour 0 -Minute 0 -Second 0).ToUniversalTime(),
     [Parameter(Mandatory=$False,ValueFromPipeline=$False,ValueFromPipelinebyPropertyName=$True)]
@@ -260,7 +250,6 @@ param
         $stopWatch = Start-JS7StopWatch
 
         $jobs = @()
-        $orders = @()
         $folders = @()
         $criticalities = @()
         $historyStates = @()
@@ -285,7 +274,7 @@ param
             }
         }
 
-        if ( $Folder -eq '/' -and !$OrderId -and !$WorkflowPath -and !$Job -and !$Recursive )
+        if ( $Folder -eq '/' -and !$WorkflowPath -and !$Job -and !$Recursive )
         {
             $Recursive = $True
         }
@@ -318,24 +307,6 @@ param
         if ( $InProgress )
         {
             $historyStates += 'INCOMPLETE'
-        }
-
-        if ( $OrderId )
-        {
-            $objOrder = New-Object PSObject
-            Add-Member -Membertype NoteProperty -Name 'orderId' -value $OrderId -InputObject $objOrder
-
-            if ( $WorkflowPath )
-            {
-                Add-Member -Membertype NoteProperty -Name 'workflowPath' -value $WorkflowPath -InputObject $objOrder
-            }
-
-            if ( $Position )
-            {
-                Add-Member -Membertype NoteProperty -Name 'position' -value $Position -InputObject $objOrder
-            }
-
-            $orders += $objOrder
         }
 
         if ( $Job ) {
@@ -401,7 +372,13 @@ param
         [string] $timezoneOffset = "$($timezoneOffsetPrefix)$($timezoneOffsetHours.ToString().PadLeft( 2, '0' )):$($Timezone.BaseUtcOffset.Minutes.ToString().PadLeft( 2, '0' ))"
 
         $body = New-Object PSObject
-        Add-Member -Membertype NoteProperty -Name 'controllerId' -value $script:jsWebService.ControllerId -InputObject $body
+
+        if ( $ControllerId )
+        {
+            Add-Member -Membertype NoteProperty -Name 'controllerId' -value $ControllerId -InputObject $body
+        } else {
+            Add-Member -Membertype NoteProperty -Name 'controllerId' -value $script:jsWebService.ControllerId -InputObject $body
+        }
 
         if ( $jobs )
         {
@@ -413,9 +390,9 @@ param
             Add-Member -Membertype NoteProperty -Name 'excludeJobs' -value $excludeJobs -InputObject $body
         }
 
-        if ( $RegularExpression )
+        if ( $JobName )
         {
-            Add-Member -Membertype NoteProperty -Name 'regex' -value $RegularExpression -InputObject $body
+            Add-Member -Membertype NoteProperty -Name 'jobName' -value $JobName -InputObject $body
         }
 
         if ( $DateFrom -or $RelativeDateFrom )
@@ -466,11 +443,6 @@ param
             Add-Member -Membertype NoteProperty -Name 'historyStates' -value $historyStates -InputObject $body
         }
 
-        if ( $orders )
-        {
-            Add-Member -Membertype NoteProperty -Name 'orders' -value $orders -InputObject $body
-        }
-
         if ( $taskIds )
         {
             Add-Member -Membertype NoteProperty -Name 'taskIds' -value $taskIds -InputObject $body
@@ -499,8 +471,11 @@ param
                                            position, `
                                            job, `
                                            criticality, `
+                                           sequence, `
+                                           retryCounter, `
                                            exitCode, `
                                            state, `
+                                           arguments, `
                                            @{name='startTime'; expression={ ( [System.TimeZoneInfo]::ConvertTimeFromUtc( [datetime]::SpecifyKind( [datetime] "$($_.startTime)".Substring(0, 19), 'UTC'), $Timezone ) ).ToString("yyyy-MM-dd HH:mm:ss") + $timezoneOffset }}, `
                                            @{name='endTime';  expression={ ( [System.TimeZoneInfo]::ConvertTimeFromUtc( [datetime]::SpecifyKind( [datetime] "$($_.endTime)".SubString(0,19), 'UTC'), $($Timezone) ) ).ToString("yyyy-MM-dd HH:mm:ss") + $timezoneOffset }}, `
                                            @{name='surveyDate'; expression={ ( [System.TimeZoneInfo]::ConvertTimeFromUtc( [datetime]::SpecifyKind( [datetime] "$($_.surveyDate)".SubString(0, 19), 'UTC'), $($Timezone) ) ).ToString("yyyy-MM-dd HH:mm:ss") + $timezoneOffset }}

@@ -183,7 +183,7 @@ param
 
                 if ( $response.StatusCode -eq 200 )
                 {
-                    $releasableObject = ( $response.Content | ConvertFrom-JSON ).releasable
+                    $releasableObject = ( $response.Content | ConvertFrom-Json ).releasable
 
                     if ( !$releasableObject.id )
                     {
@@ -214,38 +214,32 @@ param
 
             if ( $response.StatusCode -eq 200 )
             {
-                $releasableObjects = ( $response.Content | ConvertFrom-JSON ).releasables
+                $releasableFolders = ( $response.Content | ConvertFrom-Json ).folders
             } else {
                 throw ( $response | Format-List -Force | Out-String )
             }
 
-            foreach( $releasableObject in $releasableObjects )
+            foreach( $releasableFolder in $releasableFolders )
             {
-                if ( $releasableObject.objectType -eq 'FOLDER' )
+                foreach( $releasableObject in $releasableFolder.releasables )
                 {
-                    # we cannto release folders
-                    continue
+                    if ( $releasableObject.objectType -eq 'FOLDER' )
+                    {
+                        # we cannot release folders
+                        continue
+                    }
 
-                    # if ( $Delete )
-                    # {
-                    #     $deleteObjects += @{ 'path' = "$($releasableObject.folder)$($releasableObject.objectName)"; 'type' = $releasableObject.objectType; 'valid' = $releasableObject.valid; 'released' = $True }
-                    # } else {
-                    #     $storeObjects += @{ 'path' = "$($releasableObject.folder)$($releasableObject.objectName)"; 'type' = $releasableObject.objectType; 'valid' = $releasableObject.valid; 'released' = $False }
-                    # }
+                    if ( $releasableObject.folder -and !$releasableObject.folder.endsWith( '/' ) )
+                    {
+                        $releasableObject.folder += '/'
+                    }
 
-                    # continue
-                }
-
-                if ( $releasableObject.folder -and !$releasableObject.folder.endsWith( '/' ) )
-                {
-                    $releasableObject.folder += '/'
-                }
-
-                if ( $Delete )
-                {
-                    $deleteObjects += @{ 'path' = "$($releasableObject.folder)$($releasableObject.objectName)"; 'type' = $releasableObject.objectType; 'valid' = $releasableObject.valid; 'released' = $releasableObject.released }
-                } else {
-                    $storeObjects += @{ 'path' = "$($releasableObject.folder)$($releasableObject.objectName)"; 'type' = $releasableObject.objectType; 'valid' = $releasableObject.valid; 'released' = $releasableObject.released }
+                    if ( $Delete )
+                    {
+                        $deleteObjects += @{ 'path' = "$($releasableObject.folder)$($releasableObject.objectName)"; 'type' = $releasableObject.objectType; 'valid' = $releasableObject.valid; 'released' = $releasableObject.released }
+                    } else {
+                        $storeObjects += @{ 'path' = "$($releasableObject.folder)$($releasableObject.objectName)"; 'type' = $releasableObject.objectType; 'valid' = $releasableObject.valid; 'released' = $releasableObject.released }
+                    }
                 }
             }
         }

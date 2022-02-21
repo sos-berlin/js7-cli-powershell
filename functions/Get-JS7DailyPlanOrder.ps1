@@ -101,12 +101,12 @@ Returns daily plan orders for the current day.
 .EXAMPLE
 $orders = Get-JS7DailyPlanOrder -Timezone (Get-Timezone)
 
-Returns today's daily plan orders for any jobs with dates being converted to the local timezone.
+Returns today's daily plan orders for any workflows with dates being converted to the local timezone.
 
 .EXAMPLE
 $orders = Get-JS7DailyPlanOrder -Timezone (Get-Timezone -Id 'GMT Standard Time')
 
-Returns today's daily plan orders for any jobs with dates being converted to the GMT timezone.
+Returns today's daily plan orders for any workflows with dates being converted to the GMT timezone.
 
 .EXAMPLE
 $orders = Get-JS7DailyPlanOrder -DateTo (Get-Date).AddDays(3)
@@ -122,7 +122,7 @@ The daily plan is reported starting from midnight UTC.
 .EXAMPLE
 $orders = Get-JS7DailyPlanOrder -Failed -Late
 
-Returns today's daily plan orders for jobs that failed or are late, i.e. that did not start at the expected point in time.
+Returns today's daily plan orders that failed or are late, i.e. that did not start at the expected point in time.
 
 .EXAMPLE
 $orders = Get-JS7DailyPlanOrder -WorkflowPath /ap/apWorkflow1b
@@ -140,10 +140,12 @@ param
     [string] $OrderId,
     [Parameter(Mandatory=$False,ValueFromPipelinebyPropertyName=$True)]
     [string] $WorkflowPath,
+    [Parameter(Mandatory=$False,ValueFromPipeline=$False,ValueFromPipelinebyPropertyName=$True)]
+    [string] $WorkflowFolder,
     [Parameter(Mandatory=$False,ValueFromPipelinebyPropertyName=$True)]
     [string] $SchedulePath,
     [Parameter(Mandatory=$False,ValueFromPipeline=$False,ValueFromPipelinebyPropertyName=$True)]
-    [string] $Folder = '/',
+    [string] $ScheduleFolder,
     [Parameter(Mandatory=$False,ValueFromPipeline=$False,ValueFromPipelinebyPropertyName=$True)]
     [switch] $Recursive,
     [Parameter(Mandatory=$False,ValueFromPipelinebyPropertyName=$True)]
@@ -163,17 +165,9 @@ param
     [Parameter(Mandatory=$False,ValueFromPipelinebyPropertyName=$True)]
     [switch] $Planned,
     [Parameter(Mandatory=$False,ValueFromPipelinebyPropertyName=$True)]
-    [switch] $Pending,
+    [switch] $Submitted,
     [Parameter(Mandatory=$False,ValueFromPipelinebyPropertyName=$True)]
-    [switch] $InProgress,
-    [Parameter(Mandatory=$False,ValueFromPipelinebyPropertyName=$True)]
-    [switch] $Running,
-    [Parameter(Mandatory=$False,ValueFromPipelinebyPropertyName=$True)]
-    [switch] $Blocked,
-    [Parameter(Mandatory=$False,ValueFromPipelinebyPropertyName=$True)]
-    [switch] $Finished,
-    [Parameter(Mandatory=$False,ValueFromPipelinebyPropertyName=$True)]
-    [switch] $Failed
+    [switch] $Finished
 )
     Begin
     {
@@ -182,8 +176,9 @@ param
 
         $orderIds = @()
         $workflowPaths = @()
+        $workflowFolders = @()
         $schedulePaths = @()
-        $folders = @()
+        $scheduleFolders = @()
         $controllerIds = @()
         $states = @()
         $returnDailyPlanItems = @()
@@ -191,58 +186,46 @@ param
 
     Process
     {
-        Write-Debug ".. $($MyInvocation.MyCommand.Name): parameter Folder=$Folder, WorkflowPath=$WorkflowPath, SchedulePath=$SchedulePath"
+        Write-Debug ".. $($MyInvocation.MyCommand.Name): parameter WorkfowFolder=$WorkflowFolder, WorkflowPath=$WorkflowPath, SchedulePath=$SchedulePath, ScheduleFolder=$ScheduleFolder"
 
-        if ( $Folder -and $Folder -ne '/' )
+        if ( $WorkflowFolder -and $WorkflowFolder -ne '/' )
         {
-            if ( !$Folder.startsWith( '/' ) ) {
-                $Folder = '/' + $Folder
+            if ( !$WorkflowFolder.startsWith( '/' ) ) {
+                $WorkflowFolder = '/' + $WorkflowFolder
             }
 
-            if ( $Folder.endsWith( '/' ) )
+            if ( $WorkflowFolder.endsWith( '/' ) )
             {
-                $Folder = $Folder.Substring( 0, $Folder.Length-1 )
+                $WorkflowFolder = $WorkflowFolder.Substring( 0, $WorkflowFolder.Length-1 )
             }
         }
 
-        if ( $Folder -eq '/' -and !$WorkflowPath -and !$SchedulePath -and !$Recursive )
+        if ( $ScheduleFolder -and $ScheduleFolder -ne '/' )
         {
-            $Recursive = $True
+            if ( !$ScheduleFolder.startsWith( '/' ) ) {
+                $ScheduleFolder = '/' + $ScheduleFolder
+            }
+
+            if ( $ScheduleFolder.endsWith( '/' ) )
+            {
+                $ScheduleFolder = $ScheduleFolder.Substring( 0, $ScheduleFolder.Length-1 )
+            }
         }
+
 
         if ( $Planned )
         {
             $states += 'PLANNED'
         }
 
-        if ( $Pending )
+        if ( $Submitted )
         {
-            $states += 'PENDING'
-        }
-
-        if ( $InProgress )
-        {
-            $states += 'INPROGRESS'
-        }
-
-        if ( $Running )
-        {
-            $states += 'RUNNING'
-        }
-
-        if ( $Blocked )
-        {
-            $states += 'BLOCKED'
+            $states += 'SUBMITTED'
         }
 
         if ( $Finished )
         {
             $states += 'FINISHED'
-        }
-
-        if ( $Failed )
-        {
-            $states += 'FAILED'
         }
 
         if ( $OrderId )
@@ -255,17 +238,27 @@ param
             $workflowPaths += $WorkflowPath
         }
 
+        if ( $WorkflowFolder )
+        {
+            $objFolder = New-Object PSObject
+            Add-Member -Membertype NoteProperty -Name 'folder' -value $WorkflowFolder -InputObject $objFolder
+            Add-Member -Membertype NoteProperty -Name 'recursive' -value ($Recursive -eq $True) -InputObject $objFolder
+
+            $workflowFolders += $objFolder
+        }
+
         if ( $SchedulePath )
         {
             $schedulePaths += $SchedulePath
         }
 
-        if ( $Folder -ne '/' )
+        if ( $ScheduleFolder )
         {
             $objFolder = New-Object PSObject
-            Add-Member -Membertype NoteProperty -Name 'folder' -value $Folder -InputObject $objFoldere
+            Add-Member -Membertype NoteProperty -Name 'folder' -value $ScheduleFolder -InputObject $objFolder
             Add-Member -Membertype NoteProperty -Name 'recursive' -value ($Recursive -eq $True) -InputObject $objFolder
-            $folders += $objFolder
+
+            $scheduleFolders += $objFolder
         }
 
         if ( $ControllerId )
@@ -346,14 +339,19 @@ param
                 Add-Member -Membertype NoteProperty -Name 'workflowPaths' -value $workflowPaths -InputObject $filter
             }
 
+            if ( $workflowFolders )
+            {
+                Add-Member -Membertype NoteProperty -Name 'workflowFolders' -value $workflowFolders -InputObject $filter
+            }
+
             if ( $schedulePaths )
             {
                 Add-Member -Membertype NoteProperty -Name 'schedulePaths' -value $schedulePaths -InputObject $filter
             }
 
-            if ( $folders )
+            if ( $scheduleFolders )
             {
-                Add-Member -Membertype NoteProperty -Name 'folders' -value $folders -InputObject $filter
+                Add-Member -Membertype NoteProperty -Name 'scheduleFolders' -value $scheduleFolders -InputObject $filter
             }
 
             if ( $controllerIds )
@@ -394,14 +392,16 @@ param
             $returnDailyPlanItems | Sort-Object plannedStartTime
         } else {
             $returnDailyPlanItems | Sort-Object plannedStartTime | Select-Object -Property `
-                                           workflow, `
-                                           orderId, `
+                                           controllerId, `
+                                           workflowPath, `
                                            historyId, `
-                                           state, `
                                            late, `
-                                           jobStream, `
-                                           startMode, `
+                                           orderId, `
+                                           orderName, `
                                            period, `
+                                           schedulePath, `
+                                           startMode, `
+                                           state, `
                                            @{name='plannedStartTime'; expression={ ( [System.TimeZoneInfo]::ConvertTimeFromUtc( [datetime]::SpecifyKind( [datetime] "$($_.plannedStartTime)".Substring(0, 19), 'UTC'), $Timezone ) ).ToString("yyyy-MM-dd HH:mm:ss") + $timezoneOffset }}, `
                                            @{name='expectedEndTime';  expression={ ( [System.TimeZoneInfo]::ConvertTimeFromUtc( [datetime]::SpecifyKind( [datetime] "$($_.expectedEndTime)".SubString(0,19), 'UTC'), $($Timezone) ) ).ToString("yyyy-MM-dd HH:mm:ss") + $timezoneOffset }}, `
                                            @{name='startTime'; expression={ ( [System.TimeZoneInfo]::ConvertTimeFromUtc( [datetime]::SpecifyKind( [datetime] "$($_.startTime)".Substring(0, 19), 'UTC'), $Timezone ) ).ToString("yyyy-MM-dd HH:mm:ss") + $timezoneOffset }}, `

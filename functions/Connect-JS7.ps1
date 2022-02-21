@@ -23,7 +23,7 @@ is not available, or Internet Explorers first-launch configuration is not comple
 ** this operation requires administrative permissions.
 
 .PARAMETER Url
-Specifies the URL to access the Web Service.
+Specifies the URL to access JOC Cockpit. Typically this is the same URL as used with a browser for the JOC Cockpit GUI.
 
 .PARAMETER Credentials
 Specifies a credentials object that is used to authenticate the account with the JS7 Web Service.
@@ -57,7 +57,7 @@ for the proxy server can be specified with this parameter.
 This parameter currently is not used. It is provided for future versions of JOC Cockpit that support single sign on.
 
 .PARAMETER Id
-Specifies the ID of a JS7 Controller that was used during installation of the product.
+Specifies the ID of a JS7 Controller that is registered with JOC Cockpit.
 If no ID is specified then the first JS7 Controller registered with JOC Cockpit will be used.
 
 .PARAMETER AskForCredentials
@@ -72,11 +72,11 @@ This value is fixed and should not be modified for most use cases.
 Default: /joc/api
 
 .PARAMETER Timeout
-Specifies the timeout to wait for the JOC Cockpit Web Service response.
+Specifies the timeout to wait for the JS7 REST Web Service response.
 
 .PARAMETER SSLProtocol
 This parameter can be used to specify the TLS protocol version that should be used. The protocol version is agreed
-on between the JOC Cockpit web server and the PowerShell client. Both server and client have to identify a common
+on between the PowerShell client and the JOC Cockpit web server. Both client and server have to agree on a common
 protocol version.
 
 * -SSLProtocol 'Tls'
@@ -191,7 +191,9 @@ The credentials are retrieved by use of the Get-JS7SystemCredentials cmdlet and 
 
 .EXAMPLE
 $trustStoreCredentials = ( New-Object -typename System.Management.Automation.PSCredential -ArgumentList 'truststore', ( 'jobscheduler' | ConvertTo-SecureString -AsPlainText -Force) )
+#
 $keyStoreCredentials = ( New-Object -typename System.Management.Automation.PSCredential -ArgumentList 'keystore', ( 'jobscheduler' | ConvertTo-SecureString -AsPlainText -Force) )
+#
 Connect-JS7 -Url https://js7-joc-primary:4443 -Id jobscheduler -RootCertificatePath /home/sos/https-truststore.p12 -RootCertificateCredentials $trustStoreCredentials -KeyStorePath /home/sos/https-keystore.p12 -KeyStorePassword $keyStoreCredentials
 
 This example assumes a secure HTTPS connection to JOC Cockpit with mutual authentication:
@@ -445,9 +447,18 @@ param
                 $parts = $cn.split( '=' )
                 if ( $parts.count -gt 1 )
                 {
-                    $Credentials = New-Object System.Management.Automation.PSCredential( $parts[1].Trim(), (New-Object System.Security.SecureString) )
+                    $Credentials = New-Object -Typename System.Management.Automation.PSCredential( $parts[1].Trim(), (New-Object System.Security.SecureString) )
                 } else {
                     throw "no credentials specified and no CN identified from specified certificate, use -Credentials and -Certificate parameter"
+                }
+            }
+
+            if ( !$Credentials -and $Url.UserInfo ) {
+                $parts = $Url.UserInfo.split( ':' )
+                if ( $parts.count -gt 1 ) {
+                    $securePassword = New-Object Security.SecureString
+                    $parts[1].ToCharArray() | ForEach-Object { $securePassword.AppendChar($_) }
+                    $Credentials = New-Object -Typename System.Management.Automation.PSCredential -ArgumentList $parts[0], $securePassword
                 }
             }
 
