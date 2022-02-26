@@ -206,7 +206,7 @@ This example assumes a secure HTTPS connection to JOC Cockpit with mutual authen
 The cmdlet returns an object with access information including the access token for the JS7 Web Service.
 
 .LINK
-about_js7
+about_JS7
 
 #>
 [cmdletbinding()]

@@ -80,7 +80,7 @@ Publish-JS7ReleasableItem -Path /TestCases/sampleWorkflow -Type 'WORKFLOW' -Dele
 Marks for deletion the specified workflow.
 
 .LINK
-about_js7
+about_JS7
 
 #>
 [cmdletbinding()]

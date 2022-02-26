@@ -97,7 +97,7 @@ Publish-JS7DeployableItem -ControllerId testsuite,standalone -Path /TestCases/sa
 Deploys the specified workflow from the indicated path to both Controller instances.
 
 .LINK
-about_js7
+about_JS7
 
 #>
 [cmdletbinding()]

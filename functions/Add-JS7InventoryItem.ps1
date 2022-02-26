@@ -69,7 +69,7 @@ Add-JS7InventoryItem -Path /some/directory/sampleLock -Type 'LOCK' -Item (Get-Co
 Reads a resource lock from a file and adds it to the invnetory.
 
 .LINK
-about_js7
+about_JS7
 
 #>
 [cmdletbinding()]

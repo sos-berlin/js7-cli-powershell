@@ -70,7 +70,7 @@ $calendars = Get-JS7Calendar -WorkingDays
 Returns the calendars that define working days only.
 
 .LINK
-about_js7
+about_JS7
 
 #>
 [cmdletbinding()]

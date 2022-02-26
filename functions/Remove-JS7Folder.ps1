@@ -46,7 +46,7 @@ Remove-JS7Folder -Path /some/path
 Removes the specified folder from the JOC Cockpit inventory.
 
 .LINK
-about_js7
+about_JS7
 
 #>
 [cmdletbinding(SupportsShouldProcess)]

@@ -50,7 +50,7 @@ $passiveController = Get-JS7ControllerInstance -Passive
 Return the Controller standalone instance or the passive member of a JS7 cluster.
 
 .LINK
-about_js7
+about_JS7
 
 #>
 [cmdletbinding()]

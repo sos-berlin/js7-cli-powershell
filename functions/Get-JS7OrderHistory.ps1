@@ -182,7 +182,7 @@ Returns today's order execution history for any completed orders from the "/sos"
 and any sub-folders recursively.
 
 .LINK
-about_js7
+about_JS7
 
 #>
 [cmdletbinding()]

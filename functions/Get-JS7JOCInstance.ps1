@@ -13,7 +13,7 @@ $cluster = Get-JS7JOCInstance
 Returns status information about the JS7 JOC Cockpit cluster members.
 
 .LINK
-about_js7
+about_JS7
 
 #>
 [cmdletbinding()]

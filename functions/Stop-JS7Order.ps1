@@ -56,7 +56,7 @@ Get-JS7Order -Folder /sos -Recursive | Stop-JS7Order
 Retrieves and cancels all orders from the indicated folder including any sub-folders.
 
 .LINK
-about_js7
+about_JS7
 
 #>
 [cmdletbinding(SupportsShouldProcess)]

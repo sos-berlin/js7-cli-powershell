@@ -16,7 +16,7 @@ $stats = Get-JS7InventoryStatistics
 Returns information items such as the number of workflows and jobs from the JOC Cockpit inventory.
 
 .LINK
-about_js7
+about_JS7
 
 #>
 [cmdletbinding()]

@@ -107,7 +107,7 @@ Stores any deployable objects such as workflows from the specified folder recurs
 to the repository.
 
 .LINK
-about_js7
+about_JS7
 
 #>
 [cmdletbinding(SupportsShouldProcess)]
@@ -327,7 +327,7 @@ param
 
                     $storeObjects += @{ 'path' = "$($deployableObject.folder)$($deployableObject.objectName)"; 'type' = $deployableObject.objectType; 'valid' = $deployableObject.valid; 'deployed' = $deployableObject.deployed; 'commitId' = $commitId }
                 }
-            } 
+            }
 
             if ( $lookupReleasableTypes ) {
                 $body = New-Object PSObject

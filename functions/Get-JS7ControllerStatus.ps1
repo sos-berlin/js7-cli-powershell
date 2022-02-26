@@ -82,7 +82,7 @@ $status = Get-JS7ControllerStatus -Summary
 Returns an object including status information and summary information.
 
 .LINK
-about_js7
+about_JS7
 
 #>
 [cmdletbinding()]

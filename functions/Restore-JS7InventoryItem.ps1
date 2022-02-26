@@ -72,7 +72,7 @@ Restore-JS7InventoryItem -Path /some_folder/sampleWorkflow -Type 'WORKFLOW'
 Restores the indicated worfklow in the JOC Cockpit inventory.
 
 .LINK
-about_js7
+about_JS7
 
 #>
 [cmdletbinding()]

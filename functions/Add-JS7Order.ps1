@@ -125,7 +125,7 @@ Adds an order to the indicated workflow. The order will start one hour later and
 variables as specified by the -Variables parameter.
 
 .LINK
-about_js7
+about_JS7
 
 #>
 [cmdletbinding()]

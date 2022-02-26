@@ -63,7 +63,7 @@ Get-JS7Order -WorkflowPath /test/globals/chain1 | Suspend-JS7Order
 Suspends all orders for the specified workflow.
 
 .LINK
-about_js7
+about_JS7
 
 #>
 [cmdletbinding()]

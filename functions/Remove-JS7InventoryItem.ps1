@@ -58,7 +58,7 @@ Remove-JS7InventoryItem -Path /some_folder/sampleWorkflow -Type 'WORKFLOW'
 Removes the indicated worfklow from the JOC Cockpit inventory.
 
 .LINK
-about_js7
+about_JS7
 
 #>
 [cmdletbinding(SupportsShouldProcess)]

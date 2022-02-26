@@ -46,7 +46,7 @@ Remove-JS7CompletedOrder -OrderId "#2021-01-19#T086350577-ap27"
 Causes the indicated order to be removed upon completion of its workflow.
 
 .LINK
-about_js7
+about_JS7
 
 #>
 [cmdletbinding(SupportsShouldProcess)]

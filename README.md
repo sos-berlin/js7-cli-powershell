@@ -9,7 +9,7 @@ The JS7 CLI module supports Windows PowerShell FullCLR 5.1 and PowerShell CoreCL
 The JS7 Command Line Interface is used for the following areas of operation:
 
 * provide bulk operations:
-    * deploy workflows and related objects such as junctions and locks
+    * deploy workflows and related objects such as locks
     * release calendars and schedules
     * submit orders, suspend orders and cancel orders
     * manage the daily plan by creating and removing orders

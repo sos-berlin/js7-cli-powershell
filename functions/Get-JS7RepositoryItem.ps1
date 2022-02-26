@@ -45,7 +45,7 @@ $items = Get-JS7RepositoryItem -Folder /samples/some_sub_folder -Local
 Returns the items for scheduling objects that are local to the scheduling environment from the indicated folder.
 
 .LINK
-about_js7
+about_JS7
 
 #>
 [cmdletbinding()]

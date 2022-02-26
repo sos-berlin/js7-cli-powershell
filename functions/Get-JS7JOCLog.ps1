@@ -29,7 +29,7 @@ $logs = Get-JS7JOCLogFilename | Get-JS7JOCLog
 Returns the output of any available JOC Cockpit log files to an array.
 
 .LINK
-about_js7
+about_JS7
 
 #>
 [cmdletbinding()]

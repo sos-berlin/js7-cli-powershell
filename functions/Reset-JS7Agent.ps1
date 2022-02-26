@@ -16,6 +16,13 @@ Consider that orders have to be re-submitted to an Agent after reset.
 Specifies a unique identifier for an Agent. This identifier cannot be modified during the lifetime of an Agent.
 In order to modify the Agent identifier the Agent has to be removed and added.
 
+.PARAMETER Force
+This switch should be used with care as it kills any tasks running with an Agent, revokes any orders and workflows
+from the Agent and forces the Agent to drop its journal and to restart.
+
+The purpose of this switch is to hijack an Agent that is assigned a different Controller or that holds
+information in its journal that is no longer applicable, for example if the AGent ID should be modified.
+
 .PARAMETER AuditComment
 Specifies a free text that indicates the reason for the current intervention, e.g. "business requirement", "maintenance window" etc.
 
@@ -46,7 +53,7 @@ Reset-JS7Agent -AgentId agent_001
 Resets the indicated Agent.
 
 .LINK
-about_js7
+about_JS7
 
 #>
 [cmdletbinding(SupportsShouldProcess)]
@@ -54,6 +61,8 @@ param
 (
     [Parameter(Mandatory=$True,ValueFromPipeline=$False,ValueFromPipelinebyPropertyName=$True)]
     [string] $AgentId,
+    [Parameter(Mandatory=$False,ValueFromPipeline=$False,ValueFromPipelinebyPropertyName=$True)]
+    [switch] $Force,
     [Parameter(Mandatory=$False,ValueFromPipeline=$False,ValueFromPipelinebyPropertyName=$True)]
     [string] $AuditComment,
     [Parameter(Mandatory=$False,ValueFromPipeline=$False,ValueFromPipelinebyPropertyName=$True)]
@@ -77,6 +86,7 @@ param
         $body = New-Object PSObject
         Add-Member -Membertype NoteProperty -Name 'controllerId' -value $script:jsWebService.ControllerId -InputObject $body
         Add-Member -Membertype NoteProperty -Name 'agentId' -value $AgentId -InputObject $body
+        Add-Member -Membertype NoteProperty -Name 'force' -value ($Force -eq $True) -InputObject $body
 
         if ( $AuditComment -or $AuditTimeSpent -or $AuditTicketLink )
         {

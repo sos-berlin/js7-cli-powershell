@@ -50,7 +50,7 @@ Get-JS7Order -Folder /sos -Recursive -Prompting | Confirm-JS7Order
 Recursively retrieves prompting orders and confirms further execution with the workflows.
 
 .LINK
-about_js7
+about_JS7
 
 #>
 [cmdletbinding(SupportsShouldProcess)]

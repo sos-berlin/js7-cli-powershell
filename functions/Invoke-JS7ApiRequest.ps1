@@ -80,7 +80,7 @@ $response = Invoke-JS7ApiRequest -Path '/controllers'
 Returns summary information about Controllers connected to JOC Cockpit.
 
 .LINK
-about_js7
+about_JS7
 
 #>
 [cmdletbinding()]

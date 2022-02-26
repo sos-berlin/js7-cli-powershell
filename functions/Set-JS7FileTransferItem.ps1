@@ -50,7 +50,7 @@ Set-JS7FileTransferItem -Name newConfig -Configuration $xml
 Stores the given XML file transfer configuration to the JOC Cockpit inventory.
 
 .LINK
-about_js7
+about_JS7
 
 #>
 [cmdletbinding(SupportsShouldProcess)]

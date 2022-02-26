@@ -117,7 +117,7 @@ Submit-JS7DailyPlanOrder -WorkflowPath /some_folder/some_workflow
 Submits the daily plan orders for the indicated workflow in today's daily plan.
 
 .LINK
-about_js7
+about_JS7
 
 #>
 [cmdletbinding()]

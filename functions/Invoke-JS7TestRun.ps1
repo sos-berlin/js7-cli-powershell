@@ -132,7 +132,7 @@ Invoke-JS7TestRun -TestRun Test0000000068 -BaseFolder '/TestRuns' -SourceDirecto
 Run a single test case by modifying the batch size to 1 (Default: 100)
 
 .LINK
-about_js7
+about_JS7
 
 #>
 [cmdletbinding()]

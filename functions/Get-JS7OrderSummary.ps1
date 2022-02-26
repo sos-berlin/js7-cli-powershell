@@ -76,7 +76,7 @@ $items = Get-JS7OrderSummary -RelativeDateFrom -1d
 Returns the order execution summary for the last 24 hours.
 
 .LINK
-about_js7
+about_JS7
 
 #>
 [cmdletbinding()]

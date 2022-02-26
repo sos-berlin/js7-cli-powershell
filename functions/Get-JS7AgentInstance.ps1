@@ -24,7 +24,7 @@ $agents = Get-JS7AgentInstance -Enabled
 Returns all enabled Agent instances for the current Controller.
 
 .LINK
-about_js7
+about_JS7
 
 #>
 [cmdletbinding()]

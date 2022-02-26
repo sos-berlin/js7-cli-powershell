@@ -130,7 +130,7 @@ $orders = Get-JS7DailyPlanOrder -WorkflowPath /ap/apWorkflow1b
 Returns the daily plan orders for the given workflow.
 
 .LINK
-about_js7
+about_JS7
 
 #>
 [cmdletbinding()]

@@ -43,7 +43,7 @@ $key = Get-JS7SigningKey
 For PGP key types the public key is returned if JOC Cockpit is operated for security level HIGH.
 
 .LINK
-about_js7
+about_JS7
 
 #>
 [cmdletbinding()]

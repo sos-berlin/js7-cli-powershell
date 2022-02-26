@@ -31,7 +31,7 @@ $instance = New-JS7ControllerInstance -Url https://controller-primary.sos:4443 -
 
 Returns a PowerShell object for a new Controller instance.
 .LINK
-about_js7
+about_JS7
 
 #>
 [cmdletbinding(SupportsShouldProcess)]

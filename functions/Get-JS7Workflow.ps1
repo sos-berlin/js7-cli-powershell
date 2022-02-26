@@ -55,7 +55,7 @@ $workflows = Get-JS7Workflow -WorkflowPath /test/globals/workflow1
 Returns the workflow "workflow1" from the folder "/test/globals".
 
 .LINK
-about_js7
+about_JS7
 
 #>
 [cmdletbinding()]

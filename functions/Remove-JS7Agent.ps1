@@ -42,7 +42,7 @@ Remove-JS7Agent -AgentId agent_001
 Removes the indicated Agent.
 
 .LINK
-about_js7
+about_JS7
 
 #>
 [cmdletbinding(SupportsShouldProcess)]

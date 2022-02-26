@@ -42,7 +42,7 @@ Restore-JS7Agent
 Reassigns any Agents to the current Controller.
 
 .LINK
-about_js7
+about_JS7
 
 #>
 [cmdletbinding()]

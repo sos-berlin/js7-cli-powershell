@@ -155,7 +155,7 @@ prefix specified by the -ExcludesPrefix parameter.
 
 The JS7 CLI module uses this alias setting by defalt.
 .LINK
-about_jobscheduler
+about_JS7
 
 #>
 [cmdletbinding()]

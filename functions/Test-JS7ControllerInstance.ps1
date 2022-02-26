@@ -40,7 +40,7 @@ $result = Test-JS7ControllerInstance -Url (Get-JS7ControllerInstance -Active).ac
 Checks if the Controller instance from the given URL is accessible.
 
 .LINK
-about_js7
+about_JS7
 
 #>
 param

@@ -41,7 +41,7 @@ Get-JS7ReleasableItem -Folder /TestCases -Recursive -Type 'FOLDER'
 Returns releasable objects from a folder and any sub-folders.
 
 .LINK
-about_js7
+about_JS7
 
 #>
 [cmdletbinding()]

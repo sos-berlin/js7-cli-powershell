@@ -43,7 +43,7 @@ $dates = Get-JS7Calendar -WorkingDays | Get-JS7calendarDates
 Retursn the dates from any working day calendars available with the inventory.
 
 .LINK
-about_js7
+about_JS7
 
 #>
 [cmdletbinding()]

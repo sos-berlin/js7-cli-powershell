@@ -43,7 +43,7 @@ $locks = Get-JS7Lock -LockPath /test/globals/lock1
 Returns the lock "lock1" from the folder "/test/globals".
 
 .LINK
-about_js7
+about_JS7
 
 #>
 [cmdletbinding()]

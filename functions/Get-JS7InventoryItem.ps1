@@ -37,7 +37,7 @@ $fos = Get-JS7InventoryItem -Path /JS7Demo/08_FileWatching/jdFilesTxt -Type FILE
 Returns the inventory object of a file order source.
 
 .LINK
-about_js7
+about_JS7
 
 #>
 [cmdletbinding()]

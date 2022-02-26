@@ -52,7 +52,7 @@ $status = Get-JS7AgentStatus -Decoupled -CouplingFailed
 Returns summary information about Agents that currently are not coupled with a Controller.
 
 .LINK
-about_js7
+about_JS7
 
 #>
 [cmdletbinding()]

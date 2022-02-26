@@ -51,7 +51,7 @@ $items = Get-JS7OrderSnapshot
 Returns today's order execution history for any orders.
 
 .LINK
-about_js7
+about_JS7
 
 #>
 [cmdletbinding()]

@@ -41,7 +41,7 @@ Remove-JS7FileTransferItem -Name sample22
 Removes the indicated file transfer configuration from the JOC Cockpit inventory.
 
 .LINK
-about_js7
+about_JS7
 
 #>
 [cmdletbinding(SupportsShouldProcess)]

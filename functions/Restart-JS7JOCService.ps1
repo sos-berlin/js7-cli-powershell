@@ -44,7 +44,7 @@ Restarts the history service that will check for state transitions of any orders
 and add the information to the history.
 
 .LINK
-about_js7
+about_JS7
 
 #>
 [cmdletbinding(SupportsShouldProcess)]

@@ -93,7 +93,7 @@ Starts the order with the specified order ID. The order will start one hour late
 arguments from the specified hashmap.
 
 .LINK
-about_js7
+about_JS7
 
 #>
 [cmdletbinding(SupportsShouldProcess)]

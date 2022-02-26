@@ -192,7 +192,7 @@ Exports any deployable inventory objects such as workflows, locks etc that are a
 from the specified folder to a zipped file. The latest deployed version of the workflow is used.
 
 .LINK
-about_js7
+about_JS7
 
 #>
 [cmdletbinding()]

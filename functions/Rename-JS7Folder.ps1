@@ -43,7 +43,7 @@ Rename-JS7Folder -Path /some-folder/some-sub-folder -Name /some-other-folder
 Renames the specified folder including e.g. to move a sub-folder to a different folder.
 
 .LINK
-about_js7
+about_JS7
 
 #>
 [cmdletbinding()]

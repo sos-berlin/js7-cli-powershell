@@ -84,7 +84,7 @@ Add-JS7SigningKey -KeyAlgorithm PGP  -PublicKey "-----BEGIN PGP PUBLIC KEY BLOCK
 For PGP key types the public key is added if JOC Cockpit is operated for security level HIGH.
 
 .LINK
-about_js7
+about_JS7
 
 #>
 [cmdletbinding()]

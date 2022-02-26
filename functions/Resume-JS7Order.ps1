@@ -80,7 +80,7 @@ Get-JS7Order -WorkflowPath /test/globals/chain1 | Resume-JS7Order
 Resumes orders for the specified workflow.
 
 .LINK
-about_js7
+about_JS7
 
 #>
 [cmdletbinding()]

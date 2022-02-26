@@ -52,7 +52,7 @@ $calendars = Get-JS7Schedule -WorkflowPath /some/path
 Returns the schedules that are assigned the given workflow.
 
 .LINK
-about_js7
+about_JS7
 
 #>
 [cmdletbinding()]

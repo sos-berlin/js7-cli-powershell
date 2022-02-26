@@ -88,7 +88,7 @@ Creates daily plan orders for the given date from schedules that are available w
 indicated folder and any sub-folders recursively.
 
 .LINK
-about_js7
+about_JS7
 
 #>
 [cmdletbinding(SupportsShouldProcess)]

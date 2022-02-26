@@ -69,7 +69,7 @@ Set-JS7Agent -AgentId agent_002 -AgentName secondaryAgent -Url https://agent-2-0
 Adds an Agent with the specified attributes.
 
 .LINK
-about_js7
+about_JS7
 
 #>
 [cmdletbinding(SupportsShouldProcess)]

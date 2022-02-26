@@ -43,7 +43,7 @@ Add-JS7Folder -Path /TestCases
 Creates a folder with the path /TestCases in the JOC Cockpit inventory.
 
 .LINK
-about_js7
+about_JS7
 
 #>
 [cmdletbinding()]

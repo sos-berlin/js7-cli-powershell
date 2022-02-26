@@ -78,7 +78,7 @@ Consider use of the Tee-Object cmdlet in the pipeline that updates the $lastHist
 The pipeline can e.g. be executed in a cyclic job.
 
 .LINK
-about_js7
+about_JS7
 
 #>
 [cmdletbinding()]

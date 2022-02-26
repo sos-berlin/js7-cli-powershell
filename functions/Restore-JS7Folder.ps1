@@ -57,7 +57,7 @@ Restore-JS7Folder -Path /some/path
 Restores the specified folder in the JOC Cockpit inventory.
 
 .LINK
-about_js7
+about_JS7
 
 #>
 [cmdletbinding()]

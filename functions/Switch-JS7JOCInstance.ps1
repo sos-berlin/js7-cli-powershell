@@ -42,7 +42,7 @@ Switches the role of the active JOC Cockpit instance to the indicated cluster me
 As any number of JOC Cockpit passive cluster members can be used, one of them is selected by its hostname.
 
 .LINK
-about_js7
+about_JS7
 
 #>
 param

@@ -189,7 +189,7 @@ $items = Get-JS7AuditLog -RelativeDateFrom -1w
 Returns the audit log entries for the last week.
 
 .LINK
-about_js7
+about_JS7
 
 #>
 [cmdletbinding()]

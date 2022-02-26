@@ -16,7 +16,7 @@ Get-JS7JOCLogFilename
 Returns an array of log files available with JOC Cockpit.
 
 .LINK
-about_js7
+about_JS7
 
 #>
 [cmdletbinding()]

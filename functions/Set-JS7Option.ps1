@@ -28,7 +28,7 @@ Set-JS7Option -WebRequestTimeout 10
 Modifies the timeout for web service requests to 10s.
 
 .LINK
-about_js7
+about_JS7
 
 #>
 [cmdletbinding(SupportsShouldProcess)]

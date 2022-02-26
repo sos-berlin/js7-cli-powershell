@@ -61,7 +61,7 @@ Rename-JS7InventoryItem -Path /some_path/workflow173 -Type WORKFLOW -Name workfl
 Renames the given workflow in the JOC Cockpit inventory.
 
 .LINK
-about_js7
+about_JS7
 
 #>
 [cmdletbinding()]

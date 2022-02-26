@@ -14,7 +14,7 @@ $props = Get-JS7JOCProperties
 Returns the list of JS7 JOC Cockpit properties
 
 .LINK
-about_js7
+about_JS7
 
 #>
 param

@@ -32,7 +32,7 @@ Switches the roles of the active and passive JS7 Controller instances:
 The active instance becomes passive and vice versa.
 
 .LINK
-about_js7
+about_JS7
 
 #>
 param

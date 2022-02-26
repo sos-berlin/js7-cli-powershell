@@ -83,7 +83,7 @@ Creates two cluster members and adds the Controller Cluster to JOC Cockpit.
 In addition, an Agent is added that acts as cluster watch.
 
 .LINK
-about_js7
+about_JS7
 
 #>
 [cmdletbinding(SupportsShouldProcess)]

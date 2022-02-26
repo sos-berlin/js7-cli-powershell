@@ -79,7 +79,7 @@ Update-JS7RepositoryItem -Path /some_folder/samples/sampleWorkflow -Type 'WORKFL
 Updates the JS7 inventory from the indicated worfklow in the local Git repository.
 
 .LINK
-about_js7
+about_JS7
 
 #>
 [cmdletbinding(SupportsShouldProcess)]

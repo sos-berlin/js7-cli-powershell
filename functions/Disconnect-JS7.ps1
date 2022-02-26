@@ -8,7 +8,7 @@ Disconnects from the JS7 REST Web Service.
 This cmdlet can be used to disconnect from the JS7 REST Web Service.
 
 .LINK
-about_js7
+about_JS7
 
 #>
 [cmdletbinding()]

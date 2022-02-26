@@ -57,7 +57,7 @@ An ECDSA private key is created. Consider that this key requires a self-signed o
 added by use of the Add-JS7SigningKey cmdlet.
 
 .LINK
-about_js7
+about_JS7
 
 #>
 [cmdletbinding(SupportsShouldProcess)]

@@ -100,7 +100,7 @@ A fail-over to the passive cluser instance takes place.
 After shutdown the JS7 Controller instance is restarted.
 
 .LINK
-about_js7
+about_JS7
 
 #>
 [cmdletbinding(SupportsShouldProcess)]

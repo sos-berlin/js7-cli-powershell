@@ -81,7 +81,7 @@ Restart-JS7ControllerInstance -Service
 Retarts the JS7 Controller Windows service.
 
 .LINK
-about_js7
+about_JS7
 
 #>
 [cmdletbinding(SupportsShouldProcess)]

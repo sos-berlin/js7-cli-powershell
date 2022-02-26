@@ -44,7 +44,7 @@ Get-JS7DeployableItem -Folder /TestRuns -Type 'FOLDER'
 Returns deployable objects such as workflows from the specified folder recursively.
 
 .LINK
-about_js7
+about_JS7
 
 #>
 [cmdletbinding()]

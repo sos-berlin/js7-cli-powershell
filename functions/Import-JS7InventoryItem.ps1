@@ -87,7 +87,7 @@ the path /some_folder/myPath/myWorkflow.
 Any objects existing with the same path in the JOC Cockpit inventory will be overwritten.
 
 .LINK
-about_js7
+about_JS7
 
 #>
 [cmdletbinding()]

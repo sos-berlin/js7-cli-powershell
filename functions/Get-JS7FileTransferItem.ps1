@@ -24,7 +24,7 @@ $xml = Get-JS7FileTransferItem -Name primaryAgent
 Returns the XML object of the given file transfer configuration.
 
 .LINK
-about_js7
+about_JS7
 
 #>
 [cmdletbinding()]

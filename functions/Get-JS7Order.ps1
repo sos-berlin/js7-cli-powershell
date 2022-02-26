@@ -145,7 +145,7 @@ Returns any orders that have been suspended, e.g. after job failures, or
 that are waiting to retry execution of a job after failure.
 
 .LINK
-about_js7
+about_JS7
 
 #>
 [cmdletbinding()]

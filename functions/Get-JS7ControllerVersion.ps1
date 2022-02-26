@@ -13,7 +13,7 @@ Get-JS7ControllerVersion
 Returns the JS7 Controller version.
 
 .LINK
-about_js7
+about_JS7
 
 #>
 [cmdletbinding()]

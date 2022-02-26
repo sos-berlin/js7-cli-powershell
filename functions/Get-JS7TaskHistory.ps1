@@ -199,7 +199,7 @@ Returns today's task execution history for any completed tasks from the "/sos" f
 and any sub-folders recursively.
 
 .LINK
-about_js7
+about_JS7
 
 #>
 [cmdletbinding()]

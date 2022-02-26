@@ -23,22 +23,22 @@ Specifies the date up to which job executions are reported.
 Optionally specifies formatted output to be displayed.
 
 .EXAMPLE
-Get-JobSchedulerAgentReport -Display -DateFrom 2020-01-01
+Get-JS7AgentReport -Display -DateFrom 2020-01-01
 
 Displays reporting information about job executions sind first of January 2020.
 
 .EXAMPLE
-Get-JobSchedulerAgentReport -Agents http://localhost:4445 -Display
+Get-JS7AgentReport -Agents http://localhost:4445 -Display
 
 Returns reporting information about Agent job executions for today. Formatted output is displayed.
 
 .EXAMPLE
-$report = Get-JobSchedulerAgentReport -DateFrom 2020-04-01 -DateTo 2020-06-30
+$report = Get-JS7AgentReport -DateFrom 2020-04-01 -DateTo 2020-06-30
 
 Returns an object that includes reporting information for the second quarter 2020.
 
 .LINK
-about_js7
+about_JS7
 
 #>
 [cmdletbinding()]
