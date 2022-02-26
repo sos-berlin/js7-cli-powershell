@@ -60,6 +60,7 @@ FunctionsToExport = @(
     'Get-JS7OrderLog',
     'Get-JS7OrderSnapshot',
     'Get-JS7OrderSummary',
+    'Get-JS7RepositoryItem',
     'Get-JS7Schedule',
     'Get-JS7SigningKey',
     'Get-JS7SystemCredentials',
@@ -81,6 +82,7 @@ FunctionsToExport = @(
     'Remove-JS7Folder',
     'Remove-JS7InventoryItem',
     'Remove-JS7CompletedOrder',
+    'Remove-JS7RepositoryItem',
     'Reset-JS7Agent',
     'Restart-JS7ControllerInstance',
     'Restart-JS7JOCService',
@@ -96,6 +98,7 @@ FunctionsToExport = @(
     'Start-JS7ExecutableFile',
     'Set-JS7FileTransferItem',
     'Set-JS7InventoryItem',
+    'Set-JS7RepositoryItem',
     'Start-JS7Order',
     'Stop-JS7ControllerInstance',
     'Stop-JS7DailyPlanOrder',
@@ -104,7 +107,8 @@ FunctionsToExport = @(
     'Suspend-JS7Order',
     'Switch-JS7ControllerInstance',
     'Switch-JS7JOCInstance',
-    'Test-JS7ControllerInstance'
+    'Test-JS7ControllerInstance',
+    'Update-JS7FromRepositoryItem'
 )
 
 # # Cmdlets to export from this module

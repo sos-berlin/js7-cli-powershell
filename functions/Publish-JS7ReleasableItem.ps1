@@ -15,6 +15,7 @@ Specifies the folder, sub-folder and name of the object, e.g. a schedule path.
 .PARAMETER Type
 Specifies the object type which is one of:
 
+* INCLUDESCRIPT
 * SCHEDULE
 * WORKINGDAYSCALENDAR
 * NONWORKINGDAYSCALENDAR
@@ -29,6 +30,9 @@ Specifies that any sub-folders should be looked up. By default no sub-folders wi
 .PARAMETER Delete
 Specifies the action to permanently delete previously removed objects.
 Without this switch objects are released for use with any JS7 Controller.
+
+.PARAMETER Valid
+Limits the scope to valid schedudling objects only.
 
 .PARAMETER NoDraft
 Specifies that no draft objects should be released. This boils down to the fact that only previously released objects will be released.
@@ -61,9 +65,14 @@ This cmdlet accepts pipelined job objects that are e.g. returned from a Get-JS7W
 This cmdlet returns no output.
 
 .EXAMPLE
+Publish-JS7ReleasableItem -Folder /TestCases -Recursive
+
+Releases any object types from the indicated folder and any sub-folders for use with a JS7 Controller.
+
+.EXAMPLE
 Publish-JS7ReleasableItem -Path /TestCases/sampleSchedule001 -Type 'SCHEDULE'
 
-Releases the specified schedule with the indicated path for use with a JS7 Controller.
+Releases the specified schedule from the indicated path for use with a JS7 Controller.
 
 .EXAMPLE
 Publish-JS7ReleasableItem -Path /TestCases/sampleWorkflow -Type 'WORKFLOW' -Delete
@@ -80,14 +89,16 @@ param
     [Parameter(Mandatory=$False,ValueFromPipeline=$True,ValueFromPipelinebyPropertyName=$True)]
     [string] $Path,
     [Parameter(Mandatory=$False,ValueFromPipeline=$False,ValueFromPipelinebyPropertyName=$True)]
-    [ValidateSet('FOLDER','SCHEDULE','WORKINGDAYSCALENDAR','NONWORKINGDAYSCALENDAR')]
-    [string[]] $Type = 'FOLDER',
+    [ValidateSet('INCLUDESCRIPT','SCHEDULE','WORKINGDAYSCALENDAR','NONWORKINGDAYSCALENDAR')]
+    [string[]] $Type,
     [Parameter(Mandatory=$False,ValueFromPipeline=$False,ValueFromPipelinebyPropertyName=$True)]
-    [string] $Folder = '/',
+    [string] $Folder,
     [Parameter(Mandatory=$False,ValueFromPipeline=$False,ValueFromPipelinebyPropertyName=$True)]
     [switch] $Recursive,
     [Parameter(Mandatory=$False,ValueFromPipeline=$False,ValueFromPipelinebyPropertyName=$True)]
     [switch] $Delete,
+    [Parameter(Mandatory=$False,ValueFromPipeline=$False,ValueFromPipelinebyPropertyName=$True)]
+    [switch] $Valid,
     [Parameter(Mandatory=$False,ValueFromPipeline=$False,ValueFromPipelinebyPropertyName=$True)]
     [switch] $NoDraft,
     [Parameter(Mandatory=$False,ValueFromPipeline=$False,ValueFromPipelinebyPropertyName=$True)]
@@ -112,7 +123,7 @@ param
         $storeObjects = @()
         $deleteObjects = @()
 
-        $releasableTypes = @('FOLDER','SCHEDULE','WORKINGDAYSCALENDAR','NONWORKINGDAYSCALENDAR')
+        $releasableTypes = @('INCLUDESCRIPT','SCHEDULE','WORKINGDAYSCALENDAR','NONWORKINGDAYSCALENDAR')
     }
 
     Process
@@ -122,12 +133,17 @@ param
             throw "$($MyInvocation.MyCommand.Name): path has to include folder, sub-folder and object name"
         }
 
-        if ( $Path -and !$Type )
+        if ( $Path -and !$Type.count )
         {
             throw "$($MyInvocation.MyCommand.Name): path requires to specify the object type, use -Type parameter"
         }
 
-        if ( $Path -and $Folder -and ($Folder -ne '/') )
+        if ( $Path -and ($Type.count -gt 1) )
+        {
+            throw "$($MyInvocation.MyCommand.Name): path requires to specify only one object type, use -Type parameter"
+        }
+
+        if ( $Path -and $Folder )
         {
             throw "$($MyInvocation.MyCommand.Name): only one of the parameters -Path or -Folder can be used"
         }
@@ -137,12 +153,7 @@ param
             throw "$($MyInvocation.MyCommand.Name): one of the parameters -Path or -Folder has to be used"
         }
 
-        if ( $Folder -eq '/' -and !$Path -and !$Recursive )
-        {
-            $Recursive = $True
-        }
-
-        if ( $Type )
+        if ( $Type.count )
         {
             for( $i=0; $i -lt $Type.length; $i++ )
             {
@@ -153,59 +164,46 @@ param
                     $Type[$i] = $Type[$i].toUpper()
                 }
             }
-        }
-
-        if ( !$Type )
-        {
+        } else {
             $Type = $releasableTypes
         }
 
         if ( $Path )
         {
-            if ( $Type[0] -eq 'FOLDER' )
+            $body = New-Object PSObject
+            Add-Member -Membertype NoteProperty -Name 'objectType' -value $Type[0] -InputObject $body
+            Add-Member -Membertype NoteProperty -Name 'path' -value $Path -InputObject $body
+            Add-Member -Membertype NoteProperty -Name 'onlyValidObjects' -value ($Valid -eq $True) -InputObject $body
+            Add-Member -Membertype NoteProperty -Name 'withoutDrafts' -value ($NoDraft -eq $True) -InputObject $body
+            Add-Member -Membertype NoteProperty -Name 'withoutReleased' -value ($NoReleased -eq $True) -InputObject $body
+
+            [string] $requestBody = $body | ConvertTo-Json -Depth 100
+            $response = Invoke-JS7WebRequest -Path '/inventory/releasable' -Body $requestBody
+
+            if ( $response.StatusCode -eq 200 )
             {
-                if ( $Delete )
+                $releasableObject = ( $response.Content | ConvertFrom-Json ).releasable
+
+                if ( !$releasableObject.id )
                 {
-                    $deleteObjects += @{ 'path' = $Path; 'type' = $Type[0]; 'valid' = $True; 'released' = $True }
-                } else {
-                    $storeObjects += @{ 'path' = $Path; 'type' = $Type[0]; 'valid' = $True; 'released' = $True }
-                }
-            } else {
-                $body = New-Object PSObject
-                Add-Member -Membertype NoteProperty -Name 'objectType' -value $Type[0] -InputObject $body
-                Add-Member -Membertype NoteProperty -Name 'path' -value $Path -InputObject $body
-                Add-Member -Membertype NoteProperty -Name 'onlyValidObjects' -value $True -InputObject $body
-                Add-Member -Membertype NoteProperty -Name 'withoutDrafts' -value ($NoDraft -eq $True) -InputObject $body
-                Add-Member -Membertype NoteProperty -Name 'withoutReleased' -value ($NoReleased -eq $True) -InputObject $body
-
-                [string] $requestBody = $body | ConvertTo-Json -Depth 100
-                $response = Invoke-JS7WebRequest -Path '/inventory/releasable' -Body $requestBody
-
-                if ( $response.StatusCode -eq 200 )
-                {
-                    $releasableObject = ( $response.Content | ConvertFrom-Json ).releasable
-
-                    if ( !$releasableObject.id )
-                    {
-                        throw ( $response | Format-List -Force | Out-String )
-                    }
-                } else {
                     throw ( $response | Format-List -Force | Out-String )
                 }
+            } else {
+                throw ( $response | Format-List -Force | Out-String )
+            }
 
-                if ( $Delete )
-                {
-                    $deleteObjects += @{ 'path' = $Path; 'type' = $Type[0]; 'valid' = $releasableObject.valid; 'released' = $releasableObject.released }
-                } else {
-                    $storeObjects += @{ 'path' = $Path; 'type' = $Type[0]; 'valid' = $releasableObject.valid; 'released' = $releasableObject.released }
-                }
+            if ( $Delete )
+            {
+                $deleteObjects += @{ 'path' = $Path; 'type' = $Type[0]; 'valid' = $releasableObject.valid; 'released' = $releasableObject.released }
+            } else {
+                $storeObjects += @{ 'path' = $Path; 'type' = $Type[0]; 'valid' = $releasableObject.valid; 'released' = $releasableObject.released }
             }
         } else {
             $body = New-Object PSObject
             Add-Member -Membertype NoteProperty -Name 'folder' -value $Folder -InputObject $body
-            Add-Member -Membertype NoteProperty -Name 'recursive' -value $True -InputObject $body
+            Add-Member -Membertype NoteProperty -Name 'recursive' -value ($Recursive -eq $True) -InputObject $body
             Add-Member -Membertype NoteProperty -Name 'objectTypes' -value $Type -InputObject $body
-            Add-Member -Membertype NoteProperty -Name 'onlyValidObjects' -value $True -InputObject $body
+            Add-Member -Membertype NoteProperty -Name 'onlyValidObjects' -value ($Valid -eq $True) -InputObject $body
             Add-Member -Membertype NoteProperty -Name 'withoutDrafts' -value ($NoDraft -eq $True) -InputObject $body
             Add-Member -Membertype NoteProperty -Name 'withoutReleased' -value ($NoReleased -eq $True) -InputObject $body
 
@@ -214,32 +212,29 @@ param
 
             if ( $response.StatusCode -eq 200 )
             {
-                $releasableFolders = ( $response.Content | ConvertFrom-Json ).folders
+                $releasableObjects = ( $response.Content | ConvertFrom-Json ).releasables
             } else {
                 throw ( $response | Format-List -Force | Out-String )
             }
 
-            foreach( $releasableFolder in $releasableFolders )
+            foreach( $releasableObject in $releasableObjects )
             {
-                foreach( $releasableObject in $releasableFolder.releasables )
+                if ( $releasableObject.objectType -eq 'FOLDER' )
                 {
-                    if ( $releasableObject.objectType -eq 'FOLDER' )
-                    {
-                        # we cannot release folders
-                        continue
-                    }
+                    # we cannot release folders
+                    continue
+                }
 
-                    if ( $releasableObject.folder -and !$releasableObject.folder.endsWith( '/' ) )
-                    {
-                        $releasableObject.folder += '/'
-                    }
+                if ( $releasableObject.folder -and !$releasableObject.folder.endsWith( '/' ) )
+                {
+                    $releasableObject.folder += '/'
+                }
 
-                    if ( $Delete )
-                    {
-                        $deleteObjects += @{ 'path' = "$($releasableObject.folder)$($releasableObject.objectName)"; 'type' = $releasableObject.objectType; 'valid' = $releasableObject.valid; 'released' = $releasableObject.released }
-                    } else {
-                        $storeObjects += @{ 'path' = "$($releasableObject.folder)$($releasableObject.objectName)"; 'type' = $releasableObject.objectType; 'valid' = $releasableObject.valid; 'released' = $releasableObject.released }
-                    }
+                if ( $Delete )
+                {
+                    $deleteObjects += @{ 'path' = "$($releasableObject.folder)$($releasableObject.objectName)"; 'type' = $releasableObject.objectType; 'valid' = $releasableObject.valid; 'released' = $releasableObject.released }
+                } else {
+                    $storeObjects += @{ 'path' = "$($releasableObject.folder)$($releasableObject.objectName)"; 'type' = $releasableObject.objectType; 'valid' = $releasableObject.valid; 'released' = $releasableObject.released }
                 }
             }
         }
@@ -297,7 +292,6 @@ param
 
                 Add-Member -Membertype NoteProperty -Name 'auditLog' -value $objAuditLog -InputObject $body
             }
-
 
             [string] $requestBody = $body | ConvertTo-Json -Depth 100
             $response = Invoke-JS7WebRequest -Path '/inventory/release' -Body $requestBody

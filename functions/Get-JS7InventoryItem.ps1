@@ -14,16 +14,19 @@ returned from the inventory.
 .PARAMETER Type
 Specifies the object type which is one of:
 
-* FOLDER
-* WORKFLOW
-* JOBCLASS
-* JOBRESOURCE
-* LOCK
-* JUNCTION
-* FILEORDERSOURCE
-* WORKINGDAYSCALENDAR
-* NONWORKINGDAYSCALENDAR
-* SCHEDULE
+* Any Object Type
+** FOLDER
+* Deployable Object Types
+** WORKFLOW
+** FILEORDERSOURCE
+** JOBRESOURCE
+** NOTICEBOARD
+** LOCK
+* Releasable Object Types
+** INCLUDESCRIPT
+** WORKINGDAYSCALENDAR
+** NONWORKINGDAYSCALENDAR
+** SCHEDULE
 
 .OUTPUTS
 This cmdlet returns a PowerShell object that represents the inventory object.
@@ -43,7 +46,7 @@ param
     [Parameter(Mandatory=$True,ValueFromPipeline=$True,ValueFromPipelinebyPropertyName=$True)]
     [string] $Path,
     [Parameter(Mandatory=$True,ValueFromPipeline=$False,ValueFromPipelinebyPropertyName=$True)]
-    [ValidateSet('FOLDER','WORKFLOW','JOBCLASS','JOBRESOURCE','LOCK','JUNCTION','FILEORDERSOURCE','WORKINGDAYSCALENDAR','NONWORKINGDAYSCALENDAR','SCHEDULE')]
+    [ValidateSet('FOLDER','WORKFLOW','FILEORDERSOURCE','JOBRESOURCE','NOTICEBOARD','LOCK','INCLUDESCRIPT','WORKINGDAYSCALENDAR','NONWORKINGDAYSCALENDAR','SCHEDULE')]
     [string] $Type
 )
     Begin

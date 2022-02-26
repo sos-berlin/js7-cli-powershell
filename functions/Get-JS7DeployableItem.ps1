@@ -15,10 +15,10 @@ Specifies the object type which is one of:
 
 * FOLDER
 * WORKFLOW
-* JOBCLASS
-* LOCK
-* JUNCTION
 * FILEORDERSOURCE
+* JOBRESOURCE
+* NOTICEBOARD
+* LOCK
 
 .PARAMETER Folder
 Optionally specifies the folder for which included inventory objects should be returned.
@@ -53,7 +53,7 @@ param
     [Parameter(Mandatory=$False,ValueFromPipeline=$True,ValueFromPipelinebyPropertyName=$True)]
     [string] $Path,
     [Parameter(Mandatory=$False,ValueFromPipeline=$False,ValueFromPipelinebyPropertyName=$True)]
-    [ValidateSet('FOLDER','WORKFLOW','JOBCLASS','LOCK','JUNCTION','FILEORDERSOURCE')]
+    [ValidateSet('FOLDER','WORKFLOW','FILEORDERSOURCE','JOBRESOURCE','NOTICEBOARD','LOCK')]
     [string[]] $Type,
     [Parameter(Mandatory=$False,ValueFromPipeline=$False,ValueFromPipelinebyPropertyName=$True)]
     [string] $Folder = '/',
@@ -70,7 +70,7 @@ param
             throw "$($MyInvocation.MyCommand.Name): Audit Log comment required, use parameter -AuditComment if one of the parameters -AuditTimeSpent or -AuditTicketLink is used"
         }
 
-        $deployableTypes = @('FOLDER','WORKFLOW','JOBCLASS','LOCK','JUNCTION','FILEORDERSOURCE')
+        $deployableTypes = @('FOLDER','WORKFLOW','FILEORDERSOURCE','JOBRESOURCE','NOTICEBOARD','LOCK')
         $returnObjectCount = 0
     }
 

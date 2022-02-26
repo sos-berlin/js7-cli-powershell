@@ -31,17 +31,19 @@ Specifies the path and name of an individual inventory object that should be exp
 .PARAMETER Type
 Optionally restricts the object type to export which is one of:
 
+* Any Object Type
+** FOLDER
 * Deployable Object Types
 ** WORKFLOW
-** JOBCLASS
+** FILEORDERSOURCE
+** JOBRESOURCE
+** NOTICEBOARD
 ** LOCK
-** JUNCTION
 * Releasable Object Types
+** INCLUDESCRIPT
 ** WORKINGDAYSCALENDAR
 ** NONWORKINGDAYSCALENDAR
 ** SCHEDULE
-* Any Object Types
-** FOLDER
 
 The -Type parameter can be used to restrict either deployable or releasable object types to be exported.
 Without specifying this parameter objects of any type within the areas of releasable or deployable objects are exported
@@ -58,19 +60,21 @@ By default no sub-folders will be searched for exportable objects.
 .PARAMETER Releasable
 Specifies that only releasable objects should be exported that include the object types:
 
-  * WORKINGDAYSCALENDAR
-  * NONWORKINGDAYSCALENDAR
-  * SCHEDULE
+* INCLUDESCRIPT
+* WORKINGDAYSCALENDAR
+* NONWORKINGDAYSCALENDAR
+* SCHEDULE
 
 If none of the parameters -Releasable or -Deployable is used then both releasable and deployable inventory objects are exported.
 
 .PARAMETER Deployable
 Specifies that only deployable objects should be exported that include the object types:
 
-  * WORKFLOW
-  * JOBCLASS
-  * LOCK
-  * JUNCTION
+** WORKFLOW
+** FILEORDERSOURCE
+** JOBRESOURCE
+** NOTICEBOARD
+** LOCK
 
 If none of the parameters -Releasable or -Deployable is used then both releasable and deployable inventory objects are exported.
 
@@ -184,7 +188,7 @@ A draft version is considered only if it is valid otherwise the deployed version
 .EXAMPLE
 Export-JS7InventoryItem -Folder /some_folder -Deployable -File /tmp/export.zip
 
-Exports any deployable inventory objects such as workflows, junctions, locks etc that are available
+Exports any deployable inventory objects such as workflows, locks etc that are available
 from the specified folder to a zipped file. The latest deployed version of the workflow is used.
 
 .LINK
@@ -197,7 +201,7 @@ param
     [Parameter(Mandatory=$False,ValueFromPipeline=$False,ValueFromPipelinebyPropertyName=$True)]
     [string] $Path,
     [Parameter(Mandatory=$False,ValueFromPipeline=$False,ValueFromPipelinebyPropertyName=$True)]
-    [ValidateSet('FOLDER','WORKFLOW','JOBCLASS','LOCK','JUNCTION','FILEORDERSOURCE','WORKINGDAYSCALENDAR','NONWORKINGDAYSCALENDAR','SCHEDULE')]
+    [ValidateSet('FOLDER','WORKFLOW','FILEORDERSOURCE','JOBRESOURCE','NOTICEBOARD','LOCK','INCLUDESCRIPT','WORKINGDAYSCALENDAR','NONWORKINGDAYSCALENDAR','SCHEDULE')]
     [string[]] $Type,
     [Parameter(Mandatory=$False,ValueFromPipeline=$False,ValueFromPipelinebyPropertyName=$True)]
     [string] $Folder = '/',
@@ -251,8 +255,8 @@ param
         }
 
         $formats = @{ 'ZIP' = 'zip'; 'TAR_GZ' = 'tar.gz' }
-        $deployableTypes = @('FOLDER','WORKFLOW','JOBCLASS','LOCK','JUNCTION','FILEORDERSOURCE')
-        $releasableTypes = @('FOLDER','WORKINGDAYSCALENDAR','NONWORKINGDAYSCALENDAR','SCHEDULE')
+        $deployableTypes = @('FOLDER','WORKFLOW','FILEORDERSOURCE','JOBRESOURCE','NOTICEBOARD','LOCK')
+        $releasableTypes = @('FOLDER','INCLUDESCRIPT','WORKINGDAYSCALENDAR','NONWORKINGDAYSCALENDAR','SCHEDULE')
         $exportObjects = @{}
         $deployablesObj = $null
         $releasablesObj = $null

@@ -1,21 +1,22 @@
-function Remove-JS7InventoryItem
+function Update-JS7FromRepositoryItem
 {
 <#
 .SYNOPSIS
-Removes objects such as workflows, schedules etc. from the JOC Cockpit inventory.
+Updates the JS7 inventory from scheduling objects in a local Git repository.
 
 .DESCRIPTION
-This cmdlet removes objects such as a workflows, schedules etc. from the JOC Cockpit inventory.
+This cmdlet updates scheduling objects such as a workflows, schedules etc. in the JS7 inventory from a local Git repository.
 
-Consider to commit removals by deploying or releasing the object,
-see the Publish-JS7DeployableItem and  Publish-JS7ReleasableItem cmdlets.
+Existing scheduling objects in the JS7 inventory are created or are updated if they exist.
 
 .PARAMETER Path
-Specifies the folder and sub-folders of the object.
+Specifies the folder and sub-folders of the repository from which objects are selected for update of the JS7 inventory.
 
 .PARAMETER Type
-Specifies the object type which is one of:
+Specifies the scheduling object type that is one of:
 
+* Any object type
+** FOLDER
 * Deployable object types
 ** WORKFLOW
 ** FILEORDERSOURCE
@@ -27,6 +28,14 @@ Specifies the object type which is one of:
 ** WORKINGDAYSCALENDAR
 ** NONWORKINGDAYSCALENDAR
 ** SCHEDULE
+
+If no object type is specified then any deployable object types will be used.
+
+.PARAMETER Local
+Specifies that a repository holding local scheduling objects should be used.
+This corresponds to the LOCAL category. If this switch is not used then then
+ROLLOUT category is assumed for a repository that holds scheduling objects
+intended for rollout to later environments such as test, prod.
 
 .PARAMETER AuditComment
 Specifies a free text that indicates the reason for the current intervention, e.g. "business requirement", "maintenance window" etc.
@@ -47,15 +56,27 @@ This information is visible with the Audit Log view of JOC Cockpit.
 It can be useful when integrated with a ticket system that logs interventions with JobScheduler.
 
 .INPUTS
-This cmdlet accepts pipelined objects that are e.g. returned from a Get-JS7Workflow cmdlet.
+This cmdlet accepts pipelined objects as for example from the Get-JS7RepositoryItem cmdlet.
 
 .OUTPUTS
 This cmdlet returns no output.
 
 .EXAMPLE
-Remove-JS7InventoryItem -Path /some_folder/sampleWorkflow -Type 'WORKFLOW'
+Update-JS7RepositoryItem -Path /some_folder/samples -Type 'FOLDER'
 
-Removes the indicated worfklow from the JOC Cockpit inventory.
+Updates the JS7 inventory from the indicated folder in the local Git repository of category ROLLOUT.
+Depending on the JS7 Settings in use this can include workflows, resource locks etc.
+
+.EXAMPLE
+Update-JS7RepositoryItem -Path /some_folder/samples -Type 'FOLDER' -Local
+
+Updates the JS7 inventory from the indicated folder in the local Git repository of category LOCAL.
+Depending on the JS7 Settings in use this can include calendars, schedules etc.
+
+.EXAMPLE
+Update-JS7RepositoryItem -Path /some_folder/samples/sampleWorkflow -Type 'WORKFLOW'
+
+Updates the JS7 inventory from the indicated worfklow in the local Git repository.
 
 .LINK
 about_js7
@@ -66,9 +87,11 @@ param
 (
     [Parameter(Mandatory=$True,ValueFromPipeline=$False,ValueFromPipelinebyPropertyName=$True)]
     [string] $Path,
-    [Parameter(Mandatory=$True,ValueFromPipeline=$False,ValueFromPipelinebyPropertyName=$True)]
-    [ValidateSet('WORKFLOW','FILEORDERSOURCE','JOBRESOURCE','NOTICEBOARD','LOCK','INCLUDESCRIPT','WORKINGDAYSCALENDAR','NONWORKINGDAYSCALENDAR','SCHEDULE')]
-    [string] $Type,
+    [Parameter(Mandatory=$False,ValueFromPipeline=$False,ValueFromPipelinebyPropertyName=$True)]
+    [ValidateSet('FOLDER','WORKFLOW','FILEORDERSOURCE','JOBRESOURCE','NOTICEBOARD','LOCK','INCLUDESCRIPT','WORKINGDAYSCALENDAR','NONWORKINGDAYSCALENDAR','SCHEDULE')]
+    [string] $Type = 'FOLDER',
+    [Parameter(Mandatory=$False,ValueFromPipeline=$False,ValueFromPipelinebyPropertyName=$True)]
+    [switch] $Local,
     [Parameter(Mandatory=$False,ValueFromPipeline=$False,ValueFromPipelinebyPropertyName=$True)]
     [string] $AuditComment,
     [Parameter(Mandatory=$False,ValueFromPipeline=$False,ValueFromPipelinebyPropertyName=$True)]
@@ -86,7 +109,7 @@ param
             throw "$($MyInvocation.MyCommand.Name): Audit Log comment required, use parameter -AuditComment if one of the parameters -AuditTimeSpent or -AuditTicketLink is used"
         }
 
-        $removableObjects = @()
+        $updatableConfigurations = @()
     }
 
     Process
@@ -101,17 +124,28 @@ param
             $Path = $Path.Substring( 0, $Path.Length-1 )
         }
 
-        $removableObj = New-Object PSObject
-        Add-Member -Membertype NoteProperty -Name 'path' -value $Path -InputObject $removableObj
-        Add-Member -Membertype NoteProperty -Name 'objectType' -value $Type -InputObject $removableObj
+        $updatableObj = New-Object PSObject
+        Add-Member -Membertype NoteProperty -Name 'path' -value $Path -InputObject $updatableObj
+        Add-Member -Membertype NoteProperty -Name 'objectType' -value $Type -InputObject $updatableObj
 
-        $removableObjects += $removableObj
+        $updatableConfigurationObj = New-Object PSObject
+        Add-Member -Membertype NoteProperty -Name 'configuration' -value $updatableObj -InputObject $updatableConfigurationObj
+
+        $updatableConfigurations += $updatableConfigurationObj
     }
 
     End
     {
+        if ( $Local )
+        {
+            $category = 'LOCAL'
+        } else {
+            $category = 'ROLLOUT'
+        }
+
         $body = New-Object PSObject
-        Add-Member -Membertype NoteProperty -Name 'objects' -value $removableObjects -InputObject $body
+        Add-Member -Membertype NoteProperty -Name 'configurations' -value $updatableConfigurations -InputObject $body
+        Add-Member -Membertype NoteProperty -Name 'category' -value $category -InputObject $body
 
         if ( $AuditComment -or $AuditTimeSpent -or $AuditTicketLink )
         {
@@ -131,10 +165,10 @@ param
             Add-Member -Membertype NoteProperty -Name 'auditLog' -value $objAuditLog -InputObject $body
         }
 
-        if ( $PSCmdlet.ShouldProcess( $Path, '/inventory/remove' ) )
+        if ( $PSCmdlet.ShouldProcess( $Path, '/inventory/repository/update' ) )
         {
             [string] $requestBody = $body | ConvertTo-Json -Depth 100
-            $response = Invoke-JS7WebRequest -Path '/inventory/remove' -Body $requestBody
+            $response = Invoke-JS7WebRequest -Path '/inventory/repository/update' -Body $requestBody
 
             if ( $response.StatusCode -eq 200 )
             {
@@ -148,7 +182,7 @@ param
                 throw ( $response | Format-List -Force | Out-String )
             }
 
-            Write-Verbose ".. $($MyInvocation.MyCommand.Name): object removed: $Path"
+            Write-Verbose ".. $($MyInvocation.MyCommand.Name): object updated: $Path"
         }
 
         Trace-JS7StopWatch -CommandName $MyInvocation.MyCommand.Name -StopWatch $stopWatch

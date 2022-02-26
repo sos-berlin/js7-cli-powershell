@@ -17,21 +17,19 @@ Therefore, if a deployable object is removed, e.g. with the Remove-JS7InventoryI
 be committed using this cmdlet for deployment.
 
 .PARAMETER Path
-Specifies the folder, sub-folder and name of the object, e.g. a workflow path.
+Specifies the folder, sub-folder and name of the object, for example a workflow path.
 
 .PARAMETER Type
 Specifies the object type which is one of:
 
-* FOLDER
 * WORKFLOW
-* JOBCLASS
-* JOBRESOURCE
-* LOCK
-* JUNCTION
 * FILEORDERSOURCE
+* JOBRESOURCE
+* NOTICEBOARD
+* LOCK
 
 .PARAMETER Folder
-Optionally specifies the folder for which included inventory objects should be published.
+Optionally specifies the folder from which included inventory objects should be published.
 This parameter is used alternatively to the -Path parameter that specifies to publish an individual inventory object.
 
 .PARAMETER Recursive
@@ -43,6 +41,9 @@ Specifies one or more Controllers to which the indicated objects should be deplo
 .PARAMETER Delete
 Specifies the action to permanently delete objects from a Controller. Without this switch objects
 are published for use with a Controller.
+
+.PARAMETER Valid
+Limits the scope to valid schedudling objects only.
 
 .PARAMETER NoDraft
 Specifies that no draft objects should be deployed. This boils down to the fact that only previously deployed objects will be deployed.
@@ -80,26 +81,20 @@ This cmdlet accepts pipelined objects that are e.g. returned from a Get-JS7Workf
 This cmdlet returns no output.
 
 .EXAMPLE
+Publish-JS7DeployableItem -ControllerId testsuite -Folder /TestCases/sampleWorkflows -Recursive
+
+Deploys any scheduling objects such as workflows from the specified folder and any sub-folders to the indicated Controllers.
+
+.EXAMPLE
+Publish-JS7DeployableItem -ControllerId testsuite -Folder /TestCases/sampleWorkflows -Recursive -Delete
+
+Marks for deletion any scheduling objects such as workflows from the specified folder and any sub-folders.
+Consider that the specified folder is not deleted but its contents only.
+
+.EXAMPLE
 Publish-JS7DeployableItem -ControllerId testsuite,standalone -Path /TestCases/sampleWorkflow_001 -Type 'WORKFLOW'
 
 Deploys the specified workflow from the indicated path to both Controller instances.
-
-.EXAMPLE
-Publish-JS7DeployableItem -ControllerId testsuite -Path /TestCases/sampleWorkflows -Type 'FOLDER' -Delete
-
-Deletes the specified folder from the inventory and deletes any included deployable objects such as workflows from the indicated Controller and inventory.
-
-.EXAMPLE
-Publish-JS7DeployableItem -ControllerId testsuite -Folder /PowerShell -Delete
-
-Deletes any deployable objects such as workflows from the specified folder recursively.
-Consider that the specified folder is not deleted but its contents only.
-
-.EXAMPLE
-Publish-JS7DeployableItem -ControllerId testsuite -Path /PowerShell -Type FOLDER -Delete
-
-Deletes any deployable objects such as workflows from the specified folder recursively.
-Consider that the specified folder is not deleted but its contents only.
 
 .LINK
 about_js7
@@ -111,16 +106,18 @@ param
     [Parameter(Mandatory=$False,ValueFromPipeline=$True,ValueFromPipelinebyPropertyName=$True)]
     [string] $Path,
     [Parameter(Mandatory=$False,ValueFromPipeline=$False,ValueFromPipelinebyPropertyName=$True)]
-    [ValidateSet('FOLDER','WORKFLOW','JOBCLASS','JOBRESOURCE','LOCK','JUNCTION','FILEORDERSOURCE')]
-    [string[]] $Type = 'FOLDER',
+    [ValidateSet('WORKFLOW','FILEORDERSOURCE','JOBRESOURCE','NOTICEBOARD','LOCK')]
+    [string[]] $Type,
     [Parameter(Mandatory=$False,ValueFromPipeline=$False,ValueFromPipelinebyPropertyName=$True)]
-    [string] $Folder = '/',
+    [string] $Folder,
     [Parameter(Mandatory=$False,ValueFromPipeline=$False,ValueFromPipelinebyPropertyName=$True)]
     [switch] $Recursive,
     [Parameter(Mandatory=$True,ValueFromPipeline=$False,ValueFromPipelinebyPropertyName=$True)]
     [string] $ControllerId,
     [Parameter(Mandatory=$False,ValueFromPipeline=$False,ValueFromPipelinebyPropertyName=$True)]
     [switch] $Delete,
+    [Parameter(Mandatory=$False,ValueFromPipeline=$False,ValueFromPipelinebyPropertyName=$True)]
+    [switch] $Valid,
     [Parameter(Mandatory=$False,ValueFromPipeline=$False,ValueFromPipelinebyPropertyName=$True)]
     [switch] $NoDraft,
     [Parameter(Mandatory=$False,ValueFromPipeline=$False,ValueFromPipelinebyPropertyName=$True)]
@@ -148,7 +145,7 @@ param
         $storeObjects = @()
         $deleteObjects = @()
 
-        $deployableTypes = @('FOLDER','WORKFLOW','JOBCLASS','JOBRESOURCE','LOCK','JUNCTION','FILEORDERSOURCE')
+        $deployableTypes = @('WORKFLOW','FILEORDERSOURCE','JOBRESOURCE','NOTICEBOARD','LOCK')
     }
 
     Process
@@ -158,12 +155,17 @@ param
             throw "$($MyInvocation.MyCommand.Name): path has to include folder, sub-folder and object name"
         }
 
-        if ( $Path -and !$Type )
+        if ( $Path -and !$Type.count )
         {
             throw "$($MyInvocation.MyCommand.Name): path requires to specify the object type, use -Type parameter"
         }
 
-        if ( $Path -and $Folder -and ($Folder -ne '/') )
+        if ( $Path -and ($Type.count -gt 1) )
+        {
+            throw "$($MyInvocation.MyCommand.Name): path requires to specify only one object type, use -Type parameter"
+        }
+
+        if ( $Path -and $Folder )
         {
             throw "$($MyInvocation.MyCommand.Name): only one of the parameters -Path or -Folder can be used"
         }
@@ -173,17 +175,7 @@ param
             throw "$($MyInvocation.MyCommand.Name): one of the parameters -Path or -Folder has to be used"
         }
 
-        if ( $Folder -eq '/' -and !$Path -and !$Recursive )
-        {
-            $Recursive = $True
-        }
-
-        if ( !$Path )
-        {
-            $Path = $Folder
-        }
-
-        if ( $Type )
+        if ( $Type.count )
         {
             for( $i=0; $i -lt $Type.length; $i++ )
             {
@@ -194,60 +186,47 @@ param
                     $Type[$i] = $Type[$i].toUpper()
                 }
             }
-        }
-
-        if ( !$Type )
-        {
+        } else {
             $Type = $deployableTypes
         }
 
         if ( $Path )
         {
-            if ( $Type[0] -eq 'FOLDER' )
+            $body = New-Object PSObject
+            Add-Member -Membertype NoteProperty -Name 'objectType' -value $Type[0] -InputObject $body
+            Add-Member -Membertype NoteProperty -Name 'path' -value $Path -InputObject $body
+            Add-Member -Membertype NoteProperty -Name 'onlyValidObjects' -value ($Valid -eq $True) -InputObject $body
+            Add-Member -Membertype NoteProperty -Name 'withoutDeployed' -value ($NoDeployed -eq $True) -InputObject $body
+            Add-Member -Membertype NoteProperty -Name 'withoutDrafts' -value ($NoDraft -eq $True) -InputObject $body
+            Add-Member -Membertype NoteProperty -Name 'latest' -value ($Latest -eq $True) -InputObject $body
+
+            [string] $requestBody = $body | ConvertTo-Json -Depth 100
+            $response = Invoke-JS7WebRequest -Path '/inventory/deployable' -Body $requestBody
+
+            if ( $response.StatusCode -eq 200 )
             {
-                if ( $Delete )
+                $deployableObject = ( $response.Content | ConvertFrom-Json ).deployable
+
+                if ( !$deployableObject.id )
                 {
-                    $deleteObjects += @{ 'path' = $Path; 'type' = $Type[0]; 'valid' = $True; 'deployed' = ($NoDeployed -eq $False) }
-                } else {
-                    $storeObjects += @{ 'path' = $Path; 'type' = $Type[0]; 'valid' = $True; 'deployed' = ($NoDeployed -eq $True) }
-                }
-            } else {
-                $body = New-Object PSObject
-                Add-Member -Membertype NoteProperty -Name 'objectType' -value $Type[0] -InputObject $body
-                Add-Member -Membertype NoteProperty -Name 'path' -value $Path -InputObject $body
-                Add-Member -Membertype NoteProperty -Name 'onlyValidObjects' -value $True -InputObject $body
-                Add-Member -Membertype NoteProperty -Name 'withoutDeployed' -value ($NoDeployed -eq $True) -InputObject $body
-                Add-Member -Membertype NoteProperty -Name 'withoutDrafts' -value ($NoDraft -eq $True) -InputObject $body
-                Add-Member -Membertype NoteProperty -Name 'latest' -value ($Latest -eq $True) -InputObject $body
-
-                [string] $requestBody = $body | ConvertTo-Json -Depth 100
-                $response = Invoke-JS7WebRequest -Path '/inventory/deployable' -Body $requestBody
-
-                if ( $response.StatusCode -eq 200 )
-                {
-                    $deployableObject = ( $response.Content | ConvertFrom-Json ).deployable
-
-                    if ( !$deployableObject.id )
-                    {
-                        throw ( $response | Format-List -Force | Out-String )
-                    }
-                } else {
                     throw ( $response | Format-List -Force | Out-String )
                 }
+            } else {
+                throw ( $response | Format-List -Force | Out-String )
+            }
 
-                if ( $Delete )
-                {
-                    $deleteObjects += @{ 'path' = $Path; 'type' = $Type[0]; 'valid' = $deployableObject.valid; 'deployed' = $deployableObject.deployed }
-                } else {
-                    $storeObjects += @{ 'path' = $Path; 'type' = $Type[0]; 'valid' = $deployableObject.valid; 'deployed' = $deployableObject.deployed }
-                }
+            if ( $Delete )
+            {
+                $deleteObjects += @{ 'path' = $Path; 'type' = $Type[0]; 'valid' = $deployableObject.valid; 'deployed' = $deployableObject.deployed }
+            } else {
+                $storeObjects += @{ 'path' = $Path; 'type' = $Type[0]; 'valid' = $deployableObject.valid; 'deployed' = $deployableObject.deployed }
             }
         } else {
             $body = New-Object PSObject
             Add-Member -Membertype NoteProperty -Name 'folder' -value $Folder -InputObject $body
             Add-Member -Membertype NoteProperty -Name 'recursive' -value ($Recursive -eq $True) -InputObject $body
             Add-Member -Membertype NoteProperty -Name 'objectTypes' -value $Type -InputObject $body
-            Add-Member -Membertype NoteProperty -Name 'onlyValidObjects' -value $False -InputObject $body
+            Add-Member -Membertype NoteProperty -Name 'onlyValidObjects' -value ($Valid -eq $True) -InputObject $body
             Add-Member -Membertype NoteProperty -Name 'withoutDeployed' -value ($NoDeployed -eq $True) -InputObject $body
             Add-Member -Membertype NoteProperty -Name 'withoutDrafts' -value ($NoDraft -eq $True) -InputObject $body
             Add-Member -Membertype NoteProperty -Name 'latest' -value ($Latest -eq $True) -InputObject $body
@@ -305,6 +284,7 @@ param
 
             $draftConfigurations = @()
             $deployConfigurations = @()
+
             foreach( $object in $storeObjects )
             {
                 if ( !$object.valid )

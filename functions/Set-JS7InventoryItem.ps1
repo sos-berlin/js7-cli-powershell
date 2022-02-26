@@ -15,16 +15,18 @@ stored to the inventory.
 .PARAMETER Type
 Specifies the object type which is one of:
 
-* FOLDER
-* WORKFLOW
-* JOBCLASS
-* JOBRESOURCE
-* LOCK
-* JUNCTION
-* FILEORDERSOURCE
-* WORKINGDAYSCALENDAR
-* NONWORKINGDAYSCALENDAR
-* SCHEDULE
+** FOLDER
+* Deployable object types
+** WORKFLOW
+** FILEORDERSOURCE
+** JOBRESOURCE
+** NOTICEBOARD
+** LOCK
+* Releasable object types
+** INCLUDESCRIPT
+** WORKINGDAYSCALENDAR
+** NONWORKINGDAYSCALENDAR
+** SCHEDULE
 
 .PARAMETER Object
 Specifies the object that should be stored to the inventory. This parameter expects a PowerShell
@@ -74,7 +76,7 @@ param
     [Parameter(Mandatory=$True,ValueFromPipeline=$True,ValueFromPipelinebyPropertyName=$True)]
     [string] $Path,
     [Parameter(Mandatory=$True,ValueFromPipeline=$False,ValueFromPipelinebyPropertyName=$True)]
-    [ValidateSet('FOLDER','WORKFLOW','JOBCLASS','JOBRESOURCE','LOCK','JUNCTION','FILEORDERSOURCE','WORKINGDAYSCALENDAR','NONWORKINGDAYSCALENDAR','SCHEDULE')]
+    [ValidateSet('FOLDER','WORKFLOW','FILEORDERSOURCE','JOBRESOURCE','NOTICEBOARD','LOCK','INCLUDESCRIPT','WORKINGDAYSCALENDAR','NONWORKINGDAYSCALENDAR','SCHEDULE')]
     [string] $Type,
     [Parameter(Mandatory=$True,ValueFromPipeline=$True,ValueFromPipelinebyPropertyName=$True)]
     [PSCustomObject] $Object,

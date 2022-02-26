@@ -13,14 +13,17 @@ Specifies the folder, sub-folders and object name that should be renamed in the 
 .PARAMETER Type
 Specifies the object type which is one of:
 
-* WORKFLOW
-* JOBCLASS
-* LOCK
-* JUNCTION
-* FILEORDERSOURCE
-* WORKINGDAYSCALENDAR
-* NONWORKINGDAYSCALENDAR
-* SCHEDULE
+* Deployable object types
+** WORKFLOW
+** FILEORDERSOURCE
+** JOBRESOURCE
+** NOTICEBOARD
+** LOCK
+* Releasable object types
+** INCLUDESCRIPT
+** WORKINGDAYSCALENDAR
+** NONWORKINGDAYSCALENDAR
+** SCHEDULE
 
 .PARAMETER NewPath
 Specifies the new path of the object, e.g. the path and name of a workflow. Absolute and relative paths can be specified.
@@ -67,7 +70,7 @@ param
     [Parameter(Mandatory=$True,ValueFromPipeline=$False,ValueFromPipelinebyPropertyName=$True)]
     [string] $Path,
     [Parameter(Mandatory=$True,ValueFromPipeline=$False,ValueFromPipelinebyPropertyName=$True)]
-    [ValidateSet('WORKFLOW','JOBCLASS','LOCK','JUNCTION','FILEORDERSOURCE','WORKINGDAYSCALENDAR','NONWORKINGDAYSCALENDAR','SCHEDULE')]
+    [ValidateSet('WORKFLOW','FILEORDERSOURCE','JOBRESOURCE','NOTICEBOARD','LOCK','INCLUDESCRIPT','WORKINGDAYSCALENDAR','NONWORKINGDAYSCALENDAR','SCHEDULE')]
     [string] $Type,
     [Parameter(Mandatory=$True,ValueFromPipeline=$False,ValueFromPipelinebyPropertyName=$True)]
     [string] $NewPath,

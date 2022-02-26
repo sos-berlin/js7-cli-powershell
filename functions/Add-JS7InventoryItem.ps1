@@ -14,14 +14,17 @@ Specifies the folder, sub-folder and name of the object to be added, e.g. a work
 .PARAMETER Type
 Specifies the object type which is one of:
 
-* WORKFLOW
-* JOBCLASS
-* LOCK
-* JUNCTION
-* FILEORDERSOURCE
-* WORKINGDAYSCALENDAR
-* NONWORKINGDAYSCALENDAR
-* SCHEDULE
+* Deployable object types
+** WORKFLOW
+** FILEORDERSOURCE
+** JOBRESOURCE
+** NOTICEBOARD
+** LOCK
+* Releasable object types
+** INCLUDESCRIPT
+** WORKINGDAYSCALENDAR
+** NONWORKINGDAYSCALENDAR
+** SCHEDULE
 
 .PARAMETER Item
 Specifies the PowerShell object that represents the JSON item to be added. Consider to create a PowerShell object from JSON like this:
@@ -75,7 +78,7 @@ param
     [Parameter(Mandatory=$True,ValueFromPipeline=$False,ValueFromPipelinebyPropertyName=$True)]
     [string] $Path,
     [Parameter(Mandatory=$True,ValueFromPipeline=$False,ValueFromPipelinebyPropertyName=$True)]
-    [ValidateSet('WORKFLOW','JOBCLASS','LOCK','JUNCTION','FILEORDERSOURCE','WORKINGDAYSCALENDAR','NONWORKINGDAYSCALENDAR','ORDER')]
+    [ValidateSet('WORKFLOW','FILEORDERSOURCE','JOBRESOURCE','NOTICEBOARD','LOCK','INCLUDESCRIPT','WORKINGDAYSCALENDAR','NONWORKINGDAYSCALENDAR','SCHEDULE')]
     [string] $Type,
     [Parameter(Mandatory=$True,ValueFromPipeline=$False,ValueFromPipelinebyPropertyName=$True)]
     [object] $Item,
