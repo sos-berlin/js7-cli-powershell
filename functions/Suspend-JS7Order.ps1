@@ -6,9 +6,9 @@ Suspends an order in the JS7 Controller.
 
 .DESCRIPTION
 This cmdlet suspends an order in a JS7 Controller.
-Suspended orders can later on be resumed with the Resume-JS7Order cmdlet.
+Suspended orders can later on be resumed by use of the Resume-JS7Order cmdlet.
 
-If an order is in a running state, i.e. a job is executed for the order then by default the
+If an order is in a running state, for example if a job is executed for the order then by default the
 Agent will wait for that job to be completed before suspending the order. However, this behavior can be
 changed by instructing the Agent to immediately kill running orders.
 
@@ -37,13 +37,13 @@ This information is visible with the Audit Log view of JOC Cockpit.
 It can be useful when integrated with a ticket system that logs interventions with JobScheduler.
 
 .INPUTS
-This cmdlet accepts pipelined order objects that are e.g. returned from a Get-JobSchedulerOrder cmdlet.
+This cmdlet accepts pipelined order objects that are e.g. returned from the Get-JS7Order cmdlet.
 
 .OUTPUTS
 This cmdlet returns an array of order objects.
 
 .EXAMPLE
-Suspend-JS7Order -OrderId #2020-11-19#P0000000498-orderSampleWorfklow2a
+Suspend-JS7Order -OrderId "#2020-11-19#P0000000498-orderSampleWorfklow2a"
 
 Suspends the order with the given ID.
 
@@ -58,7 +58,7 @@ Get-JS7Order -WorkflowPath /some_workflow_path -Recursive | Suspend-JS7Order
 Suspends orders that are available with the workflow "some_workflow_path" and any sub-folders.
 
 .EXAMPLE
-Get-JS7Order -WorkflowPath /test/globals/chain1 | Suspend-JS7Order
+Get-JS7Order -WorkflowPath /test/samples/workflow1 | Suspend-JS7Order
 
 Suspends all orders for the specified workflow.
 
@@ -108,7 +108,7 @@ param
 
             if ( $Kill )
             {
-                Add-Member -Membertype NoteProperty -Name 'kill' -value $true -InputObject $body
+                Add-Member -Membertype NoteProperty -Name 'kill' -value $True -InputObject $body
             }
 
             if ( $AuditComment -or $AuditTimeSpent -or $AuditTicketLink )

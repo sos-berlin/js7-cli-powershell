@@ -5,7 +5,7 @@ function Get-JS7DailyPlanOrder
 Returns the daily plan orders for workflows scheduled for a JS7 Controller
 
 .DESCRIPTION
-The daily plan orders for workfows are returned.
+The daily plan orders for workflows are returned.
 
 .PARAMETER WorkflowPath
 Optionally specifies the path and name of a workflow for which daily plan orders should be returned.
@@ -85,7 +85,7 @@ Specifies that daily plan orders are returned completed successfully.
 Specifies that daily plan orders are returned that completed with errors.
 
 .PARAMETER InProgress
-Specifies that daily plan orders are returned for jobs, orders, job streams that did not yet complete.
+Specifies that daily plan orders are returned for workflows that did not yet complete.
 
 .PARAMETER Planned
 Specifies that daily plan orders are returned that did not yet start.

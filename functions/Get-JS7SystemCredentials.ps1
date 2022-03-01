@@ -2,14 +2,14 @@ function Get-JS7SystemCredentials
 {
 <#
 .SYNOPSIS
-Gets a credentials object (PSCredential) from the Windows Credential Manager
+Reads a credentials object (PSCredential) from the Windows Credential Manager
 
 .DESCRIPTION
 This cmdlet will return a [PSCredential] object from a credential stored in Windows Credential Manager.
-This cmdlet can only access Generic Credentials.
+This cmdlet can access Generic Credentials only.
 
 .PARAMETER TargetName
-The name of the target login informations in the Windows Credential Manager
+The name of the target login information in the Windows Credential Manager
 
 .EXAMPLE
 Get-JS7SystemCredentials 'localhost'
@@ -22,8 +22,8 @@ ap                                   System.Security.SecureString
 System.Management.Automation.PSCredential
 
 .NOTES
-To add credentials open up Control Panel>User Accounts>Credential Manager and click "Add a gereric credential".
-The "Internet or network address" field will be the Name required by the Get-JobSchedulerSystemCredentials cmdlet.
+To add credentials open up Control Panel->User Accounts->Credential Manager and click "Add a generic credential".
+The "Internet or network address" field expects the name required by the Get-JS7SystemCredentials cmdlet.
 
 Forked from https://gist.github.com/toburger/2947424 which was adapted from
 http://stackoverflow.com/questions/7162604/get-cached-credentials-in-powershell-from-windows-7-credential-manager

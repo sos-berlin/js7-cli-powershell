@@ -12,11 +12,11 @@ Specifies the path and name of a workflow for which an order should be added.
 
 .PARAMETER OrderName
 Specifies the name of an order. The JOC Cockpit web service will consider the order name
-when creating unique order iDs from the pattern #<YYYY-MM-DD>#<qualifier><timestamp>-<order-name>
-such as with #2020-11-22#T072521128-Some_Order_Name.
+when creating unique order IDs from the pattern #<YYYY-MM-DD>#<qualifier><timestamp>-<order-name>
+such as #2020-11-22#T072521128-Some_Order_Name.
 
 * YYYY-MM-DD: Date for which the order is scheduled
-* qualifier: one of T(emporary), P(lan), F(ile)
+* qualifier: one of T(emporary), P(lan), F(ile), created by AD(D) Order Instruction
 * timespan: time specified in milliseconds
 * order-name: the value of the -OrderName parameter
 
@@ -67,8 +67,16 @@ Find the list of time zone names from https://en.wikipedia.org/wiki/List_of_tz_d
 # Specifies that the order should leave the workflow at the workflow node that
 # is assigend the specified position.
 #
+.PARAMETER BatchSize
+As this cmdlet accepts pipelined input a larger number of orders can be added at the same time.
+This is particularly true if the Invoke-JS7TestRun cmdlet is used.
+
+Larger numbers of orders are split into individual calls to the REST API according to the batch size.
+This is required as larger batches could exceed the size of HTTP post requests that frequently
+is limited to 4MB if an HTTP proxy is used.
+
 .PARAMETER RunningNumber
-This parameter is implicitely used when pipelining input to the cmdlet as e.g. with
+This parameter is implicitly used when pipelining input to the cmdlet as e.g. with
 
     1..10 | Add-JS7Order -WorkflowPath /some_path/some_workflow
 
@@ -93,7 +101,7 @@ This information is visible with the Audit Log view of JOC Cockpit.
 It can be useful when integrated with a ticket system that logs interventions with JobScheduler.
 
 .INPUTS
-This cmdlet accepts pipelined order objects that are e.g. returned from a Get-JobSchedulerOrder cmdlet.
+This cmdlet accepts pipelined order objects that are e.g. returned from the Get-JS7Order cmdlet.
 
 .OUTPUTS
 This cmdlet returns an array of order objects.
@@ -311,7 +319,7 @@ param
 
             if ( $response.StatusCode -eq 200 )
             {
-                $responseOrderIds = ( $response.Content | ConvertFrom-JSON ).orderIds
+                $responseOrderIds = ( $response.Content | ConvertFrom-Json ).orderIds
 
                 if ( !$responseOrderIds )
                 {

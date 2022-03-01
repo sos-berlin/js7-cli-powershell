@@ -91,14 +91,9 @@ param
 
     Process
     {
-        if ( $Type -ne 'FOLDER' -and $Path.endsWith('/') )
-        {
-            throw "$($MyInvocation.MyCommand.Name): path has to include folder, sub-folder and object name"
-        }
-
         if ( $Path.endsWith('/') )
         {
-            $Path = $Path.Substring( 0, $Path.Length-1 )
+            throw "$($MyInvocation.MyCommand.Name): path has to include folder, sub-folder and object name"
         }
 
         $removableObj = New-Object PSObject

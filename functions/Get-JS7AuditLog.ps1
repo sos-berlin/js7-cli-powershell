@@ -8,7 +8,7 @@ Returns Audit Log entries
 Audit log information is returned from a JOC Cockpit instance.
 Audit log entries can be selected by workflow path, order ID, folder etc.
 
-The audit log information returned includes point in time, request, object etc.
+The audit log information returned includes point in time, request, object etc. of a change.
 
 .PARAMETER Folder
 Optionally specifies the folder that includes objects for which audit log entries should be returned.
@@ -49,6 +49,7 @@ Specfies a category that further limits results of audit log entries.
 * DEPLOYMENT
 * DOCUMENTATIONS
 * CERTIFICATES
+* IDENTITY
 
 .PARAMETER DateFrom
 Specifies the date starting from which audit log entries should be returned.
@@ -207,7 +208,7 @@ param
     [Parameter(Mandatory=$False,ValueFromPipeline=$False,ValueFromPipelinebyPropertyName=$True)]
     [string] $ObjectName,
     [Parameter(Mandatory=$False,ValueFromPipeline=$False,ValueFromPipelinebyPropertyName=$True)]
-    [ValidateSet('INVENTORY','CONTROLLER','DAILYPLAN','DEPLOYMENT','DOCUMENTATIONS','CERTIFICATES')]
+    [ValidateSet('INVENTORY','CONTROLLER','DAILYPLAN','DEPLOYMENT','DOCUMENTATIONS','CERTIFICATES','IDENTITY')]
     [string[]] $Category,
     [Parameter(Mandatory=$False,ValueFromPipeline=$False,ValueFromPipelinebyPropertyName=$True)]
     [DateTime] $DateFrom = (Get-Date -Hour 0 -Minute 0 -Second 0).ToUniversalTime(),
@@ -224,7 +225,7 @@ param
     [Parameter(Mandatory=$False,ValueFromPipeline=$False,ValueFromPipelinebyPropertyName=$True)]
     [string] $TicketLink,
     [Parameter(Mandatory=$False,ValueFromPipeline=$False,ValueFromPipelinebyPropertyName=$True)]
-    [string] $Comment,
+    [string] $Reason,
     [Parameter(Mandatory=$False,ValueFromPipeline=$False,ValueFromPipelinebyPropertyName=$True)]
     [int] $Limit,
     [Parameter(Mandatory=$False,ValueFromPipeline=$False,ValueFromPipelinebyPropertyName=$True)]
@@ -358,9 +359,9 @@ param
             Add-Member -Membertype NoteProperty -Name 'ticketLink' -value $TicketLink -InputObject $body
         }
 
-        if ( $Comment )
+        if ( $Reason )
         {
-            Add-Member -Membertype NoteProperty -Name 'comment' -value $Comment -InputObject $body
+            Add-Member -Membertype NoteProperty -Name 'comment' -value $Reason -InputObject $body
         }
 
         if ( $Limit )

@@ -33,7 +33,7 @@ The name of an Agent is used e.g. in job assignments of a workflow. During deplo
 is replaced by the respective Agent ID for the Controller to which the workflow is deployed.
 
 Should deployments of the same workflows be performed to a number of Controllers then for each Controller
-the same Agent Name has to be configured (pointing to a different Agent ID).
+the same Agent Name has to be configured (pointing to a different Agent ID from Agents' alias names).
 
 .PARAMETER AgentUrl
 Specifies the URL for which the Agent is available. A URL includes the protocol (http, https), hostname and port
@@ -113,7 +113,6 @@ param
 
     Process
     {
-
         $body = New-Object PSObject
         Add-Member -Membertype NoteProperty -Name 'controllerId' -value $ControllerId -InputObject $body
         Add-Member -Membertype NoteProperty -Name 'controllers' -value $Controller -InputObject $body

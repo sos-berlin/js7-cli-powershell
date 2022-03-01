@@ -91,12 +91,12 @@ currently being executed in a workflow.
 
 .PARAMETER Suspended
 Specifies that orders in suspended state should be returned. An order can be suspended
-e.g. when being affected by the Suspend-JobSchedulerOrder cmdlet or the respective manual operation from the GUI.
+e.g. when being affected by the Suspend-JS7Order cmdlet or by the respective manual operation from the GUI.
 
 .PARAMETER Prompting
 Specifies that orders in a prompting state should be returned. Such orders are put on hold by a
 prompt instruction in a workflow and require confirmation to futher proceed execution of the workflow.
-For details see the Confirm-JS7Order cmddlet.
+For details see the Confirm-JS7Order cmdlet.
 
 .PARAMETER Waiting
 Specifies that orders in a setback state should be returned. Such orders make use of an interval

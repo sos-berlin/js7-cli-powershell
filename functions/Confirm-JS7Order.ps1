@@ -32,10 +32,10 @@ It can be useful when integrated with a ticket system that logs interventions wi
 This cmdlet accepts pipelined order objects that are e.g. returned from a Get-JS7Order cmdlet.
 
 .OUTPUTS
-This cmdlet returns an array of removed order objects.
+This cmdlet does not return any output.
 
 .EXAMPLE
-Confirm-JS7Order -OrderId 234
+Confirm-JS7Order -OrderId "#2020-11-19#P0000000498-orderSampleWorfklow2a"
 
 Confirms a prompting order to continue execution of the workflow.
 
@@ -47,7 +47,7 @@ Retrieves prompting orders and confirms further execution with the workflow.
 .EXAMPLE
 Get-JS7Order -Folder /sos -Recursive -Prompting | Confirm-JS7Order
 
-Recursively retrieves prompting orders and confirms further execution with the workflows.
+Recursively retrieves prompting orders and confirms further execution with workflows.
 
 .LINK
 about_JS7

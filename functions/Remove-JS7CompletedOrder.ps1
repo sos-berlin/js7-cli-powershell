@@ -6,7 +6,7 @@ Removes an order that completed a workflow either with a cancelled or finished s
 
 .DESCRIPTION
 Orders in a worklfow by default are automatically removed upon completion. However, it is possible
-to make orders remain in a workflow after completion. Such orders are either in a cancelled state
+to cause orders to remain in a workflow after completion. Such orders are either in a cancelled state
 or in a finished state.
 
 The cmdlet causes orders to be removed after completion.
@@ -35,7 +35,7 @@ This information is visible with the Audit Log view of JOC Cockpit.
 It can be useful when integrated with a ticket system that logs interventions with JobScheduler.
 
 .INPUTS
-This cmdlet accepts pipelined order objects that are e.g. returned from a Get-JobSchedulerOrder cmdlet.
+This cmdlet accepts pipelined order objects that are e.g. returned from the Get-JS7Order cmdlet.
 
 .OUTPUTS
 This cmdlet returns an array of order objects.

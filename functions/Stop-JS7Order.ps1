@@ -41,19 +41,20 @@ This cmdlet accepts pipelined order objects that are e.g. returned from a Get-JS
 This cmdlet returns an array of removed order objects.
 
 .EXAMPLE
-Stop-JS7Order -OrderId 234 -Kill
+Stop-JS7Order -OrderId "#2020-11-22#T072521128-Reporting" -Kill
 
 Cancels the order by sending a SIGKILL signal to the order's running task.
 
 .EXAMPLE
 Get-JS7Order -WorkflowPath /some_path/some_workflow | Stop-JS7Order
 
-Retrieves and cancels all orders for the given workflow.
+Retrieves and cancels all orders for the given workflow. Running tasks can complete.
 
 .EXAMPLE
-Get-JS7Order -Folder /sos -Recursive | Stop-JS7Order
+Get-JS7Order -Folder /sos -Recursive | Stop-JS7Order -Kill
 
 Retrieves and cancels all orders from the indicated folder including any sub-folders.
+Running tasks are killed.
 
 .LINK
 about_JS7
@@ -101,7 +102,7 @@ param
 
             if ( $Kill )
             {
-                Add-Member -Membertype NoteProperty -Name 'kill' -value $true -InputObject $body
+                Add-Member -Membertype NoteProperty -Name 'kill' -value $True -InputObject $body
             }
 
             if ( $AuditComment -or $AuditTimeSpent -or $AuditTicketLink )

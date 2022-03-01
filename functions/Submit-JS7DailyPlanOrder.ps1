@@ -5,10 +5,10 @@ function Submit-JS7DailyPlanOrder
 Submits daily plan orders to a number of JS7 Controllers
 
 .DESCRIPTION
-Submits daily plan orders To a number of JS7 Controllers.
+Submits daily plan orders to a number of JS7 Controllers.
 
 .PARAMETER OrderId
-Optionally specifies the order ID of the daily plan order that should be submitted.
+Optionally specifies the Order ID of the daily plan order that should be submitted.
 
 .PARAMETER WorkflowPath
 Optionally specifies the path and name of a workflow for which daily plan orders should be submitted.
@@ -26,7 +26,7 @@ Optionally specifies the folder with schedules for which daily plan orders shoul
 When used with the -WorkflowFolder or -ScheduleFolder parameters then any sub-folders of the specified folder will be looked up.
 
 .PARAMETER ControllerId
-Specifies the Controller to which daily plan orders have been submitted and should be submitted.
+Specifies the Controller to which daily plan orders should be submitted.
 
 Without this parameter daily plan orders are submitted to any Controllers that are deployed the
 workflows that are indicated with the respective parameters.

@@ -13,7 +13,7 @@ The objects from the folder are not immediately erased, instead this change has 
 * For deployable objects use of the cmdlet the Publish-JS7DeployableItem cmdlet with the -Delete switch is required.
 * For releasable objects use of the cmdlet the Publish-JS7ReleasableItem cmdlet with the -Delete switch is required.
 
-.PARAMETER Path
+.PARAMETER Folder
 Specifies the folder and optionally sub-folders to be removed.
 
 .PARAMETER AuditComment
@@ -35,13 +35,13 @@ This information is visible with the Audit Log view of JOC Cockpit.
 It can be useful when integrated with a ticket system that logs interventions with JobScheduler.
 
 .INPUTS
-This cmdlet accepts pipelined input.
+This cmdlet does not accept pipelined input.
 
 .OUTPUTS
 This cmdlet returns no output.
 
 .EXAMPLE
-Remove-JS7Folder -Path /some/path
+Remove-JS7Folder -Folder /some/folder
 
 Removes the specified folder from the JOC Cockpit inventory.
 
@@ -53,7 +53,7 @@ about_JS7
 param
 (
     [Parameter(Mandatory=$True,ValueFromPipeline=$False,ValueFromPipelinebyPropertyName=$True)]
-    [string] $Path,
+    [string] $Folder,
     [Parameter(Mandatory=$False,ValueFromPipeline=$False,ValueFromPipelinebyPropertyName=$True)]
     [string] $AuditComment,
     [Parameter(Mandatory=$False,ValueFromPipeline=$False,ValueFromPipelinebyPropertyName=$True)]
@@ -74,13 +74,13 @@ param
 
     Process
     {
-        if ( $Path.endsWith('/') )
+        if ( $Folder.endsWith('/') )
         {
-            $Path = $Path.Substring( 0, $Path.Length-1 )
+            $Folder = $Folder.Substring( 0, $Folder.Length-1 )
         }
 
         $body = New-Object PSObject
-        Add-Member -Membertype NoteProperty -Name 'path' -value $Path -InputObject $body
+        Add-Member -Membertype NoteProperty -Name 'path' -value $Folder -InputObject $body
 
         if ( $PSCmdlet.ShouldProcess( $Path, '/inventory/remove/folder' ) )
         {

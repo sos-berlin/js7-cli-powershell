@@ -2,10 +2,10 @@ function Resume-JS7Order
 {
 <#
 .SYNOPSIS
-Resumes suspended orders in a JS7 Controller
+Resumes suspended or failed orders in a JS7 Controller.
 
 .DESCRIPTION
-This cmdlet resumes orders that are suspended in a JS7 Controller.
+This cmdlet resumes orders that are suspended or failed in a JS7 Controller.
 
 .PARAMETER OrderId
 Specifies the identifier of an order.
@@ -23,6 +23,28 @@ i.e. a list of names and values.
 
 Example:
 $orderArgs = @{ 'arg1' = 'value1'; 'arg2' = 'value2' }
+
+.PARAMETER Folder
+Optionally specifies the folder of workflows for which orders should be resumed.
+
+One of the parameters -Folder, -OrderId, -Folders or -State has to be specified.
+
+.PARAMETER Recursive
+When used with the -Folder parameter specifies that any sub-folders should be looked up.
+By default no sub-folders will be searched for workflows.
+
+.PARAMETER State
+Limits the scope of orders to be resumed to the following order states:
+
+* PENDING
+* SCHEDULED
+* INPROGRESS
+* RUNNING
+* SUSPENDED
+* WAITING
+* PROMPTING
+* FAILED
+* BLOCKED
 
 .PARAMETER AuditComment
 Specifies a free text that indicates the reason for the current intervention, e.g. "business requirement", "maintenance window" etc.
@@ -61,21 +83,21 @@ Resumes the order with the given ID from the 3rd instruction in the workflow.
 .EXAMPLE
 Get-JS7Order -Suspended | Resume-JS7Order
 
-Resumes all suspended orders for all workflows.
+Resumes all suspended orders for any workflows.
 
 .EXAMPLE
-Get-JS7Order -Suspended -Folder / | Resume-JS7Order
+Resume-JS7Order -State 'SUSPENDED','FAILED' -Folder /
 
 Resumes orders that are configured with the root folder
 without consideration of sub-folders.
 
 .EXAMPLE
-Get-JS7Order -Folder /some_path -Recursive | Resume-JS7Order
+Resume-JS7Order -State 'SUSPENDED','FAILED' -Folder /some_path -Recursive
 
-Resumes orders that are configured with the indicaed folder and any sub-folders.
+Resumes suspended and failed orders that are configured with the indicated folder and any sub-folders.
 
 .EXAMPLE
-Get-JS7Order -WorkflowPath /test/globals/chain1 | Resume-JS7Order
+Get-JS7Order -WorkflowPath /test/samples/workflow1 | Resume-JS7Order
 
 Resumes orders for the specified workflow.
 
@@ -86,12 +108,19 @@ about_JS7
 [cmdletbinding()]
 param
 (
-    [Parameter(Mandatory=$True,ValueFromPipeline=$True,ValueFromPipelinebyPropertyName=$True)]
+    [Parameter(Mandatory=$False,ValueFromPipeline=$True,ValueFromPipelinebyPropertyName=$True)]
     [string] $OrderId,
-    [Parameter(Mandatory=$False,ValueFromPipeline=$False,ValueFromPipelinebyPropertyName=$True)]
+    [Parameter(Mandatory=$False,ValueFromPipeline=$False,ValueFromPipelinebyPropertyName=$False)]
     [object[]] $Position,
     [Parameter(Mandatory=$False,ValueFromPipeline=$False,ValueFromPipelinebyPropertyName=$True)]
     [hashtable] $Arguments,
+    [Parameter(Mandatory=$False,ValueFromPipeline=$False,ValueFromPipelinebyPropertyName=$True)]
+    [string] $Folder,
+    [Parameter(Mandatory=$False,ValueFromPipeline=$False,ValueFromPipelinebyPropertyName=$True)]
+    [switch] $Recursive,
+    [Parameter(Mandatory=$False,ValueFromPipeline=$False,ValueFromPipelinebyPropertyName=$False)]
+    [ValidateSet('PENDING','SCHEDULED','INPROGRESS','RUNNING','SUSPENDED','WAITING','PROMPTING','FAILED','BLOCKED')]
+    [string[]] $State,
     [Parameter(Mandatory=$False,ValueFromPipeline=$False,ValueFromPipelinebyPropertyName=$True)]
     [string] $AuditComment,
     [Parameter(Mandatory=$False,ValueFromPipeline=$False,ValueFromPipelinebyPropertyName=$True)]
@@ -110,67 +139,97 @@ param
         }
 
         $orders = @()
+        $folders = @()
+        $states = @()
     }
 
     Process
     {
-        $orders += $OrderId
+        if ( $OrderId )
+        {
+            $orders += $OrderId
+        }
+
+        if ( $Folder )
+        {
+            $objFolder = New-Object PSObject
+            Add-Member -Membertype NoteProperty -Name 'folder' -value $Folder -InputObject $objFolder
+
+            if ( $Recursive )
+            {
+                Add-Member -Membertype NoteProperty -Name 'recursive' -value $True -InputObject $objFolder
+            }
+
+            $folders += $objFolder
+        }
+
+        if ( $State )
+        {
+            $states += $State
+        }
     }
 
     End
     {
+        $body = New-Object PSObject
+        Add-Member -Membertype NoteProperty -Name 'controllerId' -value $script:jsWebService.ControllerId -InputObject $body
+
         if ( $orders.count )
         {
-            $body = New-Object PSObject
-            Add-Member -Membertype NoteProperty -Name 'controllerId' -value $script:jsWebService.ControllerId -InputObject $body
             Add-Member -Membertype NoteProperty -Name 'orderIds' -value $orders -InputObject $body
+        }
 
-            if ( $Position )
+        if ( ($orders.count -eq 1) -and $Position )
+        {
+            Add-Member -Membertype NoteProperty -Name 'position' -value $Position -InputObject $body
+        }
+
+        if ( ($orders.count -eq 1) -and $Arguments )
+        {
+            Add-Member -Membertype NoteProperty -Name 'arguments' -value $Arguments -InputObject $body
+        }
+
+        if ( $folders )
+        {
+            Add-Member -Membertype NoteProperty -Name 'folders' -value $folders -InputObject $body
+        }
+
+        if ( $states )
+        {
+            Add-Member -Membertype NoteProperty -Name 'states' -value $states -InputObject $body
+        }
+
+        if ( $AuditComment -or $AuditTimeSpent -or $AuditTicketLink )
+        {
+            $objAuditLog = New-Object PSObject
+            Add-Member -Membertype NoteProperty -Name 'comment' -value $AuditComment -InputObject $objAuditLog
+
+            if ( $AuditTimeSpent )
             {
-                Add-Member -Membertype NoteProperty -Name 'position' -value $Position -InputObject $body
+                Add-Member -Membertype NoteProperty -Name 'timeSpent' -value $AuditTimeSpent -InputObject $objAuditLog
             }
 
-            if ( $Arguments )
+            if ( $AuditTicketLink )
             {
-                Add-Member -Membertype NoteProperty -Name 'arguments' -value $Arguments -InputObject $body
+                Add-Member -Membertype NoteProperty -Name 'ticketLink' -value $AuditTicketLink -InputObject $objAuditLog
             }
 
-            if ( $AuditComment -or $AuditTimeSpent -or $AuditTicketLink )
+            Add-Member -Membertype NoteProperty -Name 'auditLog' -value $objAuditLog -InputObject $body
+        }
+
+        [string] $requestBody = $body | ConvertTo-Json -Depth 100
+        $response = Invoke-JS7WebRequest '/orders/resume' $requestBody
+
+        if ( $response.StatusCode -eq 200 )
+        {
+            $requestResult = ( $response.Content | ConvertFrom-Json )
+
+            if ( !$requestResult.ok )
             {
-                $objAuditLog = New-Object PSObject
-                Add-Member -Membertype NoteProperty -Name 'comment' -value $AuditComment -InputObject $objAuditLog
-
-                if ( $AuditTimeSpent )
-                {
-                    Add-Member -Membertype NoteProperty -Name 'timeSpent' -value $AuditTimeSpent -InputObject $objAuditLog
-                }
-
-                if ( $AuditTicketLink )
-                {
-                    Add-Member -Membertype NoteProperty -Name 'ticketLink' -value $AuditTicketLink -InputObject $objAuditLog
-                }
-
-                Add-Member -Membertype NoteProperty -Name 'auditLog' -value $objAuditLog -InputObject $body
-            }
-
-            [string] $requestBody = $body | ConvertTo-Json -Depth 100
-            $response = Invoke-JS7WebRequest '/orders/resume' $requestBody
-
-            if ( $response.StatusCode -eq 200 )
-            {
-                $requestResult = ( $response.Content | ConvertFrom-Json )
-
-                if ( !$requestResult.ok )
-                {
-                    throw ( $response | Format-List -Force | Out-String )
-                }
-            } else {
                 throw ( $response | Format-List -Force | Out-String )
             }
-
-            Write-Verbose ".. $($MyInvocation.MyCommand.Name): $($orders.count) orders resumed"
         } else {
-            Write-Verbose ".. $($MyInvocation.MyCommand.Name): no orders found"
+            throw ( $response | Format-List -Force | Out-String )
         }
 
         Trace-JS7StopWatch -CommandName $MyInvocation.MyCommand.Name -StopWatch $stopWatch

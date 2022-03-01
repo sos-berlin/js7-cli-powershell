@@ -5,17 +5,17 @@ function Start-JS7Order
 Starts an existing order for the JS7 Controller
 
 .DESCRIPTION
-Start an existing order for the JS7 Controller and optionally adjust the start time and arguments.
+Start an existing order for the JS7 Controller and optionally adjust the start time and variables.
 
 .PARAMETER OrderId
 Specifies the identifier of the order.
 
-.PARAMETER Arguments
-Specifies the arguments for the order. Arguments are created from a hashmap,
+.PARAMETER Variables
+Specifies the variables for the order. Variables are created from a hashmap,
 i.e. a list of names and values.
 
 Example:
-$orderArgs = @{ 'arg1' = 'value1'; 'arg2' = 'value2' }
+$orderVariables = @{ 'var1' = 'value1'; 'var2' = 'value2' }
 
 .PARAMETER At
 Specifies the point in time when the order should start. Values are added like this:
@@ -31,22 +31,22 @@ Specifies the point in time when the order should start. Values are added like t
 Specifies the date when the order should start. The time zone is used from the date provided.
 
 .PARAMETER Timezone
-Specifies the time zone to be considered for the start time that is indicated with the -At argument.
-Without this argument the time zone of the JS7 Controller is assumed.
+Specifies the time zone to be considered for the start time that is indicated with the -At parameter.
+Without this parameter the time zone of the JS7 Controller is assumed.
 
-This argument should be used if the JS7 Controller runs in a time zone different to the environment
+This parameter should be used if the JS7 Controller runs in a time zone different to the environment
 that makes use of this cmdlet.
 
 Find the list of time zone names from https://en.wikipedia.org/wiki/List_of_tz_database_time_zones
 
-.PARAMETER StartPosition
-Specifies that the order should enter the workflow at the workflow node that
-is assigend the specified position.
-
-.PARAMETER EndPosition
-Specifies that the order should leave the workflow at the workflow node that
-is assigend the specified position.
-
+# .PARAMETER StartPosition
+# Specifies that the order should enter the workflow at the workflow node that
+# is assigend the specified position.
+#
+# .PARAMETER EndPosition
+# Specifies that the order should leave the workflow at the workflow node that
+# is assigend the specified position.
+#
 .PARAMETER AuditComment
 Specifies a free text that indicates the reason for the current intervention, e.g. "business requirement", "maintenance window" etc.
 
@@ -66,7 +66,7 @@ This information is visible with the Audit Log view of JOC Cockpit.
 It can be useful when integrated with a ticket system that logs interventions with JobScheduler.
 
 .INPUTS
-This cmdlet accepts pipelined order objects that are e.g. returned from a Get-JobSchedulerOrder cmdlet.
+This cmdlet accepts pipelined order objects that are e.g. returned from the Get-JS7Order cmdlet.
 
 .OUTPUTS
 This cmdlet returns an array of order objects.
@@ -87,7 +87,7 @@ Start-JS7Order -OrderId "#2020-11-23#T158058928-myTest03" -At "2038-01-01 00:00:
 Starts the indicated order for a later date that is specified for the "Europe/Berlin" time zone.
 
 .EXAMPLE
-Start-JS7Order -OrderId "#2020-11-23#T158058928-myTest03" -At "now+3600" -Arguments @{'arg1' = 'value1'; 'arg2' = 'value2'}
+Start-JS7Order -OrderId "#2020-11-23#T158058928-myTest03" -At "now+3600" -Variables @{'var1' = 'value1'; 'var2' = 'value2'}
 
 Starts the order with the specified order ID. The order will start one hour later and will use the
 arguments from the specified hashmap.
@@ -102,7 +102,7 @@ param
     [Parameter(Mandatory=$True,ValueFromPipeline=$True,ValueFromPipelinebyPropertyName=$True)]
     [string] $OrderId,
     [Parameter(Mandatory=$False,ValueFromPipeline=$False,ValueFromPipelinebyPropertyName=$True)]
-    [hashtable] $Arguments,
+    [hashtable] $Variables,
     [Parameter(Mandatory=$False,ValueFromPipeline=$False,ValueFromPipelinebyPropertyName=$True)]
     [string] $At = 'now',
     [Parameter(Mandatory=$False,ValueFromPipeline=$False,ValueFromPipelinebyPropertyName=$True)]
@@ -153,7 +153,7 @@ param
 
         if ( $response.StatusCode -eq 200 )
         {
-            $returnOrder = ( $response.Content | ConvertFrom-JSON )
+            $returnOrder = ( $response.Content | ConvertFrom-Json )
 
             if ( !$returnOrder.orderId )
             {
@@ -205,20 +205,20 @@ param
             Add-Member -Membertype NoteProperty -Name 'endPosition' -value $EndPosition -InputObject $objOrder
         }
 #>
-        if ( $Arguments )
+        if ( $Variables )
         {
-            $objArguments = @()
-            foreach( $argument in $Arguments.GetEnumerator() )
+            $objVariables = @()
+            foreach( $variable in $Variables.GetEnumerator() )
             {
-                $objArgument = New-Object PSObject
-                Add-Member -Membertype NoteProperty -Name 'name' -value $argument.key -InputObject $objArgument
-                Add-Member -Membertype NoteProperty -Name 'value' -value $argument.value -InputObject $objArgument
-                $objArguments += $objArgument
+                $objVariable = New-Object PSObject
+                Add-Member -Membertype NoteProperty -Name 'name' -value $variable.key -InputObject $objVariable
+                Add-Member -Membertype NoteProperty -Name 'value' -value $variable.value -InputObject $objVariable
+                $objVariables += $objVariable
             }
 
-            if ( $objArguments.count )
+            if ( $objVariables.count )
             {
-                Add-Member -Membertype NoteProperty -Name 'arguments' -value $objArguments -InputObject $objOrder
+                Add-Member -Membertype NoteProperty -Name 'arguments' -value $objVariables -InputObject $objOrder
             }
         } elseif ( $returnOrder.arguments ) {
             Add-Member -Membertype NoteProperty -Name 'arguments' -value $returnOrder.arguments -InputObject $objOrder
@@ -261,7 +261,7 @@ param
 
                 if ( $response.StatusCode -eq 200 )
                 {
-                    $requestResult = ( $response.Content | ConvertFrom-JSON )
+                    $requestResult = ( $response.Content | ConvertFrom-Json )
 
                     if ( !$requestResult.ok )
                     {

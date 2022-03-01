@@ -137,7 +137,7 @@ param
         {
             if ( $TargetName )
             {
-                $systemCredentials = Get-JobSchedulerSystemCredentials -TargetName $TargetName
+                $systemCredentials = Get-JS7SystemCredentials -TargetName $TargetName
                 if ( !$systemCredentials )
                 {
                     throw "$($MyInvocation.MyCommand.Name): no credentials found for target name: $($TargetName)"

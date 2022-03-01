@@ -7,7 +7,7 @@ Connects to the JS7 JOC Cockpit Web Service.
 .DESCRIPTION
 A connection to the JOC Cockpit Web Service is established including support for credentials and use of a proxy.
 
-The cmdlet authenticates a user and returns an access token in case of successful authentication
+The cmdlet authenticates a user account and returns an access token in case of successful authentication
 that is used for subsequent requests to the Web Service.
 
 Caveat:
@@ -32,7 +32,7 @@ Credentials can be specified in a script:
 
 * PS C:\> $credential = ( New-Object -typename System.Management.Automation.PSCredential -ArgumentList 'root', ( 'root' | ConvertTo-SecureString -AsPlainText -Force) )
 
-Credentials sets can be managed with Windows built-in tools such as:
+Credentials can be managed with Windows built-in tools such as:
 
 * PS C:\> cmdkey /generic:JS7 Web Service /user:root /pass:secret
 * The Windows Credential Manager that is available Windows Control Panel.
@@ -59,12 +59,13 @@ This parameter currently is not used. It is provided for future versions of JOC 
 .PARAMETER Id
 Specifies the ID of a JS7 Controller that is registered with JOC Cockpit.
 If no ID is specified then the first JS7 Controller registered with JOC Cockpit will be used.
+The first Controller is identified from the Controller selected with a previous session of the REST API.
 
 .PARAMETER AskForCredentials
 Specifies that the user is prompted for the account and password that are used for authentication with JS7.
 
 .PARAMETER Base
-The Base is used as a prefix to the Path for web service URLs and is configured with the web server
+The Base is used as a prefix to the path for web service URLs and is configured with the web server
 that hosts the JS7 Web Service.
 
 This value is fixed and should not be modified for most use cases.
@@ -72,7 +73,7 @@ This value is fixed and should not be modified for most use cases.
 Default: /joc/api
 
 .PARAMETER Timeout
-Specifies the timeout to wait for the JS7 REST Web Service response.
+Specifies the timeout in seconds to wait for the JS7 REST Web Service response.
 
 .PARAMETER SSLProtocol
 This parameter can be used to specify the TLS protocol version that should be used. The protocol version is agreed
@@ -88,7 +89,7 @@ protocol version.
 
 .PARAMETER Certificate
 This parameter can be used for client authentication if JOC Cockpit is configured for mutual authentication with HTTPS (SSL).
-If JOC Cockpit is configured to accept one-factor authentication then the certificate specified with this parameter replaces
+If JOC Cockpit is configured to accept single-factor authentication then the certificate specified with this parameter replaces
 the password for login. If JOC Cockpit requires two-factor authentication then a certificate is required
 in addition to specifying a password for login.
 
@@ -96,32 +97,32 @@ Consider that this parameter expects a certificate with the data type [System.Se
 This parameter can be used for Windows only. For other operating systems use the -KeyStorePath parameter.
 
 Use of this parameter requires that the certificate object includes the private key and the certificate chain, i.e. the certificate
-and any intermediate/root certificates required for validation of the certificate.
+and any Intermediate or Root CA Certificates required for validation of the certificate.
 
 This parameter cannot be used with the -CertificateThumbprint parameter or -KeyStorePath parameter.
 
 .PARAMETER CertificateThumbprint
 This parameter can be used for client authentication if JOC Cockpit is configured for mutual authentication with HTTPS (SSL).
-If JOC Cockpit is configured to accept one-factor authentication then the certificate identified with this parameter replaces
+If JOC Cockpit is configured to accept single-factor authentication then the certificate identified with this parameter replaces
 the password for login. If JOC Cockpit requires two-factor authentication then a certificate is required
 in addition to specifying a password for login.
 
 This parameter can be used for Windows only. For other operating sysems use the -KeyStorePath parameter.
 
 Use of this parameter requires a certificate store to be in place that holds the private key and certificate chain, i.e. the same certificate
-and any intermediate/root certificates required for validation of the certificate. Consider this parameter a reference
+and any Intermediate or Root CA Certificates required for validation of the certificate. Consider this parameter a reference
 to a certificate entry in your Windows certificate store that includes the private key and certificate chain.
 
 This parameter cannot be used with the -Certificate parameter or -KeyStorePath parameter.
 
 .PARAMETER KeyStorePath
 This parameter can be used for client authentication if JOC Cockpit is configured for mutual authentication with HTTPS (SSL).
-If JOC Cockpit is configured to accept one-factor authentication then the certificate from the keystore specified with this parameter replaces
+If JOC Cockpit is configured to accept single-factor authentication then the certificate from the keystore specified with this parameter replaces
 the password for login. If JOC Cockpit requires two-factor authentication then a certificate is required
 in addition to specifying a password for login.
 
 This parameter expects the path to a keystore file, preferably a PKCS12 keystore, that holds the private key and certificate chain, i.e. the certificate
-and any intermediate/root certificates required for validation of the certificate. Certificates of type X509 are supported.
+and any Intermediate or Root CA Certificates required for validation of the certificate. Certificates of type X509 are supported.
 
 The cmdlet adds the private key, certificate and any intermediate/root certificates from the keystore to the certificate store
 used by the current account. This parameter can be used for Windows and Unix operating systems.
@@ -141,12 +142,12 @@ The first argument 'keystore' is arbitrary, the second argument 'jobscheduler' s
 Specifies the location of a file that holds the root certificate that was used when signing the JOC Cockpit
 SSL certificate.
 
-* For Windows environments the root certificate by default is looked up in the Windows Certificate Store, however,
-  this parameter can be used to apply a root certificate from a location in the file system.
-* For Linux environments a path is specified to the root certificate file, e.g. *.pem, *.crt file, or to a truststore, e.g. *.jks, *.p12 file.
+* For Windows environments the Root CA Certificate by default is looked up in the Windows Certificate Store, however,
+  this parameter can be used to apply a Root CA Certificate from a location in the file system.
+* For Linux environments a path is specified to the Root CA Certificate file, e.g. *.pem, *.crt file, or to a truststore, e.g. *.jks, *.p12 file.
 
 .PARAMETER RootCertificateCredentials
-Specifies the credentials for access to a truststore that holds the root certificate.
+Specifies the credentials for access to a truststore that holds the Root CA Certificate.
 
 A credentials object can be created in a number of ways, e.g.:
 
@@ -169,24 +170,24 @@ Connect-JS7 -Url http://localhost:4446 -AskForCredentials
 Connects to the JS7 Web Service at the indicated address and asks the user interactively for credentials.
 
 .EXAMPLE
-Connect-JS7 -Url https://js7-joc-promary:4443 -AskForCredentials -RootCertificatePath /home/sos/root-ca.crt
+Connect-JS7 -Url https://js7-joc-primary:4443 -AskForCredentials -RootCertificatePath /home/sos/root-ca.crt
 
 Connects to the JS7 Web Service with a secure HTTPS connection at the indicated address and asks the user interactively for credentials.
-In order to verfy the JOC Cockpit server certificate the corresponding root certificate is specified that was used when signing the server certificate.
+In order to verfy the JOC Cockpit server certificate the corresponding Root CA Certificate is specified that was used when signing the server certificate.
 
 .EXAMPLE
 $credentials = ( New-Object -typename System.Management.Automation.PSCredential -ArgumentList 'root', ( 'root' | ConvertTo-SecureString -AsPlainText -Force) )
 Connect-JS7 -Url http://localhost:4446 -Credentials $credentials -Id jobscheduler
 
-A variable $credential is created that holds the credentials for the default root account of JOC Cockpit.
-When calling the cmdlet the URL is specified, the Controller ID that was used during installationn and the credential object.
+A variable $credentials is created that holds the credentials for the default root account of JOC Cockpit.
+When calling the cmdlet the URL is specified, the Controller ID that was used during installationn and the credentials object.
 
 .EXAMPLE
 cmdkey /generic:JS7 Web Service /user:root /pass:root
 $credentials = Get-JS7SystemCredentials -TargetName "JS7 Web Service"
 Connect-JS7 -Url http://localhost:4446 -Credentials $credentials
 
-Prior to use with PowerShell with some external command ("cmdkey") a credential set is generated for the current user.
+Prior to use with PowerShell with some external command ("cmdkey") a credentials set is generated for the current user.
 The credentials are retrieved by use of the Get-JS7SystemCredentials cmdlet and are forwarded to the Connect-JS7 cmdlet.
 
 .EXAMPLE
@@ -197,9 +198,9 @@ $keyStoreCredentials = ( New-Object -typename System.Management.Automation.PSCre
 Connect-JS7 -Url https://js7-joc-primary:4443 -Id jobscheduler -RootCertificatePath /home/sos/https-truststore.p12 -RootCertificateCredentials $trustStoreCredentials -KeyStorePath /home/sos/https-keystore.p12 -KeyStorePassword $keyStoreCredentials
 
 This example assumes a secure HTTPS connection to JOC Cockpit with mutual authentication:
-* The -RootCertificatePath is specified that holds the root certificate that was used when signing the JOC Cockpit SSL server certificate.
+* The -RootCertificatePath is specified that holds the Root CA Certificate that was used when signing the JOC Cockpit SSL server certificate.
 * The -KeyStorePath is specified that hold the private key and certificate for mutual authentication with JOC Cockpit.
-* A variable $trustStoreCredentials is created that holds the password for access to the the truststore with the root certificate.
+* A variable $trustStoreCredentials is created that holds the password for access to the the truststore with the Root CA Certificate.
 * A variable $keyStoreCredentials is created that holds the credentials for access to they keystore for mutual authentication.
 
 .OUTPUTS
@@ -397,7 +398,7 @@ param
 
         if ( $RootCertificatePath )
         {
-            # add root certificate to truststore
+            # add Root CA Certificate to truststore
             #     see https://github.com/PowerShell/PowerShell/issues/1865
             #     see https://github.com/dotnet/corefx/blob/Controller/Documentation/architecture/cross-platform-cryptography.md
             $storeName = [System.Security.Cryptography.X509Certificates.StoreName]
@@ -419,6 +420,7 @@ param
             $store.Close()
         }
 
+        # all checks done, now let's create request parameters
         $requestParams = @{}
         $requestParams.Add( 'Verbose', $false )
         $requestParams.Add( 'Uri', $authenticationUrl )

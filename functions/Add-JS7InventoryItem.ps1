@@ -6,7 +6,7 @@ Add a configuration object such as a workflow from a JSON file to the JOC Cockpi
 
 .DESCRIPTION
 This cmdlet reads configuration objects from JSON files and stores them with JOC Cockpit.
-Consider that imported objects have to be deployed with the Deploy-JS7DeployableObject and Deploy-JS7ReleasableObject cmdlets.
+Consider that imported objects have to be deployed or released with the Deploy-JS7DeployableObject and Deploy-JS7ReleasableObject cmdlets.
 
 .PARAMETER Path
 Specifies the folder, sub-folder and name of the object to be added, e.g. a workflow path.
@@ -144,7 +144,7 @@ param
 
         if ( $response.StatusCode -eq 200 )
         {
-            $requestResult = ( $response.Content | ConvertFrom-JSON )
+            $requestResult = ( $response.Content | ConvertFrom-Json )
 
             if ( !$requestResult.path )
             {
