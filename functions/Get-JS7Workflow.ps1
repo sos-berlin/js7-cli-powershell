@@ -25,7 +25,8 @@ Optionally specifies the folder for which workflows should be returned.
 One of the parameters -Folder, -WorkflowPath or -RegularExpression has to be specified.
 
 .PARAMETER Recursive
-Specifies that any sub-folders should be looked up. By default no sub-folders will be searched for workflows.
+When used with the -Folder parameter specifies that any sub-folders should be looked up.
+By default no sub-folders will be searched for workflows.
 
 .PARAMETER RegularExpression
 Limits results to workflow paths that correspond to the given regular expression.

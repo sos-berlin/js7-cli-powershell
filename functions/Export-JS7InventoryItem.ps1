@@ -15,7 +15,7 @@ This cmdlet exports inventory objects that are stored with JOC Cockpit.
 ** When exporting releasable objects then either a draft version can be used or the latest released version is requested by use of the -Released parameter.
 
 An export is performed either to backup deployable and releasable objects that later on can be imported,
-or to export objects for signing and later depeloyment with a JOC Cockpit operated in security level "high".
+or to export objects for signing and later deployment with a JOC Cockpit operated in security level "high".
 
 The process to export for signigng includes the following steps:
 

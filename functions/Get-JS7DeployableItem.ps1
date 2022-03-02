@@ -53,12 +53,20 @@ param
     [Parameter(Mandatory=$False,ValueFromPipeline=$True,ValueFromPipelinebyPropertyName=$True)]
     [string] $Path,
     [Parameter(Mandatory=$False,ValueFromPipeline=$False,ValueFromPipelinebyPropertyName=$True)]
-    [ValidateSet('FOLDER','WORKFLOW','FILEORDERSOURCE','JOBRESOURCE','NOTICEBOARD','LOCK')]
+    [ValidateSet('WORKFLOW','FILEORDERSOURCE','JOBRESOURCE','NOTICEBOARD','LOCK')]
     [string[]] $Type,
     [Parameter(Mandatory=$False,ValueFromPipeline=$False,ValueFromPipelinebyPropertyName=$True)]
-    [string] $Folder = '/',
+    [string] $Folder,
     [Parameter(Mandatory=$False,ValueFromPipeline=$False,ValueFromPipelinebyPropertyName=$True)]
-    [switch] $Recursive
+    [switch] $Recursive,
+    [Parameter(Mandatory=$False,ValueFromPipeline=$False,ValueFromPipelinebyPropertyName=$True)]
+    [switch] $Valid,
+    [Parameter(Mandatory=$False,ValueFromPipeline=$False,ValueFromPipelinebyPropertyName=$True)]
+    [switch] $NoDraft,
+    [Parameter(Mandatory=$False,ValueFromPipeline=$False,ValueFromPipelinebyPropertyName=$True)]
+    [switch] $NoDeployed,
+    [Parameter(Mandatory=$False,ValueFromPipeline=$False,ValueFromPipelinebyPropertyName=$True)]
+    [switch] $Latest
 )
 	Begin
 	{
@@ -70,7 +78,7 @@ param
             throw "$($MyInvocation.MyCommand.Name): Audit Log comment required, use parameter -AuditComment if one of the parameters -AuditTimeSpent or -AuditTicketLink is used"
         }
 
-        $deployableTypes = @('FOLDER','WORKFLOW','FILEORDERSOURCE','JOBRESOURCE','NOTICEBOARD','LOCK')
+        $deployableTypes = @('WORKFLOW','FILEORDERSOURCE','JOBRESOURCE','NOTICEBOARD','LOCK')
         $returnObjectCount = 0
     }
 
@@ -96,11 +104,6 @@ param
             throw "$($MyInvocation.MyCommand.Name): one of the parameters -Path or -Folder has to be used"
         }
 
-        if ( $Folder -eq '/' -and !$Path -and !$Recursive )
-        {
-            $Recursive = $True
-        }
-
         if ( $Type )
         {
             foreach( $typeItem in $Type )
@@ -122,8 +125,10 @@ param
             $body = New-Object PSObject
             Add-Member -Membertype NoteProperty -Name 'objectType' -value $Type[0] -InputObject $body
             Add-Member -Membertype NoteProperty -Name 'path' -value $Path -InputObject $body
-            Add-Member -Membertype NoteProperty -Name 'onlyValidObjects' -value $False -InputObject $body
-            Add-Member -Membertype NoteProperty -Name 'withoutDeployed' -value $False -InputObject $body
+            Add-Member -Membertype NoteProperty -Name 'onlyValidObjects' -value ($Valid -eq $True) -InputObject $body
+            Add-Member -Membertype NoteProperty -Name 'withoutDeployed' -value ($NoDeployed -eq $True) -InputObject $body
+            Add-Member -Membertype NoteProperty -Name 'withoutDrafts' -value ($NoDraft -eq $True) -InputObject $body
+            Add-Member -Membertype NoteProperty -Name 'latest' -value ($Latest -eq $True) -InputObject $body
 
             [string] $requestBody = $body | ConvertTo-Json -Depth 100
             $response = Invoke-JS7WebRequest -Path '/inventory/deployable' -Body $requestBody
@@ -147,7 +152,7 @@ param
             Add-Member -Membertype NoteProperty -Name 'folder' -value $Folder -InputObject $body
             Add-Member -Membertype NoteProperty -Name 'recursive' -value ($Recursive -eq $True) -InputObject $body
             Add-Member -Membertype NoteProperty -Name 'objectTypes' -value $Type -InputObject $body
-            Add-Member -Membertype NoteProperty -Name 'onlyValidObjects' -value $False -InputObject $body
+            Add-Member -Membertype NoteProperty -Name 'onlyValidObjects' -value ($Valid -eq $True) -InputObject $body
             Add-Member -Membertype NoteProperty -Name 'withVersions' -value $False -InputObject $body
 
             [string] $requestBody = $body | ConvertTo-Json -Depth 100

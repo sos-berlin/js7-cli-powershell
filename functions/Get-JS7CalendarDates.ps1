@@ -97,7 +97,7 @@ param
 
         if ( $response.StatusCode -eq 200 )
         {
-            $returnCalendarDateItems = ( $response.Content | ConvertFrom-JSON ).dates
+            $returnCalendarDateItems = ( $response.Content | ConvertFrom-Json ).dates
         } else {
             throw ( $response | Format-List -Force | Out-String )
         }

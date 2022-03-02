@@ -7,7 +7,7 @@ Returns calendars from the JOC Cockpit inventory
 .DESCRIPTION
 Calendars are selected from the JOC Cockpit inventory
 
-* by the path and name of a calendar,
+* by path and name of a calendar,
 * by the folder of the calendar location including sub-folders,
 * by a regular expression that is used to filter calendar names.
 
@@ -148,6 +148,7 @@ param
         {
             $Recursive = $True
         }
+
 
         if ( $WorkingDays )
         {
