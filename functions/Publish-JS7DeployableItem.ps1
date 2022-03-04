@@ -236,9 +236,16 @@ param
 
             if ( $response.StatusCode -eq 200 )
             {
-                $deployableObjects = ( $response.Content | ConvertFrom-Json ).deployables
+                $deployableItems = ( $response.Content | ConvertFrom-Json )
             } else {
                 throw ( $response | Format-List -Force | Out-String )
+            }
+
+            if ( $deployableItems.folders )
+            {
+                $deployableObjects = $deployableItems.folders.deployables
+            } else {
+                $deployableObjects = $deployableItems.deployables
             }
 
             foreach( $deployableObject in $deployableObjects )

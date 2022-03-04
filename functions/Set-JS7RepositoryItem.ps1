@@ -55,6 +55,9 @@ that only previously deployed or released objects will be stored.
 .PARAMETER NoDeployed
 Specifies that no previously deployed objects should be stored.
 
+.PARAMETER NoReleased
+Specifies that no previously released objects should be stored.
+
 .PARAMETER Latest
 If used with the -Path parameter then -Latest specifies that only the latest deployed object will be considered.
 This parameter is not considered if the -NoDeployed parameter is used.
@@ -132,6 +135,8 @@ param
     [switch] $NoDraft,
     [Parameter(Mandatory=$False,ValueFromPipeline=$False,ValueFromPipelinebyPropertyName=$True)]
     [switch] $NoDeployed,
+    [Parameter(Mandatory=$False,ValueFromPipeline=$False,ValueFromPipelinebyPropertyName=$True)]
+    [switch] $NoReleased,
     [Parameter(Mandatory=$False,ValueFromPipeline=$False,ValueFromPipelinebyPropertyName=$True)]
     [switch] $Latest,
     [Parameter(Mandatory=$False,ValueFromPipeline=$False,ValueFromPipelinebyPropertyName=$True)]
@@ -253,7 +258,7 @@ param
             } else {
                 throw "$($MyInvocation.MyCommand.Name): unknown type: $curType"
             }
-        } elseif ( $Folder ) {
+        } else {
             if ( $Type.count )
             {
                 $lookupDeployableTypes = @()
@@ -298,9 +303,16 @@ param
 
                 if ( $response.StatusCode -eq 200 )
                 {
-                    $deployableObjects = ( $response.Content | ConvertFrom-Json ).deployables
+                    $deployableItems = ( $response.Content | ConvertFrom-Json )
                 } else {
                     throw ( $response | Format-List -Force | Out-String )
+                }
+
+                if ( $deployableItems.folders )
+                {
+                    $deployableObjects = $deployableItems.folders.deployables
+                } else {
+                    $deployableObjects = $deployableItems.deployables
                 }
 
                 Write-Verbose ".. $($MyInvocation.MyCommand.Name): $($deployableObjects.count) deployable objects found"
@@ -324,15 +336,17 @@ param
                     } else {
                         $commitId = $Null
                     }
-
-                    $storeObjects += @{ 'path' = "$($deployableObject.folder)$($deployableObject.objectName)"; 'type' = $deployableObject.objectType; 'valid' = $deployableObject.valid; 'deployed' = $deployableObject.deployed; 'commitId' = $commitId }
+                    if ( $deployableObject.objectName )
+                    {
+                        $storeObjects += @{ 'path' = "$($deployableObject.folder)$($deployableObject.objectName)"; 'type' = $deployableObject.objectType; 'valid' = $deployableObject.valid; 'deployed' = $deployableObject.deployed; 'commitId' = $commitId }
+                    }
                 }
             }
 
             if ( $lookupReleasableTypes ) {
                 $body = New-Object PSObject
                 Add-Member -Membertype NoteProperty -Name 'folder' -value $Folder -InputObject $body
-                Add-Member -Membertype NoteProperty -Name 'recursive' -value $True -InputObject $body
+                Add-Member -Membertype NoteProperty -Name 'recursive' -value ($Recursive -eq $True) -InputObject $body
                 Add-Member -Membertype NoteProperty -Name 'objectTypes' -value $lookupReleasableTypes -InputObject $body
                 Add-Member -Membertype NoteProperty -Name 'onlyValidObjects' -value ($Valid -eq $True) -InputObject $body
                 Add-Member -Membertype NoteProperty -Name 'withoutDrafts' -value ($NoDraft -eq $True) -InputObject $body
@@ -343,28 +357,29 @@ param
 
                 if ( $response.StatusCode -eq 200 )
                 {
-                    $releasableFolders = ( $response.Content | ConvertFrom-Json ).folders
+                    $releasableItems = ( $response.Content | ConvertFrom-Json )
                 } else {
                     throw ( $response | Format-List -Force | Out-String )
                 }
 
+                if ( $releasableItems.folders )
+                {
+                    $releasableObjects = $releasableItems.folders.releasables
+                } else {
+                    $releasableObjects = $releasableItems.releasables
+                }
+
                 Write-Verbose ".. $($MyInvocation.MyCommand.Name): $($releasableObjects.count) releasable objects found"
 
-                foreach( $releasableFolder in $releasableFolders )
+                foreach( $releasableObject in $releasableObjects )
                 {
-                    foreach( $releasableObject in $releasableFolder.releasables )
+                    if ( $releasableObject.folder -and !$releasableObject.folder.endsWith( '/' ) )
                     {
-                        if ( $releasableObject.objectType -eq 'FOLDER' )
-                        {
-                            # we cannot release folders
-                            continue
-                        }
+                        $releasableObject.folder += '/'
+                    }
 
-                        if ( $releasableObject.folder -and !$releasableObject.folder.endsWith( '/' ) )
-                        {
-                            $releasableObject.folder += '/'
-                        }
-
+                    if ( $releasableObject.objectName )
+                    {
                         $storeObjects += @{ 'path' = "$($releasableObject.folder)$($releasableObject.objectName)"; 'type' = $releasableObject.objectType; 'valid' = $releasableObject.valid; 'released' = $releasableObject.released }
                     }
                 }

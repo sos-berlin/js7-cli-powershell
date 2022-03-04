@@ -212,9 +212,16 @@ param
 
             if ( $response.StatusCode -eq 200 )
             {
-                $releasableObjects = ( $response.Content | ConvertFrom-Json ).releasables
+                $releasableItems = ( $response.Content | ConvertFrom-Json )
             } else {
                 throw ( $response | Format-List -Force | Out-String )
+            }
+
+            if ( $releasableItems.folders )
+            {
+                $releasableObjects = $releasableItems.folders.releasables
+            } else {
+                $releasableObjects = $releasableItems.releasables
             }
 
             foreach( $releasableObject in $releasableObjects )

@@ -374,7 +374,7 @@ param
     }
 }
 
-function Invoke-JS7WebRequest( [string] $Path, [object] $Body, [string] $Method='POST', [string] $ContentType='application/json', [hashtable] $Headers=@{'Accept' = 'application/json'}, [string] $InFile, [boolean] $Verbose )
+function Invoke-JS7WebRequest( [string] $Path, [object] $Body, [string] $Method='POST', [string] $ContentType='application/json', [hashtable] $Headers=@{'Accept' = 'application/json'}, [string] $InFile, [string] $OutFile, [boolean] $Verbose )
 {
     if ( $script:jsWebService.Url.UserInfo )
     {
@@ -441,6 +441,11 @@ function Invoke-JS7WebRequest( [string] $Path, [object] $Body, [string] $Method=
         $requestParams.Add( 'InFile', $InFile )
     }
 
+    if ( $OutFile )
+    {
+        $requestParams.Add( 'OutFile', $OutFile )
+    }
+
     try
     {
         Write-Debug ".. $($MyInvocation.MyCommand.Name): sending request to JS7 Web Service $($requestUrl)"
@@ -473,14 +478,19 @@ function Invoke-JS7WebRequest( [string] $Path, [object] $Body, [string] $Method=
             }
         }
 
-        if ( $response -and $response.StatusCode -and $response.Content )
+        if ( $OutFile )
         {
             $response
-        } elseif ( $response -and !(isPowerShellVersion 7) ) {
-            $response
         } else {
-            $message = $response | Format-List -Force | Out-String
-            throw $message
+            if ( $response -and $response.StatusCode -and $response.Content  )
+            {
+                $response
+            } elseif ( $response -and !(isPowerShellVersion 7) ) {
+                $response
+            } else {
+                $message = $response | Format-List -Force | Out-String
+                throw $message
+            }
         }
     } catch {
         $message = $_.Exception | Format-List -Force | Out-String
