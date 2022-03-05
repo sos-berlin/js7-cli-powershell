@@ -8,6 +8,13 @@ Stores a file transfer configuration to the JOC Cockpit inventory
 File transfer configuration objects can be stored to JOC Cockpit. The configuration is passed on from an XML
 object and is converted by the cmdlet to its native JSON reperesentation.
 
+The following REST Web Service API resources are used:
+
+* /xmleditor/schema/assign
+* /xmleditor/apply
+* /xmleditor/store
+* /xmleditor/validate
+
 .PARAMETER Name
 Specifies the name of the file transfer configuration.
 The name is used to display the subtab holding the file transfer configuration in the JOC Cockpit GUI.

@@ -10,6 +10,10 @@ Order executions can be selected by workflow, order ID, folder, history status e
 
 The history information returned includes start time, end time, return code etc.
 
+The following REST Web Service API resources are used:
+
+* /orders/history
+
 .PARAMETER OrderId
 Optionally specifies the identifier of an order for which the order history should be returned.
 

@@ -11,6 +11,10 @@ that the deletion of the objects has not yet been committed with one of the cmdl
 * For deployable objects use of the cmdlet the Publish-JS7DeployableItem cmdlet with the -Delete switch commits permanent deletion.
 * For releasable objects use of the cmdlet the Publish-JS7ReleasableOItem cmdlet with the -Delete switch commits permanent deletion.
 
+The following REST Web Service API resources are used:
+
+* /inventory/trash/restore
+
 .PARAMETER Path
 Specifies the folder and sub-folders of the object.
 
@@ -81,7 +85,7 @@ param
     [Parameter(Mandatory=$True,ValueFromPipeline=$False,ValueFromPipelinebyPropertyName=$True)]
     [string] $Path,
     [Parameter(Mandatory=$True,ValueFromPipeline=$False,ValueFromPipelinebyPropertyName=$True)]
-    [ValidateSet('WORKFLOW','FILEORDERSOURCE','JOBRESOURCE','NOTICEBOARD','LOCK','INCLUDESCRIPT','WORKINGDAYSCALENDAR','NONWORKINGDAYSCALENDAR','SCHEDULE')]
+    [ValidateSet('WORKFLOW','FILEORDERSOURCE','JOBRESOURCE','NOTICEBOARD','LOCK','INCLUDESCRIPT','WORKINGDAYSCALENDAR','NONWORKINGDAYSCALENDAR','SCHEDULE',IgnoreCase = $False)]
     [string] $Type,
     [Parameter(Mandatory=$False,ValueFromPipeline=$False,ValueFromPipelinebyPropertyName=$True)]
     [string] $NewPath,

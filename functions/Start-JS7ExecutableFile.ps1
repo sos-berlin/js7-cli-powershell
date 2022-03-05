@@ -2,7 +2,7 @@ function Start-JS7ExecutableFile
 {
 <#
 .SYNOPSIS
-Starts an executable file in a Windows OS with parameters optionally for a different user account.
+Starts an executable file in a Windows OS with parameters optionally for a different user account
 
 .DESCRIPTION
 Runs the specified executable file in the context of a different user account for a Windows OS.

@@ -2,10 +2,14 @@ function Disconnect-JS7
 {
 <#
 .SYNOPSIS
-Disconnects from the JS7 REST Web Service.
+Disconnects from the JS7 REST Web Service
 
 .DESCRIPTION
 This cmdlet can be used to disconnect from the JS7 REST Web Service.
+
+The following REST Web Service API resources are used:
+
+* /authentication/logout
 
 .LINK
 about_JS7

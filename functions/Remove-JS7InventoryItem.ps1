@@ -2,13 +2,17 @@ function Remove-JS7InventoryItem
 {
 <#
 .SYNOPSIS
-Removes objects such as workflows, schedules etc. from the JOC Cockpit inventory.
+Removes objects such as workflows, schedules etc. from the JOC Cockpit inventory
 
 .DESCRIPTION
 This cmdlet removes objects such as a workflows, schedules etc. from the JOC Cockpit inventory.
 
 Consider to commit removals by deploying or releasing the object,
 see the Publish-JS7DeployableItem and  Publish-JS7ReleasableItem cmdlets.
+
+The following REST Web Service API resources are used:
+
+* /inventory/remove
 
 .PARAMETER Path
 Specifies the folder and sub-folders of the object.
@@ -67,7 +71,7 @@ param
     [Parameter(Mandatory=$True,ValueFromPipeline=$False,ValueFromPipelinebyPropertyName=$True)]
     [string] $Path,
     [Parameter(Mandatory=$True,ValueFromPipeline=$False,ValueFromPipelinebyPropertyName=$True)]
-    [ValidateSet('WORKFLOW','FILEORDERSOURCE','JOBRESOURCE','NOTICEBOARD','LOCK','INCLUDESCRIPT','WORKINGDAYSCALENDAR','NONWORKINGDAYSCALENDAR','SCHEDULE')]
+    [ValidateSet('WORKFLOW','FILEORDERSOURCE','JOBRESOURCE','NOTICEBOARD','LOCK','INCLUDESCRIPT','WORKINGDAYSCALENDAR','NONWORKINGDAYSCALENDAR','SCHEDULE',IgnoreCase = $False)]
     [string] $Type,
     [Parameter(Mandatory=$False,ValueFromPipeline=$False,ValueFromPipelinebyPropertyName=$True)]
     [string] $AuditComment,
@@ -143,7 +147,7 @@ param
                 throw ( $response | Format-List -Force | Out-String )
             }
 
-            Write-Verbose ".. $($MyInvocation.MyCommand.Name): object removed: $Path"
+            Write-Verbose ".. $($MyInvocation.MyCommand.Name): item removed: $Path"
         }
 
         Trace-JS7StopWatch -CommandName $MyInvocation.MyCommand.Name -StopWatch $stopWatch

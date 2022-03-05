@@ -10,6 +10,10 @@ Locks can be selected either by the folder of the lock location including sub-fo
 
 Resulting locks can be forwarded to other cmdlets for pipelined bulk operations.
 
+The following REST Web Service API resources are used:
+
+* /locks
+
 .PARAMETER LockPath
 Optionally specifies the path and name of a lock that should be returned.
 

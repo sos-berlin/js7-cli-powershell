@@ -10,6 +10,10 @@ This cmdlet adds an Agent to a JS7 Controller. A number of Agent properties can 
 Consider that the Agent identification specified with the -AgentId parameter cannot be modified
 for the lifetime of an Agent.
 
+The following REST Web Service API resources are used:
+
+* /agents/store
+
 .PARAMETER AgentId
 Specifies a unique identifier for an Agent. This identifier cannot be modified during the lifetime of an Agent.
 In order to modify the Agent identifier the Agent has to be removed and added.

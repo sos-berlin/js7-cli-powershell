@@ -2,7 +2,7 @@ function Remove-JS7CompletedOrder
 {
 <#
 .SYNOPSIS
-Removes an order that completed a workflow either with a cancelled or finished state.
+Removes an order that completed a workflow either with a cancelled or finished state
 
 .DESCRIPTION
 Orders in a worklfow by default are automatically removed upon completion. However, it is possible
@@ -10,6 +10,10 @@ to cause orders to remain in a workflow after completion. Such orders are either
 or in a finished state.
 
 The cmdlet causes orders to be removed after completion.
+
+The following REST Web Service API resources are used:
+
+* /orders/remove_when_terminated
 
 .PARAMETER OrderId
 Specifies the identification of an order.

@@ -2,12 +2,20 @@ function Publish-JS7ReleasableItem
 {
 <#
 .SYNOPSIS
-Releases a configuration object such as a schedule
+Releases scheduling objects such as schedules and calendars
 
 .DESCRIPTION
-This cmdlet releases a configuration object for use with any JS7 Controller.
+This cmdlet releases scheduling objects such as schedules and calendars for use with JOC Cockpit.
+Such objects are not deployced to a JS7 Controller, instead they are used for example to automatically
+create orders for the daily plan from a JOC Cockpit service.
 
 Releasing can include to permanently delete previously removed objects from the inventory.
+
+The following REST Web Service API resources are used:
+
+* /inventory/releasable
+* /inventory/releasables
+* /inventory/release
 
 .PARAMETER Path
 Specifies the folder, sub-folder and name of the object, e.g. a schedule path.
@@ -89,7 +97,7 @@ param
     [Parameter(Mandatory=$False,ValueFromPipeline=$True,ValueFromPipelinebyPropertyName=$True)]
     [string] $Path,
     [Parameter(Mandatory=$False,ValueFromPipeline=$False,ValueFromPipelinebyPropertyName=$True)]
-    [ValidateSet('INCLUDESCRIPT','SCHEDULE','WORKINGDAYSCALENDAR','NONWORKINGDAYSCALENDAR')]
+    [ValidateSet('INCLUDESCRIPT','SCHEDULE','WORKINGDAYSCALENDAR','NONWORKINGDAYSCALENDAR',IgnoreCase = $False)]
     [string[]] $Type,
     [Parameter(Mandatory=$False,ValueFromPipeline=$False,ValueFromPipelinebyPropertyName=$True)]
     [string] $Folder,
@@ -315,9 +323,9 @@ param
                 throw ( $response | Format-List -Force | Out-String )
             }
 
-            Write-Verbose ".. $($MyInvocation.MyCommand.Name): $($storeObjects.count+$deleteObjects.count) objects released"
+            Write-Verbose ".. $($MyInvocation.MyCommand.Name): $($storeObjects.count+$deleteObjects.count) items released"
         } else {
-            Write-Verbose ".. $($MyInvocation.MyCommand.Name): no objects released"
+            Write-Verbose ".. $($MyInvocation.MyCommand.Name): no items released"
         }
 
         Trace-JS7StopWatch -CommandName $MyInvocation.MyCommand.Name -StopWatch $stopWatch

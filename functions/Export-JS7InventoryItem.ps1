@@ -2,22 +2,22 @@ function Export-JS7InventoryItem
 {
 <#
 .SYNOPSIS
-Exports inventory objects, e.g. workflows, schedules etc. from JOC Cockpit
+Exports inventory items, e.g. workflows, schedules etc. from JOC Cockpit
 
 .DESCRIPTION
-This cmdlet exports inventory objects that are stored with JOC Cockpit.
+This cmdlet exports inventory items that are stored with JOC Cockpit.
 
 * Deployable Objects: use of the -Deployable parameter
-** Inventory objects such as workflows are deployed to a JS7 Controller. The -Type parameter can be used to restrict object types.
-** When exporting deployable objects then either a draft version can be used or the latest deployed version is requested by use of the -Deployed parameter.
+** Inventory items such as workflows are deployed to a JS7 Controller. The -Type parameter can be used to restrict object types.
+** When exporting deployable objects then either a draft version can be used or the latest deployed version by use of the -Deployed parameter.
 * Releasable Objects: use of the -Releasable parameter
-** Inventory objects such as calendars and schedules are not deployed to a Controller but are used by JOC Cockpit.
-** When exporting releasable objects then either a draft version can be used or the latest released version is requested by use of the -Released parameter.
+** Inventory items such as calendars and schedules are not deployed to a Controller but are used by JOC Cockpit.
+** When exporting releasable objects then either a draft version can be used or the latest released version by use of the -Released parameter.
 
 An export is performed either to backup deployable and releasable objects that later on can be imported,
-or to export objects for signing and later deployment with a JOC Cockpit operated in security level "high".
+or to export objects for signing and later deployment with a JOC Cockpit operated in security level HIGH.
 
-The process to export for signigng includes the following steps:
+The process to export objects for signigng includes the following steps:
 
 * export deployable objects to a compressed archive (.zip, .tar.gz),
 * unzip the archive to the local file system,
@@ -25,8 +25,16 @@ The process to export for signigng includes the following steps:
 * zip signed objects and signature files to a compressed archive,
 * import the archive and deploy the signed objects.
 
+The following REST Web Service API resources are used:
+
+* /inventory/deployable
+* /inventory/deployables
+* /inventory/releasable
+* /inventory/releasables
+* /inventory/export
+
 .PARAMETER Path
-Specifies the path and name of an individual inventory object that should be exported, e.g. a workflow.
+Specifies the path and name of an individual inventory item that should be exported, e.g. a workflow.
 
 .PARAMETER Type
 Optionally restricts the object type to export which is one of:
@@ -44,12 +52,12 @@ Optionally restricts the object type to export which is one of:
 ** SCHEDULE
 
 The -Type parameter can be used to restrict either deployable or releasable object types to be exported.
-Without specifying this parameter objects of any type within the areas of releasable or deployable objects are exported
+Without specifying this parameter objects of any type within the areas of releasable and deployable objects are exported
 depending on use of the -Releasable and -Deployable parameters.
 
 .PARAMETER Folder
-Optionally specifies the folder for which all included inventory objects should be exported.
-This parameter is used alternatively to the -Path parameter that specifies export of an individual inventory object.
+Optionally specifies the folder for which all included inventory items should be exported.
+This parameter is used alternatively to the -Path parameter that specifies export of an individual inventory item.
 
 .PARAMETER Recursive
 Specifies that any sub-folders should be looked up if the -Folder parameter is used.
@@ -63,7 +71,7 @@ Specifies that only releasable objects should be exported that include the objec
 * NONWORKINGDAYSCALENDAR
 * SCHEDULE
 
-If none of the parameters -Releasable or -Deployable is used then both releasable and deployable inventory objects are exported.
+If none of the parameters -Releasable or -Deployable is used then both releasable and deployable inventory items are exported.
 
 .PARAMETER Deployable
 Specifies that only deployable objects should be exported that include the object types:
@@ -74,14 +82,14 @@ Specifies that only deployable objects should be exported that include the objec
 ** NOTICEBOARD
 ** LOCK
 
-If none of the parameters -Releasable or -Deployable is used then both releasable and deployable inventory objects are exported.
+If none of the parameters -Releasable or -Deployable is used then both releasable and deployable inventory items are exported.
 
 .PARAMETER NoDraft
 Specifies that no draft versions of releasable or deployable objects will be exported but only released/deployed versions.
-Without this parameter the draft version of the inventory object will be exported if available.
+Without this parameter the draft version of the inventory item will be exported if available.
 
-If this switch is in place then depending on the presence of the -Latest parameter for deployable objects either the the latest
-deployed version or depending on availability.
+If this switch is in place then depending on the presence of the -Latest parameter for deployable objects only the latest
+deployed version will be used for export.
 
 .PARAMETER NoReleased
 Specifies that no released versions of the releasable objects will be exported but only draft versions if available.
@@ -90,6 +98,9 @@ Without this parameter any draft versions and released versions of inventory obj
 .PARAMETER NoDeployed
 Specifies that no deployed versions of deployable objects will be exported but only draft versions.
 Without this parameter the draft version of the inventory object will be exported if available.
+
+.PARAMETER Latest
+Specifies that for deployable objects the latest deployed version is eligible for export.
 
 .PARAMETER Valid
 Specifies that only valid versions of inventory draft objects are eligible for export.
@@ -102,7 +113,7 @@ deletion has not yet been confirmed by a deploy/release operation that permanent
 
 .PARAMETER ForSigning
 Specifies that deployable objects are exported for external signing and later import into a JOC Cockpit
-instance operated for security level "high".
+instance operated for security level HIGH.
 
 * The export file cannot include releasable objects as such objects are not subject to signing.
 * The export file must be created from the same JOC Cockpit instance to which it will be imported for deployment.
@@ -145,16 +156,11 @@ This cmdlet accepts pipelined objects.
 This cmdlet returns an octet-stream that can be piped to an output file, e.g. with the Out-File cmdlet.
 
 .EXAMPLE
-Export-JS7InventoryItem | Out-File /tmp/export.zip
-
-Exports all inventory objects to a zipped octet-stream that is written to a file.
-This includes deployable and releasable inventory objects.
-By default draft versions and deployed or released versions are used.
-
-.EXAMPLE
 Export-JS7InventoryItem -Folder /some_folder -FilePath /tmp/export.tar.gz -Format TAR_GZ
 
 Exports any objects from the given folder to a compressed tar file.
+This includes deployable and releasable inventory objects.
+By default draft versions and deployed or released versions are used.
 
 .EXAMPLE
 Export-JS7InventoryItem -Folder /some_folder -Deployable -FilePath /tmp/export.zip -ForSigning
@@ -182,10 +188,10 @@ Depending on availability the draft version or the latest deployed version of th
 A draft version is considered only if it is valid otherwise the deployed version is used.
 
 .EXAMPLE
-Export-JS7InventoryItem -Folder /some_folder -Deployable -File /tmp/export.zip
+Export-JS7InventoryItem -Folder /some_folder -Deployable -FilePath /tmp/export.zip
 
-Exports any deployable inventory objects such as workflows, locks etc that are available
-from the specified folder to a zipped file. The latest deployed version of the workflow is used.
+Exports any deployable inventory items such as workflows, resource locks etc. that are available
+from the specified folder to a zipped file. The latest deployed version of the objects is used.
 
 .LINK
 about_JS7
@@ -197,7 +203,7 @@ param
     [Parameter(Mandatory=$False,ValueFromPipeline=$False,ValueFromPipelinebyPropertyName=$True)]
     [string] $Path,
     [Parameter(Mandatory=$False,ValueFromPipeline=$False,ValueFromPipelinebyPropertyName=$True)]
-    [ValidateSet('WORKFLOW','FILEORDERSOURCE','JOBRESOURCE','NOTICEBOARD','LOCK','INCLUDESCRIPT','WORKINGDAYSCALENDAR','NONWORKINGDAYSCALENDAR','SCHEDULE')]
+    [ValidateSet('WORKFLOW','FILEORDERSOURCE','JOBRESOURCE','NOTICEBOARD','LOCK','INCLUDESCRIPT','WORKINGDAYSCALENDAR','NONWORKINGDAYSCALENDAR','SCHEDULE',IgnoreCase = $False)]
     [string[]] $Type,
     [Parameter(Mandatory=$False,ValueFromPipeline=$False,ValueFromPipelinebyPropertyName=$True)]
     [string] $Folder,
@@ -226,7 +232,7 @@ param
     [Parameter(Mandatory=$True,ValueFromPipeline=$False,ValueFromPipelinebyPropertyName=$True)]
     [string] $FilePath,
     [Parameter(Mandatory=$False,ValueFromPipeline=$False,ValueFromPipelinebyPropertyName=$True)]
-    [ValidateSet('ZIP','TAR_GZ')]
+    [ValidateSet('ZIP','TAR_GZ',IgnoreCase = $False)]
     [string] $Format = 'ZIP',
     [Parameter(Mandatory=$False,ValueFromPipeline=$False,ValueFromPipelinebyPropertyName=$True)]
     [string] $AuditComment,
@@ -328,6 +334,7 @@ param
                 }
 
                 $exportKey = "$($releasableObject.folder)-$($releasableObject.objectName)-$($releasableObject.objectType)"
+
                 if ( !$exportObjects.Item( $exportKey ) )
                 {
                     $exportObjects.Add( $exportKey, @{ 'area' = 'releasable'; 'path' = "$($releasableObject.folder)$($releasableObject.objectName)"; 'type' = $releasableObject.objectType; 'released' = $releasableObject.released } )
@@ -421,6 +428,7 @@ param
                 }
 
                 $exportKey = "$($deployableObject.folder)-$($deployableObject.objectName)-$($deployableObject.objectType)"
+
                 if ( !$exportObjects.Item( $exportKey ) )
                 {
                     if ( $NoDraft )
@@ -533,7 +541,6 @@ param
             }
 
             Add-Member -Membertype NoteProperty -Name 'exportFile' -value $exportFile -InputObject $body
-
 
             $deployableDraftConfigurations = @()
             $deployableDeployedConfigurations = @()
@@ -687,39 +694,21 @@ param
                     Add-Member -Membertype NoteProperty -Name 'auditLog' -value $objAuditLog -InputObject $body
                 }
 
-
                 if ( $FilePath -and (Test-Path -Path $FilePath -PathType Leaf) )
                 {
                       Remove-Item -Path $FilePath -Force
                 }
 
-#               $headers = @{'Accept' = 'application/json, text/plain, */*'; 'Accept-Encoding' = 'gzip, deflate'; 'Content-Disposition' = "attachment; filename*=UTF-8''joc-export.zip" }
+                # not used with Invoke-WebRequest -OutFile
+                # $headers = @{'Accept' = 'application/json, text/plain, */*'; 'Accept-Encoding' = 'gzip, deflate'; 'Content-Disposition' = "attachment; filename*=UTF-8''joc-export.zip" }
                 $headers = @{'Accept' = 'application/json, text/plain, */*'; 'Accept-Encoding' = 'gzip, deflate'}
 
                 [string] $requestBody = $body | ConvertTo-Json -Depth 100
                 $response = Invoke-JS7WebRequest -Path '/inventory/export' -Body $requestBody -Headers $headers -OutFile $FilePath
 
-<#
-                if ( $response.StatusCode -ne 200 )
-                {
-                    throw ( $response | Format-List -Force | Out-String )
-                }
-
-                if ( $FilePath )
-                {
-                    if ( Test-Path -Path $FilePath -PathType Leaf )
-                    {
-                        Remove-Item -Path $FilePath -Force
-                    }
-
-                    [System.Text.Encoding]::ASCII.GetString( $response.Content ) | Out-File $FilePath
-                } else {
-                    [System.Text.Encoding]::ASCII.GetString( $response.Content )
-                }
-#>
-                Write-Verbose ".. $($MyInvocation.MyCommand.Name): $($exportObjects.count) objects exported"
+                Write-Verbose ".. $($MyInvocation.MyCommand.Name): $($exportObjects.count) items exported"
             } else {
-                Write-Verbose ".. $($MyInvocation.MyCommand.Name): no objects exported"
+                Write-Verbose ".. $($MyInvocation.MyCommand.Name): no items exported"
             }
         }
 

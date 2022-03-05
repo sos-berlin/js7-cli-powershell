@@ -2,12 +2,16 @@ function Set-JS7Controller
 {
 <#
 .SYNOPSIS
-Registers a Controller and Agents.
+Registers a Controller and Agents
 
 .DESCRIPTION
 The cmdlet registers a Controller either for a Standalone Controller instance or for
 a primary and a secondary Controller Cluster instance.
 A Controller Cluster requires an Agent to be added that acts as a cluster watcher.
+
+The following REST Web Service API resources are used:
+
+* /controller/register
 
 .PARAMETER Controller
 Specifies an array of Controller instances that will be added:

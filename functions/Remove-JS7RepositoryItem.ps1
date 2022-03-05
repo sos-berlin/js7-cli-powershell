@@ -2,10 +2,14 @@ function Remove-JS7RepositoryItem
 {
 <#
 .SYNOPSIS
-Removes scheduling objects such as workflows, schedules etc. from a local Git repository.
+Removes scheduling objects such as workflows, schedules etc. from a local Git repository
 
 .DESCRIPTION
 This cmdlet removes scheduling objects such as workflows, schedules etc. from a local Git repository.
+
+The following REST Web Service API resources are used:
+
+* /inventory/repository/delete
 
 .PARAMETER Path
 Specifies the folder and sub-folders of the scheduling object to be removed.
@@ -52,12 +56,12 @@ This cmdlet accepts pipelined objects.
 This cmdlet returns no output.
 
 .EXAMPLE
-Remove-JS7InventoryItem -Path /some_folder/some_sub_folder -Type 'FOLDER'
+Remove-JS7RepositoryItem -Path /some_folder/some_sub_folder -Type 'FOLDER'
 
 Removes any scheduling objects from the indicated folder in the repository.
 
 .EXAMPLE
-Remove-JS7InventoryItem -Path /some_folder/sampleWorkflow -Type 'WORKFLOW'
+Remove-JS7ReposioryItem -Path /some_folder/sampleWorkflow -Type 'WORKFLOW'
 
 Removes the indicated worfklow "sampleWorkflow" from the repository.
 
@@ -71,7 +75,7 @@ param
     [Parameter(Mandatory=$True,ValueFromPipeline=$False,ValueFromPipelinebyPropertyName=$True)]
     [string] $Path,
     [Parameter(Mandatory=$False,ValueFromPipeline=$False,ValueFromPipelinebyPropertyName=$True)]
-    [ValidateSet('FOLDER','WORKFLOW','FILEORDERSOURCE','JOBRESOURCE','NOTICEBOARD','LOCK','INCLUDESCRIPT','WORKINGDAYSCALENDAR','NONWORKINGDAYSCALENDAR','SCHEDULE')]
+    [ValidateSet('FOLDER','WORKFLOW','FILEORDERSOURCE','JOBRESOURCE','NOTICEBOARD','LOCK','INCLUDESCRIPT','WORKINGDAYSCALENDAR','NONWORKINGDAYSCALENDAR','SCHEDULE',IgnoreCase = $False)]
     [string] $Type = 'FOLDER',
     [Parameter(Mandatory=$False,ValueFromPipeline=$False,ValueFromPipelinebyPropertyName=$True)]
     [switch] $Local,

@@ -7,6 +7,10 @@ Returns the JS7 Controller version
 .DESCRIPTION
 The cmdlet returns the version of the JS7 Controller.
 
+The following REST Web Service API resources are used:
+
+* /controller/p
+
 .EXAMPLE
 Get-JS7ControllerVersion
 

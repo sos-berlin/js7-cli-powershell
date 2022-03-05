@@ -2,10 +2,15 @@ function Get-JS7DeployableItem
 {
 <#
 .SYNOPSIS
-Returns deployable configuration objects such as workflows from the JOC Cockpit inventory.
+Returns deployable scheduling objects such as workflows from the JOC Cockpit inventory
 
 .DESCRIPTION
-This cmdlet returns deployable configuration objects from the JOC Cockpit inventory.
+This cmdlet returns deployable scheduling objects from the JOC Cockpit inventory.
+
+The following REST Web Service API resources are used:
+
+* /inventory/deployable
+* /inventory/deployables
 
 .PARAMETER Path
 Specifies the folder, sub-folder and name of the object, e.g. a workflow path.
@@ -13,7 +18,6 @@ Specifies the folder, sub-folder and name of the object, e.g. a workflow path.
 .PARAMETER Type
 Specifies the object type which is one of:
 
-* FOLDER
 * WORKFLOW
 * FILEORDERSOURCE
 * JOBRESOURCE
@@ -63,7 +67,7 @@ param
     [Parameter(Mandatory=$False,ValueFromPipeline=$True,ValueFromPipelinebyPropertyName=$True)]
     [string] $Path,
     [Parameter(Mandatory=$False,ValueFromPipeline=$False,ValueFromPipelinebyPropertyName=$True)]
-    [ValidateSet('WORKFLOW','FILEORDERSOURCE','JOBRESOURCE','NOTICEBOARD','LOCK')]
+    [ValidateSet('WORKFLOW','FILEORDERSOURCE','JOBRESOURCE','NOTICEBOARD','LOCK',IgnoreCase = $False)]
     [string[]] $Type,
     [Parameter(Mandatory=$False,ValueFromPipeline=$False,ValueFromPipelinebyPropertyName=$True)]
     [string] $Folder,

@@ -2,13 +2,20 @@ function Connect-JS7
 {
 <#
 .SYNOPSIS
-Connects to the JS7 JOC Cockpit Web Service.
+Connects to the JS7 REST Web Service available from JOC Cockpit
 
 .DESCRIPTION
-A connection to the JOC Cockpit Web Service is established including support for credentials and use of a proxy.
+A connection to the JS7 REST Web Service is established including support for credentials and use of a proxy.
 
 The cmdlet authenticates a user account and returns an access token in case of successful authentication
 that is used for subsequent requests to the Web Service.
+
+The following REST Web Service API resources are used:
+
+* /authentication/login
+* /controller/switch
+* /controller/ids
+* /controllers
 
 Caveat:
 * This cmdlet calls the Invoke-WebRequest cmdlet that may throw an error 'The response content cannot be parsed because the Internet Explorer engine
@@ -524,7 +531,7 @@ param
         }
 
         try {
-            Write-Verbose ".. $($MyInvocation.MyCommand.Name): sending request to JS7 Web Service $($authenticationUrl)"
+            Write-Verbose ".. $($MyInvocation.MyCommand.Name): sending request to JS7 REST Web Service $($authenticationUrl)"
             Write-Debug ".... Invoke-WebRequest Uri: $($requestParams.Uri)"
 
             $requestParams.Keys | ForEach-Object {
@@ -571,7 +578,7 @@ param
                     throw ( $response | Format-List -Force | Out-String )
                 }
             } else {
-                Write-Verbose ".. $($MyInvocation.MyCommand.Name): sending request to JS7 Web Service /controller/ids"
+                Write-Verbose ".. $($MyInvocation.MyCommand.Name): sending request to JS7 REST Web Service /controller/ids"
                 Write-Debug ".... Invoke-WebRequest Uri: /controller/ids"
 
                 $body = New-Object PSObject

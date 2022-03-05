@@ -7,6 +7,10 @@ Returns the configuration of a JOC Cockpit inventory item, e.g. a workflow
 .DESCRIPTION
 Any inventory objects are returned in their native JSON reperesentation.
 
+The following REST Web Service API resources are used:
+
+* /inventory/read/configuration
+
 .PARAMETER Path
 Specifies the folder, sub-folder and name of the object, e.g. a workflow path that should be
 returned from the inventory.
@@ -46,7 +50,7 @@ param
     [Parameter(Mandatory=$True,ValueFromPipeline=$True,ValueFromPipelinebyPropertyName=$True)]
     [string] $Path,
     [Parameter(Mandatory=$True,ValueFromPipeline=$False,ValueFromPipelinebyPropertyName=$True)]
-    [ValidateSet('FOLDER','WORKFLOW','FILEORDERSOURCE','JOBRESOURCE','NOTICEBOARD','LOCK','INCLUDESCRIPT','WORKINGDAYSCALENDAR','NONWORKINGDAYSCALENDAR','SCHEDULE')]
+    [ValidateSet('FOLDER','WORKFLOW','FILEORDERSOURCE','JOBRESOURCE','NOTICEBOARD','LOCK','INCLUDESCRIPT','WORKINGDAYSCALENDAR','NONWORKINGDAYSCALENDAR','SCHEDULE',IgnoreCase = $False)]
     [string] $Type
 )
     Begin

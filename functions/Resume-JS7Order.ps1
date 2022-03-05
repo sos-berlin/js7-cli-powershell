@@ -2,10 +2,14 @@ function Resume-JS7Order
 {
 <#
 .SYNOPSIS
-Resumes suspended or failed orders in a JS7 Controller.
+Resumes suspended or failed orders in a JS7 Controller
 
 .DESCRIPTION
 This cmdlet resumes orders that are suspended or failed in a JS7 Controller.
+
+The following REST Web Service API resources are used:
+
+* /orders/resume
 
 .PARAMETER OrderId
 Specifies the identifier of an order.
@@ -119,7 +123,7 @@ param
     [Parameter(Mandatory=$False,ValueFromPipeline=$False,ValueFromPipelinebyPropertyName=$True)]
     [switch] $Recursive,
     [Parameter(Mandatory=$False,ValueFromPipeline=$False,ValueFromPipelinebyPropertyName=$False)]
-    [ValidateSet('PENDING','SCHEDULED','INPROGRESS','RUNNING','SUSPENDED','WAITING','PROMPTING','FAILED','BLOCKED')]
+    [ValidateSet('PENDING','SCHEDULED','INPROGRESS','RUNNING','SUSPENDED','WAITING','PROMPTING','FAILED','BLOCKED',IgnoreCase = $False)]
     [string[]] $State,
     [Parameter(Mandatory=$False,ValueFromPipeline=$False,ValueFromPipelinebyPropertyName=$True)]
     [string] $AuditComment,

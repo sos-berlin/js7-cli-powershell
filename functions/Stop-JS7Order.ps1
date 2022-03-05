@@ -10,6 +10,10 @@ Orders are cancelled and removed by
 * a pipelined object, e.g. the output of the Get-JS7Order cmdlet
 * specifying an individual order with the -OrderId parameter.
 
+The following REST Web Service API resources are used:
+
+* /orders/cancel
+
 .PARAMETER OrderId
 Specifies the identifier of an order.
 

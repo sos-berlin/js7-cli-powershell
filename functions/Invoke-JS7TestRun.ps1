@@ -2,7 +2,7 @@ function Invoke-JS7TestRun
 {
 <#
 .SYNOPSIS
-Performs test runs for JS7.
+Performs test runs for JS7
 
 .DESCRIPTION
 The cmdlet is used to automate execution of test cases with JS7.

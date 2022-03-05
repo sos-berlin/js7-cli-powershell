@@ -12,6 +12,10 @@ JS7 releases.
 
 Consider that this cmdlet requires PowerShell version 6.0 or newer.
 
+The following REST Web Service API resources are used:
+
+* /inventory/import
+
 .PARAMETER FilePath
 Specifies the path to the archive file that includes objects for import to the JOC Cockpit inventory.
 

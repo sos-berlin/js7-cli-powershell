@@ -2,7 +2,7 @@ function Get-JS7AgentStatus
 {
 <#
 .SYNOPSIS
-Return summary information for JS7 Agents assigned the current Controller.
+Returns summary information for JS7 Agents assigned the current Controller
 
 .DESCRIPTION
 Summary information is returned for JS7 Agents that are assigned the current Controller.
@@ -10,6 +10,10 @@ Summary information is returned for JS7 Agents that are assigned the current Con
 * Summary information includes e.g. the start date and JS7 Agent release.
 
 This cmdlet can be used to check if an Agent is available.
+
+The following REST Web Service API resources are used:
+
+* /agents
 
 .PARAMETER AgentId
 Optionally specifies the unique identifier of an Agent for which informaiton is retrieved.
@@ -21,11 +25,11 @@ Specifies to return information about Agents only that are coupled with a Contro
 
 .PARAMETER Decoupled
 Specifies to return information about Agents only that are decoupled from a Controller.
-Typically this indicates either an early stage before coupling occurs or an error status.
+Typically this indicates either an early stage before coupling occurs or an error state.
 
 .PARAMETER CouplingFailed
 Specifies to return information about Agents only that could not be successfully coupled with a Controller.
-This indicates an error status.
+This indicates an error state.
 
 .PARAMETER Enabled
 Specifies to return information about enabled Agents only.
@@ -42,7 +46,7 @@ Get-JS7AgentStatus -Display
 Displays summary information about all JS7 Agents configured for the current Controller.
 
 .EXAMPLE
-Get-JS7AgentStatus -Agent agent_001 -Display
+Get-JS7AgentStatus -AgentId agent_001 -Display
 
 Returns summary information about the Agent with ID "agent_001". Formatted output is displayed.
 
@@ -84,7 +88,10 @@ param
 
     Process
     {
-        $agentIds += $AgentId
+        if ( $AgentId )
+        {
+            $agentIds += $AgentId
+        }
 
         if ( $Coupled )
         {

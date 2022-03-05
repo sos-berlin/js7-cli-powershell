@@ -7,6 +7,10 @@ Returns the XML representation of a file transfer configuration managed with the
 .DESCRIPTION
 A file transfer configuration is returned from the JOC Cockpit inventory
 
+The following REST Web Service API resources are used:
+
+* /xmleditor/read
+
 .PARAMETER Name
 Specifies the name of the file transfer configuration in the JOC Cockpit inventory.
 

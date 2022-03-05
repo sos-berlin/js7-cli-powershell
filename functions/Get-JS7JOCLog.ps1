@@ -8,6 +8,10 @@ Return the JOC Cockpit log
 Returns the latest JOC Cockpit log or the specified log file. Should the JOC Cockpit log have rotated
 then previous log files can be specified using the -Filename parameter. The list of JOC Cockpit log file names is available from the Get-JS7JOCLogFilename cmdlet.
 
+The following REST Web Service API resources are used:
+
+* /joc/log
+
 .PARAMETER Filename
 Optionally specifies a log file name. Without use of this parameter the most recent JOC Cockpit log is returned.
 A file name can be specified as returned by the list of available JOC Cockpit logs with the Get-JS7JOCLogFilename cmdlet.

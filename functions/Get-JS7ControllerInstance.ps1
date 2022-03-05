@@ -7,6 +7,11 @@ Returns information about a JS7 Controller instance from JOC Cockpit
 .DESCRIPTION
 Returns any JS7 standalone Controller instace or JS7 Controller Cluster members that are connected to JOC Cockpit.
 
+The following REST Web Service API resources are used:
+
+* /controller
+* /controllers/p
+
 .PARAMETER Id
 Specifies the ID of a JS7 Controller that was specified during installation of the product.
 If no ID is specified then the first JS7 Controller registered with JOC Cockpit will be used.
@@ -30,7 +35,7 @@ $controllers = Get-JS7ControllerInstance
 Returns the Controller standalone instance or all members of a JS7 cluster.
 
 .EXAMPLE
-$controllers = Get-JS7ControllerInstance -Id some-controllerId
+$controllers = Get-JS7ControllerInstance -Id some-controller-id
 
 Returns the Controller standalone instance or all members of a JS7 Controller cluster with the specified Controller ID.
 

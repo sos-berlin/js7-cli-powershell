@@ -2,10 +2,14 @@ function Get-JS7JOCInstance
 {
 <#
 .SYNOPSIS
-Return status information of cluster members for JS7 JOC Cockpit instances.
+Returns status information of cluster members for JS7 JOC Cockpit instances
 
 .DESCRIPTION
 Status information of each JOC Cockpit cluster member is returned.
+
+The following REST Web Service API resources are used:
+
+* /controller/components
 
 .EXAMPLE
 $cluster = Get-JS7JOCInstance

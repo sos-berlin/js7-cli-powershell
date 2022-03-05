@@ -2,19 +2,25 @@ function Publish-JS7DeployableItem
 {
 <#
 .SYNOPSIS
-Deploys a configuration object such as a workflow to a number of JS7 Controllers.
+Deploys scheduling objects such as workflows to JS7 Controllers
 
 .DESCRIPTION
-This cmdlet deploys a configuration object to a number of JS7 Controllers. Consider a workflow
+This cmdlet deploys scheduling objects to a number of JS7 Controllers. Consider for example a workflow
 that can be deployed to more than one Controller.
 
-Deployment includes that objects such as workflows are digitally signed and forwarded to a Controller.
-Depending on the security level JOC Cockpit is operated for signging is available with a general certificate,
-with a user based certificate or by external signing.
+Deployment includes that objects such as workflows are digitally signed and are forwarded to a Controller.
+Depending on the security level in use signging is available with a common private key/certificate (security level: low),
+with a user based private key/certificate (security level: medium) or by external signing (security level: high).
 
 Deployment can include to permanently delete previously removed objects from Controllers and from the inventory.
 Therefore, if a deployable object is removed, e.g. with the Remove-JS7InventoryItem cmdlet, then this removal has to
 be committed using this cmdlet for deployment.
+
+The following REST Web Service API resources are used:
+
+* /inventory/deployable
+* /inventory/deployables
+* /inventory/deploy
 
 .PARAMETER Path
 Specifies the folder, sub-folder and name of the object, for example a workflow path.
@@ -106,7 +112,7 @@ param
     [Parameter(Mandatory=$False,ValueFromPipeline=$True,ValueFromPipelinebyPropertyName=$True)]
     [string] $Path,
     [Parameter(Mandatory=$False,ValueFromPipeline=$False,ValueFromPipelinebyPropertyName=$True)]
-    [ValidateSet('WORKFLOW','FILEORDERSOURCE','JOBRESOURCE','NOTICEBOARD','LOCK')]
+    [ValidateSet('WORKFLOW','FILEORDERSOURCE','JOBRESOURCE','NOTICEBOARD','LOCK',IgnoreCase = $False)]
     [string[]] $Type,
     [Parameter(Mandatory=$False,ValueFromPipeline=$False,ValueFromPipelinebyPropertyName=$True)]
     [string] $Folder,
@@ -398,9 +404,9 @@ param
                 throw ( $response | Format-List -Force | Out-String )
             }
 
-            Write-Verbose ".. $($MyInvocation.MyCommand.Name): $($storeObjects.count + $deleteObjects.count) objects deployed"
+            Write-Verbose ".. $($MyInvocation.MyCommand.Name): $($storeObjects.count + $deleteObjects.count) items deployed"
         } else {
-            Write-Verbose ".. $($MyInvocation.MyCommand.Name): no objects deployed"
+            Write-Verbose ".. $($MyInvocation.MyCommand.Name): no items deployed"
         }
 
         Trace-JS7StopWatch -CommandName $MyInvocation.MyCommand.Name -StopWatch $stopWatch

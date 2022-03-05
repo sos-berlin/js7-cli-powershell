@@ -13,6 +13,10 @@ Schedules are selected from the JOC Cockpit inventory
 
 Resulting calendars can be forwarded to other cmdlets for pipelined bulk operations.
 
+The following REST Web Service API resources are used:
+
+* /schedules
+
 .PARAMETER SchedulePath
 Optionally specifies the path and name of a schedule that should be returned.
 

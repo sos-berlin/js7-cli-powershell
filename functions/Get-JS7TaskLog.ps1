@@ -2,12 +2,16 @@ function Get-JS7TaskLog
 {
 <#
 .SYNOPSIS
-Return the task log from the JS7 History
+Returns the task log from the JS7 History
 
 .DESCRIPTION
 Returns a task log for a given task ID. This cmdlet is mostly used for pipelined input from the
 Get-JS7TaskHistory cmdlet that allows to search the execution history of tasks and
 that returns task IDs that are used by this cmdlet to retrieve the task's log output.
+
+The following REST Web Service API resources are used:
+
+* /task/log/download
 
 .PARAMETER TaskId
 Specifies the ID that the task was running with. This information is provided by the

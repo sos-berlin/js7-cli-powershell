@@ -2,7 +2,7 @@ function Set-JS7Credentials
 {
 <#
 .SYNOPSIS
-Sets credentials that are used to authenticate with requests to the JS7 Web Services.
+Sets credentials that are used to authenticate with requests to the JS7 Web Services
 
 .DESCRIPTION
 Credentials are required to authenticate with the JS7 Web Service.

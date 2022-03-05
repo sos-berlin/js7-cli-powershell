@@ -2,10 +2,14 @@ function Add-JS7Folder
 {
 <#
 .SYNOPSIS
-Add a folder to the JOC Cockpit inventory.
+Adds a folder to the JOC Cockpit inventory
 
 .DESCRIPTION
-This cmdlet adds one or more folders to the JOC Cockpit inventory.
+This cmdlet adds folders and optionally sub-folders to the JOC Cockpit inventory.
+
+The following REST Web Service API resources are used:
+
+* /inventory/store
 
 .PARAMETER Path
 Specifies the directory, sub-directories and name of the object, e.g. a workflow path.

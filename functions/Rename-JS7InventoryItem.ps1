@@ -2,10 +2,14 @@ function Rename-JS7InventoryItem
 {
 <#
 .SYNOPSIS
-Rename an object in the JOC Cockpit inventory
+Renames an object in the JOC Cockpit inventory
 
 .DESCRIPTION
 This cmdlet renames an object in the JOC Cockpit inventory.
+
+The following REST Web Service API resources are used:
+
+* /inventory/rename
 
 .PARAMETER Path
 Specifies the folder, sub-folders and object name that should be renamed in the JOC Cockpit inventory.
@@ -70,7 +74,7 @@ param
     [Parameter(Mandatory=$True,ValueFromPipeline=$False,ValueFromPipelinebyPropertyName=$True)]
     [string] $Path,
     [Parameter(Mandatory=$True,ValueFromPipeline=$False,ValueFromPipelinebyPropertyName=$True)]
-    [ValidateSet('WORKFLOW','FILEORDERSOURCE','JOBRESOURCE','NOTICEBOARD','LOCK','INCLUDESCRIPT','WORKINGDAYSCALENDAR','NONWORKINGDAYSCALENDAR','SCHEDULE')]
+    [ValidateSet('WORKFLOW','FILEORDERSOURCE','JOBRESOURCE','NOTICEBOARD','LOCK','INCLUDESCRIPT','WORKINGDAYSCALENDAR','NONWORKINGDAYSCALENDAR','SCHEDULE',IgnoreCase = $False)]
     [string] $Type,
     [Parameter(Mandatory=$True,ValueFromPipeline=$False,ValueFromPipelinebyPropertyName=$True)]
     [string] $NewPath,
@@ -140,7 +144,7 @@ param
             throw ( $response | Format-List -Force | Out-String )
         }
 
-        Write-Verbose ".. $($MyInvocation.MyCommand.Name): object renamed: $NewPath"
+        Write-Verbose ".. $($MyInvocation.MyCommand.Name): item renamed: $NewPath"
     }
 
     End

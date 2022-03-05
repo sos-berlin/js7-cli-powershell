@@ -2,10 +2,14 @@ function Rename-JS7Folder
 {
 <#
 .SYNOPSIS
-Rename a folder in the JOC Cockpit inventory
+Renames a folder in the JOC Cockpit inventory
 
 .DESCRIPTION
 This cmdlet renames a folder in the JOC Cockpit inventory.
+
+The following REST Web Service API resources are used:
+
+* /inventory/rename
 
 .PARAMETER Path
 Specifies the folder - optionally including sub-folders - that should be renamed.

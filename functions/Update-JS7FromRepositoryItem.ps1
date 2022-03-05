@@ -2,12 +2,16 @@ function Update-JS7FromRepositoryItem
 {
 <#
 .SYNOPSIS
-Updates the JS7 inventory from scheduling objects in a local Git repository.
+Updates the JS7 inventory from scheduling objects in a local Git repository
 
 .DESCRIPTION
 This cmdlet updates scheduling objects such as a workflows, schedules etc. in the JS7 inventory from a local Git repository.
 
 Existing scheduling objects in the JS7 inventory are created or are updated if they exist.
+
+The following REST Web Service API resources are used:
+
+* /inventory/repository/update
 
 .PARAMETER Path
 Specifies the folder and sub-folders of the repository from which objects are selected for update of the JS7 inventory.
@@ -15,8 +19,6 @@ Specifies the folder and sub-folders of the repository from which objects are se
 .PARAMETER Type
 Specifies the scheduling object type that is one of:
 
-* Any object type
-** FOLDER
 * Deployable object types
 ** WORKFLOW
 ** FILEORDERSOURCE
@@ -29,7 +31,7 @@ Specifies the scheduling object type that is one of:
 ** NONWORKINGDAYSCALENDAR
 ** SCHEDULE
 
-If no object type is specified then any deployable object types will be used.
+If no object type is specified then any object types will be used.
 
 .PARAMETER Local
 Specifies that a repository holding local scheduling objects should be used.
@@ -62,21 +64,21 @@ This cmdlet accepts pipelined objects as for example from the Get-JS7RepositoryI
 This cmdlet returns no output.
 
 .EXAMPLE
-Update-JS7RepositoryItem -Path /some_folder/samples -Type 'FOLDER'
+Update-JS7FromRepositoryItem -Folder /some_folder/samples
 
-Updates the JS7 inventory from the indicated folder in the local Git repository of category ROLLOUT.
+Updates the JOC Cockpit inventory from the indicated folder in the local Git repository of category ROLLOUT.
 Depending on the JS7 Settings in use this can include workflows, resource locks etc.
 
 .EXAMPLE
-Update-JS7RepositoryItem -Path /some_folder/samples -Type 'FOLDER' -Local
+Update-JS7FromRepositoryItem -Folder /some_folder/samples -Local
 
-Updates the JS7 inventory from the indicated folder in the local Git repository of category LOCAL.
+Updates the JOC Cockpit inventory from the indicated folder in the local Git repository of category LOCAL.
 Depending on the JS7 Settings in use this can include calendars, schedules etc.
 
 .EXAMPLE
-Update-JS7RepositoryItem -Path /some_folder/samples/sampleWorkflow -Type 'WORKFLOW'
+Update-JS7FromRepositoryItem -Path /some_folder/samples/sampleWorkflow -Type 'WORKFLOW'
 
-Updates the JS7 inventory from the indicated worfklow in the local Git repository.
+Updates the JOC Cockpit inventory from the indicated worfklow in the local Git repository.
 
 .LINK
 about_JS7
@@ -88,7 +90,7 @@ param
     [Parameter(Mandatory=$False,ValueFromPipeline=$False,ValueFromPipelinebyPropertyName=$True)]
     [string] $Path,
     [Parameter(Mandatory=$False,ValueFromPipeline=$False,ValueFromPipelinebyPropertyName=$True)]
-    [ValidateSet('WORKFLOW','FILEORDERSOURCE','JOBRESOURCE','NOTICEBOARD','LOCK','INCLUDESCRIPT','WORKINGDAYSCALENDAR','NONWORKINGDAYSCALENDAR','SCHEDULE')]
+    [ValidateSet('WORKFLOW','FILEORDERSOURCE','JOBRESOURCE','NOTICEBOARD','LOCK','INCLUDESCRIPT','WORKINGDAYSCALENDAR','NONWORKINGDAYSCALENDAR','SCHEDULE',IgnoreCase = $False)]
     [string] $Type,
     [Parameter(Mandatory=$False,ValueFromPipeline=$False,ValueFromPipelinebyPropertyName=$True)]
     [string] $Folder,

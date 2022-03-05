@@ -2,11 +2,15 @@ function Remove-JS7Agent
 {
 <#
 .SYNOPSIS
-Removes an Agent from a Controller and from JOC Cockpit.
+Removes an Agent from a Controller and from JOC Cockpit
 
 .DESCRIPTION
 This cmdlet removes an Agent. It is required to complete or to cancel any orders attached the Agent
 prior to removing the Agent.
+
+The following REST Web Service API resources are used:
+
+* /agent/remove
 
 .PARAMETER AgentId
 Specifies a unique identifier for an Agent. This identifier cannot be modified during the lifetime of an Agent.

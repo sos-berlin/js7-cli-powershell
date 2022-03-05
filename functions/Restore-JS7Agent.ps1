@@ -12,6 +12,10 @@ will loose the information about assigned Agents.
 
 Use of this cmdlet restores the Agent assignment for the given Controller.
 
+The following REST Web Service API resources are used:
+
+* /agents/reassign
+
 .PARAMETER AuditComment
 Specifies a free text that indicates the reason for the current intervention, e.g. "business requirement", "maintenance window" etc.
 

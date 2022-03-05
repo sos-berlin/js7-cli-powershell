@@ -18,6 +18,10 @@ Depending on the security level that JOC Cockpit is operated for one of the foll
 * public key/certificate if security level HIGH is used.
 * public key/certificate and private key if security level LOW or MEDIUM are used.
 
+The following REST Web Service API resources are used:
+
+* /profile/key
+
 .OUTPUTS
 This cmdlet returns an object with public key/certificate and optionally private key items.
 
@@ -69,7 +73,7 @@ param
 
         if ( $response.StatusCode -eq 200 )
         {
-            $returnKey = ( $response.Content | ConvertFrom-JSON )
+            $returnKey = ( $response.Content | ConvertFrom-Json )
         } else {
             throw ( $response | Format-List -Force | Out-String )
         }

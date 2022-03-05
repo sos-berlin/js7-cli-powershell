@@ -7,6 +7,10 @@ Return the list of available JOC Cockpit log file names
 .DESCRIPTION
 Returns the list of JOC Cockpit log file names.
 
+The following REST Web Service API resources are used:
+
+* /joc/logs
+
 .OUTPUTS
 This cmdlet returns an array of JOC Cockpit log file names.
 

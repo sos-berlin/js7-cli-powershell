@@ -2,10 +2,15 @@ function Remove-JS7FileTransferItem
 {
 <#
 .SYNOPSIS
-Removes file transfer configurations from the JOC Cockpit inventory.
+Removes file transfer configurations from the JOC Cockpit inventory
 
 .DESCRIPTION
 This cmdlet removes file transfer configurations from the JOC Cockpit inventory.
+
+The following REST Web Service API resources are used:
+
+* /xmleditor/read
+* /xmleditor/remove
 
 .PARAMETER Name
 Specifies the name of the file transfer configuration.

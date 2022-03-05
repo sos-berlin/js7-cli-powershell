@@ -2,11 +2,15 @@ function New-JS7DailyPlanOrder
 {
 <#
 .SYNOPSIS
-Create daily plan orders for a number of JS7 Controllers
+Creates daily plan orders for a number of JS7 Controllers
 
 .DESCRIPTION
 Creates daily plan orders for a number of JS7 Controllers. Orders can be submitted to any
 JS7 Controllers that are deployed the respective workflows.
+
+The following REST Web Service API resources are used:
+
+* /daily_plan/orders/generate
 
 .PARAMETER DailyPlanDate
 Specifies the date for which daily plan orders should be created.

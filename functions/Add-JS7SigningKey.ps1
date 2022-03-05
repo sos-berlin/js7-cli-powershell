@@ -18,6 +18,10 @@ Depending on the security level that JOC Cockpit is operated for one of the foll
 * public key/certificate if security level HIGH is used.
 * public key/certificate and private key if security level LOW or MEDIUM are used.
 
+The following REST Web Service API resources are used:
+
+/profile/key/store
+
 .PARAMETER KeyAlgorithm
 JS7 supports the following key algorithms: PGP, RSA and ECDSA.
 
@@ -91,7 +95,7 @@ about_JS7
 param
 (
     [Parameter(Mandatory=$True,ValueFromPipelinebyPropertyName=$True)]
-    [ValidateSet('PGP','RSA','ECDSA')]
+    [ValidateSet('PGP','RSA','ECDSA',IgnoreCase = $False)]
     [string] $KeyAlgorithm,
     [Parameter(Mandatory=$False,ValueFromPipelinebyPropertyName=$True)]
     [string] $PrivateKey,

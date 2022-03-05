@@ -2,7 +2,7 @@ function Remove-JS7Folder
 {
 <#
 .SYNOPSIS
-Removes a folder from the JOC Cockpit inventory.
+Removes a folder from the JOC Cockpit inventory
 
 .DESCRIPTION
 This cmdlet marks for deletion a folder and its contents, i.e. deployable and releasable objects
@@ -12,6 +12,10 @@ The objects from the folder are not immediately erased, instead this change has 
 
 * For deployable objects use of the cmdlet the Publish-JS7DeployableItem cmdlet with the -Delete switch is required.
 * For releasable objects use of the cmdlet the Publish-JS7ReleasableItem cmdlet with the -Delete switch is required.
+
+The following REST Web Service API resources are used:
+
+* /inventory/remove/folder
 
 .PARAMETER Folder
 Specifies the folder and optionally sub-folders to be removed.

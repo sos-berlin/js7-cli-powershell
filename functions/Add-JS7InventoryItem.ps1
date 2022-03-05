@@ -2,11 +2,26 @@ function Add-JS7InventoryItem
 {
 <#
 .SYNOPSIS
-Add a configuration object such as a workflow from a JSON file to the JOC Cockpit inventory
+Adds a scheduling object such as a workflow from a PowerShell object to the JOC Cockpit inventory
 
 .DESCRIPTION
-This cmdlet reads configuration objects from JSON files and stores them with JOC Cockpit.
-Consider that imported objects have to be deployed or released with the Deploy-JS7DeployableObject and Deploy-JS7ReleasableObject cmdlets.
+Scheduling objects can be represented in JSON format, however, they have to be converted to PowerShell objects
+to be processed by the cmdlet.
+
+Basic examples how to convert JSON to PowerShell objects:
+
+* '{ "limit": 1 }' | ConvertFrom-Json
+** The JSON representation is converted from a string to a PowerShell object
+
+* Get-Content /tmp/myForkExample.workflow.json -Raw | ConvertFrom-Json -Depth 100
+** The contents of a file holding the JSON representation is converted to a PowerShell object
+
+This cmdlet accepts scheduling objects and stores them with the JOC Cockpit inventory.
+Consider that added objects have to be deployed or released with the Deploy-JS7DeployableItem and Deploy-JS7ReleasableItem cmdlets.
+
+The following REST Web Service API resources are used:
+
+* /inventory/store
 
 .PARAMETER Path
 Specifies the folder, sub-folder and name of the object to be added, e.g. a workflow path.
@@ -61,7 +76,7 @@ This cmdlet returns no output.
 .EXAMPLE
 Add-JS7InventoryItem -Path /some/directory/sampleLock -Type 'LOCK' -Item ( '{ "limit": 1 }' | ConvertFrom-Json )
 
-On-the-fly adds a resource lock to the invnetory. The JSON document for the resource lock is specified with the -Item parameter.
+On-the-fly adds a resource lock to the inventory. The JSON document for the resource lock is specified with the -Item parameter.
 
 .EXAMPLE
 Add-JS7InventoryItem -Path /some/directory/sampleLock -Type 'LOCK' -Item (Get-Content /tmp/myForkExample.workflow.json -Raw | ConvertFrom-Json -Depth 100)
@@ -78,7 +93,7 @@ param
     [Parameter(Mandatory=$True,ValueFromPipeline=$False,ValueFromPipelinebyPropertyName=$True)]
     [string] $Path,
     [Parameter(Mandatory=$True,ValueFromPipeline=$False,ValueFromPipelinebyPropertyName=$True)]
-    [ValidateSet('WORKFLOW','FILEORDERSOURCE','JOBRESOURCE','NOTICEBOARD','LOCK','INCLUDESCRIPT','WORKINGDAYSCALENDAR','NONWORKINGDAYSCALENDAR','SCHEDULE')]
+    [ValidateSet('WORKFLOW','FILEORDERSOURCE','JOBRESOURCE','NOTICEBOARD','LOCK','INCLUDESCRIPT','WORKINGDAYSCALENDAR','NONWORKINGDAYSCALENDAR','SCHEDULE',IgnoreCase = $False)]
     [string] $Type,
     [Parameter(Mandatory=$True,ValueFromPipeline=$False,ValueFromPipelinebyPropertyName=$True)]
     [object] $Item,
@@ -154,7 +169,7 @@ param
             throw ( $response | Format-List -Force | Out-String )
         }
 
-        Write-Verbose ".. $($MyInvocation.MyCommand.Name): object added to inventory: $Path"
+        Write-Verbose ".. $($MyInvocation.MyCommand.Name): item added to inventory: $Path"
     }
 
     End

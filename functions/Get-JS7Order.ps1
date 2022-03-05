@@ -13,6 +13,11 @@ Orders are selected from the JS7 Controller
 
 Resulting orders can be forwarded to other cmdlets for pipelined bulk operations.
 
+The following REST Web Service API resources are used:
+
+* /order
+* /orders
+
 .PARAMETER OrderId
 Optionally specifies the identifier of an order that should be returned.
 

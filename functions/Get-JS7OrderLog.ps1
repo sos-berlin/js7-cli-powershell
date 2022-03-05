@@ -2,12 +2,16 @@ function Get-JS7OrderLog
 {
 <#
 .SYNOPSIS
-Read the order log from the JS7 History
+Reads the order log from the JS7 History
 
 .DESCRIPTION
 Reads an order log for a given workflow, order ID and history ID. This cmdlet is mostly used for pipelined input from the
 Get-JS7OrderHistory cmdlet that allows to search the execution history of orders and
 that returns history IDs that are used by this cmdlet to retrieve the order's log output.
+
+The following REST Web Service API resources are used:
+
+* /order/log/download
 
 .PARAMETER HistoryId
 Specifies the history ID that the order was running for. This information is provided by the

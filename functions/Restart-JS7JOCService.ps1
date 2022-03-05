@@ -12,6 +12,10 @@ JOC Cockpit instances as e.g. offered with the Switch-JS7JOCInstance cmdlet.
 Consider that restart of a JOC Cockpit service can be performed when being connected to the
 currently active JOC Cockpit instance only.
 
+The following REST Web Service API resources are used:
+
+* /joc/cluster/restart
+
 .PARAMETER Service
 Specifies the the service to be restarted which is one of:
 

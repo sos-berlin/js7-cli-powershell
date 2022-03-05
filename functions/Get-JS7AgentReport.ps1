@@ -2,16 +2,20 @@ function Get-JS7AgentReport
 {
 <#
 .SYNOPSIS
-Return reporting information about job executions from a JS7 Agent.
+Returns reporting information about job executions from a JS7 Agent
 
 .DESCRIPTION
 Reporting information about job executions is returned from a JS7 Agent.
 
-* Reporting information includes e.g. the number of successfully executed tasks with an Agent.
+Reporting information includes e.g. the number of successfully executed tasks with an Agent.
+
+The following REST Web Service API resources are used:
+
+* /report/agents
 
 .PARAMETER Agents
 Specifies an array of URLs that point to Agents. This is useful if specific Agents
-should be checked. Without this parameter all Agents configured for a Controller will be checked.
+should be checked. Without this parameter all Agents registered with a Controller will be checked.
 
 .PARAMETER DateFrom
 Specifies the date starting from which job executions are reported.
@@ -28,9 +32,9 @@ Get-JS7AgentReport -Display -DateFrom 2020-01-01
 Displays reporting information about job executions sind first of January 2020.
 
 .EXAMPLE
-Get-JS7AgentReport -Agents http://localhost:4445 -Display
+Get-JS7AgentReport -Agents http://host-a:4445,http://host-b:4445 -Display
 
-Returns reporting information about Agent job executions for today. Formatted output is displayed.
+Returns reporting information about job executions with the indicated Agents for today. Formatted output is displayed.
 
 .EXAMPLE
 $report = Get-JS7AgentReport -DateFrom 2020-04-01 -DateTo 2020-06-30

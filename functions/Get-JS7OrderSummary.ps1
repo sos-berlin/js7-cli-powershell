@@ -8,6 +8,9 @@ Returns information about successful and failed order execution
 Summary information is returned that indicates the number of successful and failed
 orders in a given period.
 
+The following REST Web Service API resources are used:
+
+* /orders/overview/summary
 
 .PARAMETER DateFrom
 Specifies the date starting from which history items should be returned.

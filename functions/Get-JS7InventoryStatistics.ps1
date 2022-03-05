@@ -7,6 +7,10 @@ Returns statistics information about the JOC Cockpit inventory
 .DESCRIPTION
 Statistics informationn includes the number of workflows, jobs etc. from the JOC Cockpit inventory
 
+The following REST Web Service API resources are used:
+
+* /inventory/statistics
+
 .OUTPUTS
 This cmdlet returns an array of statistics information items.
 

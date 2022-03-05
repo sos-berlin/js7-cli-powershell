@@ -2,10 +2,17 @@ function Get-JS7ReleasableItem
 {
 <#
 .SYNOPSIS
-Returns releasable scheduling objects such as schedules from the JOC Cockpit inventory.
+Returns releasable scheduling objects such as schedules from the JOC Cockpit inventory
 
 .DESCRIPTION
 This cmdlet returns releasable scheduling objects from the JOC Cockpit inventory.
+Such objects are not deployed to Controllers and Agents but are used by JOC Cockpit services
+for example to automatically create orders for the daily plan.
+
+The following REST Web Service API resources are used:
+
+* /inventory/releasable
+* /inventory/releasables
 
 .PARAMETER Path
 Specifies the folder, sub-folder and name of the object, e.g. a schedule path.
@@ -60,7 +67,7 @@ param
     [Parameter(Mandatory=$False,ValueFromPipeline=$True,ValueFromPipelinebyPropertyName=$True)]
     [string] $Path,
     [Parameter(Mandatory=$False,ValueFromPipeline=$False,ValueFromPipelinebyPropertyName=$True)]
-    [ValidateSet('INCLUDESCRIPT','SCHEDULE','WORKINGDAYSCALENDAR','NONWORKINGDAYSCALENDAR')]
+    [ValidateSet('INCLUDESCRIPT','SCHEDULE','WORKINGDAYSCALENDAR','NONWORKINGDAYSCALENDAR',IgnoreCase = $False)]
     [string[]] $Type,
     [Parameter(Mandatory=$False,ValueFromPipeline=$False,ValueFromPipelinebyPropertyName=$True)]
     [string] $Folder,

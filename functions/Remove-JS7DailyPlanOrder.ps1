@@ -7,6 +7,10 @@ Removes daily plan orders from a number of JS7 Controllers
 .DESCRIPTION
 Removes daily plan orders from a number of JS7 Controllers.
 
+The following REST Web Service API resources are used:
+
+* /daily_plan/orders/delete
+
 .PARAMETER OrderId
 Optionally specifies the order ID of the daily plan order that should be removed.
 

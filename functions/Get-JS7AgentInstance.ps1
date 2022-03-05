@@ -2,10 +2,14 @@ function Get-JS7AgentInstance
 {
 <#
 .SYNOPSIS
-Returns Agent instances assigned the current JS7 Controller.
+Returns Agent instances assigned the current JS7 Controller
 
 .DESCRIPTION
 Returns a list of Agent instances that are assigned the current JS7 Controller.
+
+The following REST Web Service API resources are used:
+
+* /agents/p
 
 .PARAMETER Enabled
 Specifies to return only enabled Agents.

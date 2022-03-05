@@ -2,46 +2,60 @@ function Send-JS7Mail
 {
 <#
 .SYNOPSIS
-Send e-mail
+Sends e-mail
+
 .DESCRIPTION
 This cmdlet can be used to send e-mail.
 
 The cmdlet will not work for mail servers that enforce SMTP over SSL instead of TLS, see https://docs.microsoft.com/en-us/dotnet/api/system.net.mail.smtpclient.enablessl?view=net-5.0
+
 .PARAMETER Server
 Host name or IP address of the SMTP mail server.
+
 .PARAMETER Port
 Numeric port for the SMTP protocol:
 * Basic SMTP frequently makes use of port 25.
 * Explicit SSL frequently makes use of port 587.
 * Implicit SSL frequently makes use of port 465.
+
 .PARAMETER From
 The e-mail address that sends the information.
+
 .PARAMETER To
 The recipient of the e-mail.
+
 .PARAMETER Subject
 The subject of the e-mail.
+
 .PARAMETER Body
 The body of the e-mail. By default the body is plain text.
 When using HTML e-mail consider to use the -BodyAsHtml switch.
+
 .PARAMETER Cc
 The carbon copy recipients of e-mail.
+
 .PARAMETER Bcc
 The blind carbon copy recipients of e-mail.
+
 .PARAMETER Attachments
 Accepts an array of file names including the full path that should be attached to the e-mail.
+
 .PARAMETER Credential
 The credential including user name and password of the account that authenticates with the SMTP mail server.
 This parameter hqs to be specified for SMTP mail servers that require authentication.
 
 A credential object can be created like this:
 $mailCredential = New-Object System.Net.NetworkCredential( "info@sos-berlin.com", "secret" )
+
 .PARAMETER Timeout
 The timout in milliseconds that JS7 will wait for the connection to the mail server to be established.
 
 Default: 15000
+
 .PARAMETER UseSSL
 Forces one of Explicit SSL or Implicit SSL to be used.
 Without this switch e-mail body and credentials will be sent as unencrypted plain text through the network.
+
 .PARAMETER SSLProtocol
 This parameter can be used to specify the TLS protocol version that should be used. The protocol version is agreed
 on between the mail server and the PowerShell client. Both server and client have to identify a common protocol version.
@@ -56,6 +70,7 @@ on between the mail server and the PowerShell client. Both server and client hav
 .PARAMETER UseDefaultCredentials
 This parameter specifies that default credentials of the logged in user should be used if
 SMTP authentication is required.
+
 .EXAMPLE
 Send-JS7Mail -Server 'smtp.example.com' -Port 25 -To 'user@example.com' -Subject 'some subject' -Body '<html><head><body>Hi there</body></head></html>' -BodyAsHtml -UseSSL
 

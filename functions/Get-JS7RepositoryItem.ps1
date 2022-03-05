@@ -2,7 +2,7 @@ function Get-JS7RepositoryItem
 {
 <#
 .SYNOPSIS
-Returns a list of scheduling objects from a local Git repository.
+Returns a list of scheduling objects from a local Git repository
 
 .DESCRIPTION
 A list of scheduling objects such as workflows etc. are returned from a local Git repository
@@ -11,6 +11,10 @@ A list of scheduling objects such as workflows etc. are returned from a local Gi
 * by the folder of the item location optionally including sub-folders.
 
 Resulting items can be forwarded to other cmdlets for pipelined bulk operations.
+
+The following REST Web Service API resources are used:
+
+* /inventory/repository/read
 
 .PARAMETER Folder
 Specifies the repository folder for which items should be returned.

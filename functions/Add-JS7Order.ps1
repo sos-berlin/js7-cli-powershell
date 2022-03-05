@@ -2,10 +2,14 @@ function Add-JS7Order
 {
 <#
 .SYNOPSIS
-Adds an order to a workflow in the JS7 Controller
+Adds an order to a workflow in a JS7 Controller
 
 .DESCRIPTION
 Creates a temporary order for execution with the specified workflow.
+
+The following REST Web Service API resources are used:
+
+* /orders/add
 
 .PARAMETER WorkflowPath
 Specifies the path and name of a workflow for which an order should be added.

@@ -9,6 +9,10 @@ The cmdlets tests the connection between JOC Cockpit and a Controller instance.
 A standalone Controller instance or the active or passive member of a Controller cluster can be
 tested to be accessible.
 
+The following REST Web Service API resources are used:
+
+* /controller/test
+
 .PARAMETER Url
 Specifies the Url of the Controller instance to be tested.
 

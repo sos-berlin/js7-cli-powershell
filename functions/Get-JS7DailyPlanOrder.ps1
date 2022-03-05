@@ -7,6 +7,10 @@ Returns the daily plan orders for workflows scheduled for a JS7 Controller
 .DESCRIPTION
 The daily plan orders for workflows are returned.
 
+The following REST Web Service API resources are used:
+
+* /daily_plan/orders
+
 .PARAMETER WorkflowPath
 Optionally specifies the path and name of a workflow for which daily plan orders should be returned.
 
@@ -67,11 +71,11 @@ This parameter takes precedence over the -DateTo parameter.
 Specifies the timezone to which dates should be converted in the daily plan information.
 A timezone can e.g. be specified like this:
 
-  Get-JSDailyPlan -Timezone (Get-Timezone -Id 'GMT Standard Time')
+  Get-JSDailyPlanOrder -Timezone (Get-Timezone -Id 'GMT Standard Time')
 
 All dates in JobScheduler are UTC and can be converted e.g. to the local time zone like this:
 
-  Get-JSDailyPlan -Timezone (Get-Timezone)
+  Get-JSDailyPlanOrder -Timezone (Get-Timezone)
 
 Default: Dates are returned in UTC.
 

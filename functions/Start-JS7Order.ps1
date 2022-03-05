@@ -7,6 +7,11 @@ Starts an existing order for the JS7 Controller
 .DESCRIPTION
 Start an existing order for the JS7 Controller and optionally adjust the start time and variables.
 
+The following REST Web Service API resources are used:
+
+* /orders/add
+* /orders/cancel
+
 .PARAMETER OrderId
 Specifies the identifier of the order.
 

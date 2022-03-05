@@ -13,6 +13,10 @@ Calendars are selected from the JOC Cockpit inventory
 
 Resulting calendars can be forwarded to other cmdlets for pipelined bulk operations.
 
+The following REST Web Service API resources are used:
+
+* /calendars
+
 .PARAMETER CalendarPath
 Optionally specifies the path and name of a calendar that should be returned.
 

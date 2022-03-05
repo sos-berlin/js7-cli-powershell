@@ -12,6 +12,10 @@ In a final step the Controller reconnects to the Agent and deploys any required 
 It is recommended to first check the state of orders prior to resetting the Agent and to complete or to cancel any attached orders.
 Consider that orders have to be re-submitted to an Agent after reset.
 
+The following REST Web Service API resources are used:
+
+* /agent/reset
+
 .PARAMETER AgentId
 Specifies a unique identifier for an Agent. This identifier cannot be modified during the lifetime of an Agent.
 In order to modify the Agent identifier the Agent has to be removed and added.

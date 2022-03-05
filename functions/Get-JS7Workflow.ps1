@@ -10,6 +10,10 @@ Workflows can be selected either by the folder of the workflow location includin
 
 Resulting workflows can be forwarded to other cmdlets for pipelined bulk operations.
 
+The following REST Web Service API resources are used:
+
+* /workflows
+
 .PARAMETER WorkflowPath
 Optionally specifies the path and name of a workflow that should be returned.
 

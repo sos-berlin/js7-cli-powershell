@@ -2,11 +2,15 @@ function Get-JS7JOCProperties
 {
 <#
 .SYNOPSIS
-Returns JS7 properties
+Returns JS7 JOC Cockpit properties
 
 .DESCRIPTION
-A number of JS7 properties can be specified with the JOC Cockpit joc.properties file.
+A number of properties can be specified with the JOC Cockpit Settings page.
 This cmdlet returns the list of active properties.
+
+The following REST Web Service API resources are used:
+
+* /joc/properties
 
 .EXAMPLE
 $props = Get-JS7JOCProperties
@@ -31,7 +35,7 @@ param
 
         if ( $response.StatusCode -eq 200 )
         {
-            $requestResult = ( $response.Content | ConvertFrom-JSON )
+            $requestResult = ( $response.Content | ConvertFrom-Json )
 
             if ( !$requestResult )
             {

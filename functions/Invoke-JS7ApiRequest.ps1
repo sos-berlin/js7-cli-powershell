@@ -2,7 +2,7 @@ function Invoke-JS7ApiRequest
 {
 <#
 .SYNOPSIS
-Sends a request to the JS7 REST Web Service.
+Sends a request to the JS7 REST Web Service
 
 .DESCRIPTION
 The JS7 REST Web Service accepts JSON based requests. This cmdlet therefore is generic to allow

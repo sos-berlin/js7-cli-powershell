@@ -7,6 +7,10 @@ Cancels daily plan orders from a number of JS7 Controllers
 .DESCRIPTION
 Cancels daily plan orders from a number of JS7 Controllers.
 
+The following REST Web Service API resources are used:
+
+* /orders/daily_plan/cancel
+
 .PARAMETER OrderId
 Optionally specifies the order ID of the daily plan order that should be cancelled.
 

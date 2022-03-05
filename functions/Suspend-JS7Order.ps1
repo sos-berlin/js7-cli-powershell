@@ -2,7 +2,7 @@ function Suspend-JS7Order
 {
 <#
 .SYNOPSIS
-Suspends an order in the JS7 Controller.
+Suspends an order in the JS7 Controller
 
 .DESCRIPTION
 This cmdlet suspends an order in a JS7 Controller.
@@ -11,6 +11,10 @@ Suspended orders can later on be resumed by use of the Resume-JS7Order cmdlet.
 If an order is in a running state, for example if a job is executed for the order then by default the
 Agent will wait for that job to be completed before suspending the order. However, this behavior can be
 changed by instructing the Agent to immediately kill running orders.
+
+The following REST Web Service API resources are used:
+
+* /orders/suspend
 
 .PARAMETER OrderId
 Specifies the identifier of the order.

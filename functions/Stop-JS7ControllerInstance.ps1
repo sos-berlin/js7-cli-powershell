@@ -2,11 +2,18 @@ function Stop-JS7ControllerInstance
 {
 <#
 .SYNOPSIS
-Stops a JS7 Controller instance.
+Stops a JS7 Controller instance
 
 .DESCRIPTION
 The stop of a Controller instance is performed and optionally the instance fails over
 to the passive cluster member in a JS7 Controller cluster.
+
+The following REST Web Service API resources are used:
+
+* /controller/abort
+* /controller/abort_and_restart
+* /controller/restart
+* /controller/terminate
 
 .PARAMETER Url
 Optionally the Url of the Controller instance to be stopped can be specified.
@@ -109,7 +116,7 @@ param
     [Parameter(Mandatory=$False,ValueFromPipeline=$False,ValueFromPipelinebyPropertyName=$False)]
     [Uri] $Url,
     [Parameter(Mandatory=$False,ValueFromPipeline=$False,ValueFromPipelinebyPropertyName=$True)]
-    [ValidateSet('terminate','abort')] [string] $Action = 'terminate',
+    [ValidateSet('terminate','abort',IgnoreCase = $False)] [string] $Action = 'terminate',
     [Parameter(Mandatory=$False,ValueFromPipeline=$False,ValueFromPipelinebyPropertyName=$True)]
     [switch] $Restart,
     [Parameter(Mandatory=$False,ValueFromPipeline=$False,ValueFromPipelinebyPropertyName=$False)]

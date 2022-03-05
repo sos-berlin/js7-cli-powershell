@@ -7,6 +7,10 @@ Switches the role of the active JS7 JOC Cockpit instance in a cluster
 .DESCRIPTION
 During switchover the active JOC Cockpit instance becomes passive and vice versa.
 
+The following REST Web Service API resources are used:
+
+* /joc/cluster/switch_member
+
 .PARAMETER MemberId
 Specifies the identification of the passive JOC Cockpit cluster member that should become active.
 This information is provided with the Get-JS7JOCInstance cmdlet that returns an array of passive cluster members.

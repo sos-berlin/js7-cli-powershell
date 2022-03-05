@@ -7,6 +7,10 @@ Confirms a prompting order
 .DESCRIPTION
 Workflows can use a prompt instruction to put orders on hold until confirmation.
 
+The following REST Web Service API resources are used:
+
+* /orders/confirm
+
 .PARAMETER OrderId
 Specifies the identifier of an order.
 

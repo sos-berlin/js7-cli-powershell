@@ -9,6 +9,10 @@ Return the list of dates that are included with a calendar.
 
 Past and future dates can be retrieved.
 
+The following REST Web Service API resources are used:
+
+* /calendar/dates
+
 .PARAMETER CalendarPath
 Specifies the path and name of a calendar that should be returned.
 
@@ -40,7 +44,7 @@ Returns the calendar dates for the next 30 days.
 .EXAMPLE
 $dates = Get-JS7Calendar -WorkingDays | Get-JS7calendarDates
 
-Retursn the dates from any working day calendars available with the inventory.
+Returns the dates from any working day calendars available with the inventory.
 
 .LINK
 about_JS7

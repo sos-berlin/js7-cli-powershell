@@ -2,7 +2,7 @@ function Restore-JS7Folder
 {
 <#
 .SYNOPSIS
-Restores a removed folder from the JOC Cockpit inventory.
+Restores a removed folder from the JOC Cockpit inventory
 
 .DESCRIPTION
 This cmdlet restores a folder and its contents that have perviously been removed provided
@@ -10,6 +10,10 @@ that the deletion of objects has not yet been committed with one of the cmdlets:
 
 * For deployable objects use of the cmdlet the Publish-JS7DeployableItem cmdlet with the -Delete switch commits permanent deletion.
 * For releasable objects use of the cmdlet the Publish-JS7ReleasableItem cmdlet with the -Delete switch commits permanent deletion.
+
+The following REST Web Service API resources are used:
+
+* /inventory/trash/restore
 
 .PARAMETER Path
 Specifies the folder and optionally sub-folders to be removed.

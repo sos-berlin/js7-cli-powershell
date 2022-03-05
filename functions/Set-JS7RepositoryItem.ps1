@@ -2,10 +2,20 @@ function Set-JS7RepositoryItem
 {
 <#
 .SYNOPSIS
-Stores scheduling objects from the JS7 inventory to a local Git repository.
+Stores scheduling objects from the JS7 inventory to a local Git repository
 
 .DESCRIPTION
-This cmdlet stores JS7 scheduling objects to a local Git repository.
+This cmdlet stores JS7 scheduling objects to a local Git repository. The JS7 settings
+determine which object types such as schedules, workflows are considered for a repository
+of category LOCAL and of category ROLLOUT respectively.
+
+The following REST Web Service API resources are used:
+
+* /inventory/deployable
+* /inventory/deployables
+* /inventory/releasable
+* /inventory/releasables
+* /inventory/repository/store
 
 .PARAMETER Path
 Specifies the folder, sub-folder and name of the scheduling object, for example a workflow path,
@@ -87,27 +97,28 @@ This cmdlet accepts pipelined objects.
 This cmdlet returns no output.
 
 .EXAMPLE
+Set-JSRepositoryItem -Folder /TestCases/sampleWorkflows -Recursive
+
+Stores any scheduling objects of the indicated folder and sub-folders to the repository of category ROLLOUT.
+
+.EXAMPLE
 Set-JS7RepositoryItem -ControllerId testsuite,standalone -Path /TestCases/sampleWorkflow_001 -Type 'WORKFLOW'
 
-Deploys the specified workflow from the indicated path to both Controller instances.
+Stores the workflow from the specified path to the local repository of category ROLLOUT provided that
+the workflow has previously been deployed to both indicated Controller instances.
 
 .EXAMPLE
-Set-JSRepositoryItem -ControllerId testsuite -Folder /TestCases/sampleWorkflows
+Set-JS7RepositoryItem -ControllerId testsuite -Folder /Samples -NoDraft
 
-Stores any scheduling objects previously deployed to the indicated Controller
-to the repository.
-
-.EXAMPLE
-Set-JS7RepositoryItem -ControllerId testsuite -Folder /Samples
-
-Stores any deployable objects such as workflows from the specified folder
-to the repository. No sub-folders are considered.
+Stores any objects such as workflows, resource locks etc from the specified folder
+to the repository of category ROLLOUT. No sub-folders and no draft versions of objects are considered.
 
 .EXAMPLE
 Set-JS7RepositoryItem -ControllerId testsuite -Folder /Samples -Recursive -Local
 
-Stores any deployable objects such as workflows from the specified folder recursively
-to the repository.
+Stores any objects such as job resources and schedules from the specified folder recursively
+to the repository of category LOCAL. Deployable objects arec considered only if
+previously deployed to the indicated Controller.
 
 .LINK
 about_JS7
@@ -119,7 +130,7 @@ param
     [Parameter(Mandatory=$False,ValueFromPipeline=$True,ValueFromPipelinebyPropertyName=$True)]
     [string] $Path,
     [Parameter(Mandatory=$False,ValueFromPipeline=$False,ValueFromPipelinebyPropertyName=$True)]
-    [ValidateSet('WORKFLOW','FILEORDERSOURCE','JOBRESOURCE','NOTICEBOARD','LOCK','INCLUDESCRIPT','WORKINGDAYSCALENDAR','NONWORKINGDAYSCALENDAR','SCHEDULE')]
+    [ValidateSet('WORKFLOW','FILEORDERSOURCE','JOBRESOURCE','NOTICEBOARD','LOCK','INCLUDESCRIPT','WORKINGDAYSCALENDAR','NONWORKINGDAYSCALENDAR','SCHEDULE',IgnoreCase = $False)]
     [string[]] $Type,
     [Parameter(Mandatory=$False,ValueFromPipeline=$False,ValueFromPipelinebyPropertyName=$True)]
     [string] $Folder,
@@ -343,7 +354,8 @@ param
                 }
             }
 
-            if ( $lookupReleasableTypes ) {
+            if ( $lookupReleasableTypes )
+            {
                 $body = New-Object PSObject
                 Add-Member -Membertype NoteProperty -Name 'folder' -value $Folder -InputObject $body
                 Add-Member -Membertype NoteProperty -Name 'recursive' -value ($Recursive -eq $True) -InputObject $body
@@ -501,9 +513,9 @@ param
                 }
             }
 
-            Write-Verbose ".. $($MyInvocation.MyCommand.Name): $($storeObjects.count) objects stored"
+            Write-Verbose ".. $($MyInvocation.MyCommand.Name): $($storeObjects.count) items stored"
         } else {
-            Write-Verbose ".. $($MyInvocation.MyCommand.Name): no objects stored"
+            Write-Verbose ".. $($MyInvocation.MyCommand.Name): no items stored"
         }
 
         Trace-JS7StopWatch -CommandName $MyInvocation.MyCommand.Name -StopWatch $stopWatch

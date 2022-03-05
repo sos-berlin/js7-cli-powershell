@@ -10,6 +10,11 @@ Audit log entries can be selected by workflow path, order ID, folder etc.
 
 The audit log information returned includes point in time, request, object etc. of a change.
 
+The following REST Web Service API resources are used:
+
+* /audit_log
+* /audit_log/details
+
 .PARAMETER Folder
 Optionally specifies the folder that includes objects for which audit log entries should be returned.
 
@@ -203,12 +208,12 @@ param
     [Parameter(Mandatory=$False,ValueFromPipeline=$False,ValueFromPipelinebyPropertyName=$True)]
     [switch] $Recursive,
     [Parameter(Mandatory=$False,ValueFromPipeline=$False,ValueFromPipelinebyPropertyName=$True)]
-    [ValidateSet('WORKFLOW','JOBRESOURCE','LOCK','FILEORDERSOURCE','NOTICEBOARD','WORKINGDAYSCALENDAR','NONWORKINGDAYSCALENDAR','SCHEDULE','INCLUDESCRIPT','DOCUMENTATION','ORDER')]
+    [ValidateSet('WORKFLOW','JOBRESOURCE','LOCK','FILEORDERSOURCE','NOTICEBOARD','WORKINGDAYSCALENDAR','NONWORKINGDAYSCALENDAR','SCHEDULE','INCLUDESCRIPT','DOCUMENTATION','ORDER',IgnoreCase = $False)]
     [string[]] $Type,
     [Parameter(Mandatory=$False,ValueFromPipeline=$False,ValueFromPipelinebyPropertyName=$True)]
     [string] $ObjectName,
     [Parameter(Mandatory=$False,ValueFromPipeline=$False,ValueFromPipelinebyPropertyName=$True)]
-    [ValidateSet('INVENTORY','CONTROLLER','DAILYPLAN','DEPLOYMENT','DOCUMENTATIONS','CERTIFICATES','IDENTITY')]
+    [ValidateSet('INVENTORY','CONTROLLER','DAILYPLAN','DEPLOYMENT','DOCUMENTATIONS','CERTIFICATES','IDENTITY',IgnoreCase = $False)]
     [string[]] $Category,
     [Parameter(Mandatory=$False,ValueFromPipeline=$False,ValueFromPipelinebyPropertyName=$True)]
     [DateTime] $DateFrom = (Get-Date -Hour 0 -Minute 0 -Second 0).ToUniversalTime(),
@@ -257,7 +262,6 @@ param
                 $Folder = $Folder.Substring( 0, $Folder.Length-1 )
             }
         }
-
 
         if ( $Folder )
         {

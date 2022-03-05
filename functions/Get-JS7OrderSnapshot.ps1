@@ -5,7 +5,11 @@ function Get-JS7OrderSnapshot
 Returns the snashot summary of order states
 
 .DESCRIPTION
-The cmdlet returns the summary of any order states for a given period.
+The cmdlet returns the summary of order states for a given period.
+
+The following REST Web Service API resources are used:
+
+* /orders/overview/snapshot
 
 .PARAMETER DateTo
 Specifies the date until which history items should be returned.

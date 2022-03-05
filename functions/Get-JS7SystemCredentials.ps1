@@ -5,7 +5,7 @@ function Get-JS7SystemCredentials
 Reads a credentials object (PSCredential) from the Windows Credential Manager
 
 .DESCRIPTION
-This cmdlet will return a [PSCredential] object from a credential stored in Windows Credential Manager.
+This cmdlet returns a [PSCredential] object from a credential stored in Windows Credential Manager.
 This cmdlet can access Generic Credentials only.
 
 .PARAMETER TargetName
@@ -29,7 +29,7 @@ Forked from https://gist.github.com/toburger/2947424 which was adapted from
 http://stackoverflow.com/questions/7162604/get-cached-credentials-in-powershell-from-windows-7-credential-manager
 
 .LINK
-Set-JS7Credentials
+about_JS7
 
 .ROLE
 Operations

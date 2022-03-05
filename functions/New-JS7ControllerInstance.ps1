@@ -2,7 +2,7 @@ function New-JS7ControllerInstance
 {
 <#
 .SYNOPSIS
-Creates a new JS7 Controller instance PowerShell object for use with other cmdlets.
+Creates a new JS7 Controller instance PowerShell object for use with other cmdlets
 
 .DESCRIPTION
 The cmdlets is used to create a PowerShell object for a new Controller instance
@@ -42,7 +42,7 @@ param
     [Parameter(Mandatory=$False,ValueFromPipeline=$False,ValueFromPipelinebyPropertyName=$False)]
     [Uri] $ClusterUrl,
     [Parameter(Mandatory=$True,ValueFromPipeline=$False,ValueFromPipelinebyPropertyName=$True)]
-    [ValidateSet('standalone','primary','backup')] [string] $Role,
+    [ValidateSet('standalone','primary','backup',IgnoreCase = $False)] [string] $Role,
     [Parameter(Mandatory=$False,ValueFromPipeline=$False,ValueFromPipelinebyPropertyName=$False)]
     [string] $Title
 )

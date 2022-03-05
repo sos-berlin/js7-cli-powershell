@@ -7,6 +7,10 @@ Switches the roles of the active and passive JS7 Controller instances in a clust
 .DESCRIPTION
 During switchover the active Controller instance becomes passive and vice versa.
 
+The following REST Web Service API resources are used:
+
+* /controller/cluster/switchover
+
 .PARAMETER AuditComment
 Specifies a free text that indicates the reason for the current intervention, e.g. "business requirement", "maintenance window" etc.
 

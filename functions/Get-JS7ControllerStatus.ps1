@@ -2,7 +2,7 @@ function Get-JS7ControllerStatus
 {
 <#
 .SYNOPSIS
-Return status information, optionally summary and history information for a JS7 Controller
+Returns status information, optionally summary and history information for a JS7 Controller
 
 .DESCRIPTION
 Status information, optionally summary and history information are returned for a JS7 Controller.
@@ -10,6 +10,12 @@ Status information, optionally summary and history information are returned for 
 * Status information includes e.g. the start date and JS7 release
 * Summary information includes e.g. the number of running orders
 * History information includes e.g. an overview of past orders
+
+The following REST Web Service API resources are used:
+
+* /controller
+* /controller/p
+* /controllers/p
 
 .PARAMETER DateFrom
 Specifies the date starting from which history items should be returned.

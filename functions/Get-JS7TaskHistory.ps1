@@ -10,6 +10,10 @@ Task executions can be selected by job name, workflow, folder, history status et
 
 The history information retured includes start time, end time, return code etc.
 
+The following REST Web Service API resources are used:
+
+* /tasks/history
+
 .PARAMETER Job
 Optionally specifies the name of a job for which task execution results are reported.
 

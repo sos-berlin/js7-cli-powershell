@@ -2,7 +2,7 @@ function Set-JS7Option
 {
 <#
 .SYNOPSIS
-Set options for access to the JS7 REST Web Service.
+Set options for access to the JS7 REST Web Service
 
 .PARAMETER DebugMaxOutputSize
 When using $DebugPreference settings then the JS7 CLI provides the
