@@ -48,6 +48,12 @@ Specifies that no draft objects should be released. This boils down to the fact 
 .PARAMETER NoReleased
 Specifies that no previously released objects should be releaed.
 
+.PARAMETER ObjectName
+Internal use for pipelining.
+
+.PARAMETER ObjectName
+Internal use for pipelining.
+
 .PARAMETER AuditComment
 Specifies a free text that indicates the reason for the current intervention, e.g. "business requirement", "maintenance window" etc.
 
@@ -112,6 +118,11 @@ param
     [Parameter(Mandatory=$False,ValueFromPipeline=$False,ValueFromPipelinebyPropertyName=$True)]
     [switch] $NoReleased,
     [Parameter(Mandatory=$False,ValueFromPipeline=$False,ValueFromPipelinebyPropertyName=$True)]
+    [string] $ObjectName,
+    [Parameter(Mandatory=$False,ValueFromPipeline=$False,ValueFromPipelinebyPropertyName=$True)]
+    [ValidateSet('INCLUDESCRIPT','SCHEDULE','WORKINGDAYSCALENDAR','NONWORKINGDAYSCALENDAR',IgnoreCase = $False)]
+    [string] $ObjectType,
+    [Parameter(Mandatory=$False,ValueFromPipeline=$False,ValueFromPipelinebyPropertyName=$True)]
     [string] $AuditComment,
     [Parameter(Mandatory=$False,ValueFromPipeline=$False,ValueFromPipelinebyPropertyName=$True)]
     [int] $AuditTimeSpent,
@@ -130,12 +141,27 @@ param
 
         $storeObjects = @()
         $deleteObjects = @()
-
         $releasableTypes = @('INCLUDESCRIPT','SCHEDULE','WORKINGDAYSCALENDAR','NONWORKINGDAYSCALENDAR')
     }
 
     Process
     {
+        While ( $Folder.endsWith('/') )
+        {
+            $Folder = $Folder.Substring( 0, $Folder.Length -1 )
+        }
+        
+        if ( $ObjectType )
+        {
+            $Type = @( $ObjectType )
+        }
+
+        if ( $ObjectName -and $Folder )
+        {
+            $Path = "$Folder/$ObjectName"
+            $Folder = $null
+        }
+
         if ( $Path.endsWith('/') )
         {
             throw "$($MyInvocation.MyCommand.Name): path has to include folder, sub-folder and object name"

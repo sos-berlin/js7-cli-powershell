@@ -72,11 +72,13 @@ about_JS7
 [cmdletbinding(SupportsShouldProcess)]
 param
 (
-    [Parameter(Mandatory=$True,ValueFromPipeline=$False,ValueFromPipelinebyPropertyName=$True)]
+    [Parameter(Mandatory=$False,ValueFromPipeline=$False,ValueFromPipelinebyPropertyName=$True)]
     [string] $Path,
     [Parameter(Mandatory=$False,ValueFromPipeline=$False,ValueFromPipelinebyPropertyName=$True)]
-    [ValidateSet('FOLDER','WORKFLOW','FILEORDERSOURCE','JOBRESOURCE','NOTICEBOARD','LOCK','INCLUDESCRIPT','WORKINGDAYSCALENDAR','NONWORKINGDAYSCALENDAR','SCHEDULE',IgnoreCase = $False)]
-    [string] $Type = 'FOLDER',
+    [ValidateSet('WORKFLOW','FILEORDERSOURCE','JOBRESOURCE','NOTICEBOARD','LOCK','INCLUDESCRIPT','WORKINGDAYSCALENDAR','NONWORKINGDAYSCALENDAR','SCHEDULE',IgnoreCase = $False)]
+    [string] $Type,
+    [Parameter(Mandatory=$False,ValueFromPipeline=$False,ValueFromPipelinebyPropertyName=$True)]
+    [string] $Folder,
     [Parameter(Mandatory=$False,ValueFromPipeline=$False,ValueFromPipelinebyPropertyName=$True)]
     [switch] $Local,
     [Parameter(Mandatory=$False,ValueFromPipeline=$False,ValueFromPipelinebyPropertyName=$True)]
@@ -101,19 +103,41 @@ param
 
     Process
     {
-        if ( $Type -ne 'FOLDER' -and $Path.endsWith('/') )
+        if ( $Path.endsWith('/') )
         {
             throw "$($MyInvocation.MyCommand.Name): path has to include folder, sub-folder and object name"
         }
 
-        if ( $Path.endsWith('/') )
+        if ( $Path -and !$Type )
         {
-            $Path = $Path.Substring( 0, $Path.Length-1 )
+            throw "$($MyInvocation.MyCommand.Name): path requires to specify the object type, use -Type parameter"
         }
 
-        $removableObj = New-Object PSObject
-        Add-Member -Membertype NoteProperty -Name 'path' -value $Path -InputObject $removableObj
-        Add-Member -Membertype NoteProperty -Name 'objectType' -value $Type -InputObject $removableObj
+        if ( $Path -and ($Type.count -gt 1) )
+        {
+            throw "$($MyInvocation.MyCommand.Name): path requires to specify a single object type, use -Type parameter"
+        }
+
+        if ( $Path -and $Folder )
+        {
+            throw "$($MyInvocation.MyCommand.Name): only one of the parameters -Path or -Folder can be used"
+        }
+
+        if ( !$Path -and !$Folder )
+        {
+            throw "$($MyInvocation.MyCommand.Name): one of the parameters -Path or -Folder has to be used"
+        }
+
+        if ( $Path )
+        {
+            $removableObj = New-Object PSObject
+            Add-Member -Membertype NoteProperty -Name 'path' -value $Path -InputObject $removableObj
+            Add-Member -Membertype NoteProperty -Name 'objectType' -value $Type -InputObject $removableObj
+        } else {
+            $removableObj = New-Object PSObject
+            Add-Member -Membertype NoteProperty -Name 'path' -value $Folder -InputObject $removableObj
+            Add-Member -Membertype NoteProperty -Name 'objectType' -value 'FOLDER' -InputObject $removableObj
+        }
 
         $removableConfigurationObj = New-Object PSObject
         Add-Member -Membertype NoteProperty -Name 'configuration' -value $removableObj -InputObject $removableConfigurationObj

@@ -62,6 +62,12 @@ Specifies that no previously deployed objects should be deployed. This is useful
 If used with the -Path parameter then -Latest specifies that only the latest deployed object will be considered for redeployment.
 This parameter is not considered if the -NoDeployed parameter is used.
 
+.PARAMETER ObjectName
+Internal use for pipelining.
+
+.PARAMETER ObjectName
+Internal use for pipelining.
+
 .PARAMETER AuditComment
 Specifies a free text that indicates the reason for the current intervention, e.g. "business requirement", "maintenance window" etc.
 
@@ -131,6 +137,11 @@ param
     [Parameter(Mandatory=$False,ValueFromPipeline=$False,ValueFromPipelinebyPropertyName=$True)]
     [switch] $Latest,
     [Parameter(Mandatory=$False,ValueFromPipeline=$False,ValueFromPipelinebyPropertyName=$True)]
+    [string] $ObjectName,
+    [Parameter(Mandatory=$False,ValueFromPipeline=$False,ValueFromPipelinebyPropertyName=$True)]
+    [ValidateSet('WORKFLOW','FILEORDERSOURCE','JOBRESOURCE','NOTICEBOARD','LOCK',IgnoreCase = $False)]
+    [string] $ObjectType,
+    [Parameter(Mandatory=$False,ValueFromPipeline=$False,ValueFromPipelinebyPropertyName=$True)]
     [string] $AuditComment,
     [Parameter(Mandatory=$False,ValueFromPipeline=$False,ValueFromPipelinebyPropertyName=$True)]
     [int] $AuditTimeSpent,
@@ -156,6 +167,22 @@ param
 
     Process
     {
+        While ( $Folder.endsWith('/') )
+        {
+            $Folder = $Folder.Substring( 0, $Folder.Length -1 )
+        }
+        
+        if ( $ObjectType )
+        {
+            $Type = @( $ObjectType )
+        }
+
+        if ( $ObjectName -and $Folder )
+        {
+            $Path = "$Folder/$ObjectName"
+            $Folder = $null
+        }
+
         if ( $Path.endsWith('/') )
         {
             throw "$($MyInvocation.MyCommand.Name): path has to include folder, sub-folder and object name"
