@@ -5,15 +5,15 @@ function Switch-JS7JOCInstance
 Switches the role of the active JS7 JOC Cockpit instance in a cluster
 
 .DESCRIPTION
-During switchover the active JOC Cockpit instance becomes passive and vice versa.
+During switch-over the active JOC Cockpit instance switches to the standby and vice versa.
 
 The following REST Web Service API resources are used:
 
 * /joc/cluster/switch_member
 
 .PARAMETER MemberId
-Specifies the identification of the passive JOC Cockpit cluster member that should become active.
-This information is provided with the Get-JS7JOCInstance cmdlet that returns an array of passive cluster members.
+Specifies the identification of the standby JOC Cockpit cluster member that should become active.
+This information is provided with the Get-JS7JOCInstance cmdlet that returns an array of standby cluster members.
 
 .PARAMETER AuditComment
 Specifies a free text that indicates the reason for the current intervention, e.g. "business requirement", "maintenance window" etc.
@@ -36,14 +36,14 @@ It can be useful when integrated with a ticket system that logs interventions wi
 .EXAMPLE
 Switch-JS7JOCInstance
 
-Switches the roles of the active and passive JS7 JOC Cockpit instances:
-The active instance becomes passive and one of the passive instances becomes active.
+Switches the roles of the active and standby JS7 JOC Cockpit instances:
+The active instance switches to standby mode and one of the standby instances becomes active.
 
 .EXAMPLE
 Switch-JS7JOCInstance -MemberId ( (Get-JS7JOCInstance).Passive | Where-Object -Property 'host' -eq -Value 'joc-2-0-secondary' ).memberId
 
-Switches the role of the active JOC Cockpit instance to the indicated cluster member that is currently passive.
-As any number of JOC Cockpit passive cluster members can be used, one of them is selected by its hostname.
+Switches the role of the active JOC Cockpit instance to the indicated cluster member that is currently in standby mode.
+As any number of JOC Cockpit standby cluster members can be used, one of them is selected by its hostname.
 
 .LINK
 about_JS7

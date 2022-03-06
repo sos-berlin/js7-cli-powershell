@@ -23,13 +23,22 @@ Without this parameter any Agents assigned the current Controller are returned.
 .PARAMETER Coupled
 Specifies to return information about Agents only that are coupled with a Controller.
 
-.PARAMETER Decoupled
-Specifies to return information about Agents only that are decoupled from a Controller.
-Typically this indicates either an early stage before coupling occurs or an error state.
-
 .PARAMETER CouplingFailed
 Specifies to return information about Agents only that could not be successfully coupled with a Controller.
 This indicates an error state.
+
+.PARAMETER Reset
+Specifies to return information about Agents that did perform a reset operation.
+This indicates a volatile state that later on is replaced by a coupling state.
+
+.PARAMETER Resetting
+Specifies to return information about Agents that are in process of performing a reset.
+During a reset operation the Agent drops its journal and restarts.
+This indicates a volatile state, that later on is replaced by a coupling state.
+
+.PARAMETER Shutdown
+Specifies to return information about Agents only that in process of shutting down.
+This indicates that respective Agents are about to terminate.
 
 .PARAMETER Enabled
 Specifies to return information about enabled Agents only.
@@ -67,9 +76,13 @@ param
     [Parameter(Mandatory=$False,ValueFromPipeline=$False,ValueFromPipelinebyPropertyName=$False)]
     [switch] $Coupled,
     [Parameter(Mandatory=$False,ValueFromPipeline=$False,ValueFromPipelinebyPropertyName=$False)]
-    [switch] $Decoupled,
-    [Parameter(Mandatory=$False,ValueFromPipeline=$False,ValueFromPipelinebyPropertyName=$False)]
     [switch] $CouplingFailed,
+    [Parameter(Mandatory=$False,ValueFromPipeline=$False,ValueFromPipelinebyPropertyName=$False)]
+    [switch] $Reset,
+    [Parameter(Mandatory=$False,ValueFromPipeline=$False,ValueFromPipelinebyPropertyName=$False)]
+    [switch] $Resetting,
+    [Parameter(Mandatory=$False,ValueFromPipeline=$False,ValueFromPipelinebyPropertyName=$False)]
+    [switch] $Shutdown,
     [Parameter(Mandatory=$False,ValueFromPipeline=$False,ValueFromPipelinebyPropertyName=$False)]
     [switch] $Enabled,
     [Parameter(Mandatory=$False,ValueFromPipeline=$False,ValueFromPipelinebyPropertyName=$False)]
@@ -98,14 +111,24 @@ param
             $states += 'COUPLED'
         }
 
-        if ( $Decoupled )
-        {
-            $states += 'DECOUPLED'
-        }
-
         if ( $CouplingFailed )
         {
             $states += 'COUPLINGFAILED'
+        }
+
+        if ( $Reset )
+        {
+            $states += 'RESET'
+        }
+
+        if ( $Resetting )
+        {
+            $states += 'RESETTING'
+        }
+
+        if ( $Shutdown )
+        {
+            $states += 'SHUTDOWN'
         }
     }
 

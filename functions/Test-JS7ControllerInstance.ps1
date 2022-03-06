@@ -6,7 +6,7 @@ Tests the connection to a JS7 Controller instance
 
 .DESCRIPTION
 The cmdlets tests the connection between JOC Cockpit and a Controller instance.
-A standalone Controller instance or the active or passive member of a Controller cluster can be
+A standalone Controller instance or the active or standby member of a Controller cluster can be
 tested to be accessible.
 
 The following REST Web Service API resources are used:
@@ -16,11 +16,12 @@ The following REST Web Service API resources are used:
 .PARAMETER Url
 Specifies the Url of the Controller instance to be tested.
 
-Without use of this parameter and the -Passive parameter
+Without use of this parameter and the -StandBy parameter
 a standalone Controller instance or the active member of a Controller cluster is checked.
 
-.PARAMETER Passive
-Specifies that the passive member of Controller cluster should be be tested.
+.PARAMETER StandBy
+Specifies that the standby member of Controller cluster should be be tested.
+The alias parameter name -Passive can be used.
 
 Without use of this parameter and the -Url parameter
 a standalone Controller instance or the active member of a Controller cluster is checked.
@@ -34,9 +35,9 @@ $result = Test-JS7ControllerInstance
 Checks if a standalone Controller instance or the active member of a Controller cluster is accessible.
 
 .EXAMPLE
-$result = Test-JS7ControllerInstance -Passive
+$result = Test-JS7ControllerInstance -StandBy
 
-Checks if the passive member of a Controller cluster is accessible.
+Checks if the standby member of a Controller cluster is accessible.
 
 .EXAMPLE
 $result = Test-JS7ControllerInstance -Url (Get-JS7ControllerInstance -Active).active.url
@@ -52,7 +53,8 @@ param
     [Parameter(Mandatory=$False,ValueFromPipeline=$False,ValueFromPipelinebyPropertyName=$False)]
     [Uri] $Url,
     [Parameter(Mandatory=$False,ValueFromPipeline=$False,ValueFromPipelinebyPropertyName=$False)]
-    [switch] $Passive
+    [Alias('Passive')]
+    [switch] $StandBy
 )
     Begin
     {
@@ -62,10 +64,10 @@ param
 
     Process
     {
-        if ( !$Url -and !$Passive )
+        if ( !$Url -and !$StandBy )
         {
             $Url = (Get-JS7ControllerInstance).Active.Url
-        } elseif ( !$Url -and $Passive ) {
+        } elseif ( !$Url -and $StandBy ) {
             $Url = (Get-JS7ControllerInstance).Passive.Url
         }
 

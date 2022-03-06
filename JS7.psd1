@@ -78,6 +78,7 @@ FunctionsToExport = @(
     'Rename-JS7InventoryItem',
     'Remove-JS7Agent',
     'Remove-JS7DailyPlanOrder',
+    'Remove-JS7DailyPlanSubmission',
     'Remove-JS7FileTransferItem',
     'Remove-JS7Folder',
     'Remove-JS7InventoryItem',

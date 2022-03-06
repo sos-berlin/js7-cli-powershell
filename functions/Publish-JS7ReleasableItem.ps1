@@ -150,7 +150,7 @@ param
         {
             $Folder = $Folder.Substring( 0, $Folder.Length -1 )
         }
-        
+
         if ( $ObjectType )
         {
             $Type = @( $ObjectType )

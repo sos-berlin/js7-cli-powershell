@@ -1,54 +1,33 @@
-function Remove-JS7DailyPlanOrder
+function Remove-JS7DailyPlanSubmission
 {
 <#
 .SYNOPSIS
-Removes daily plan orders from a JS7 Controller
+Removes daily plan submissions from a JS7 Controller
 
 .DESCRIPTION
-Removes daily plan orders from a JS7 Controller.
+Removes daily plan submissions from a JS7 Controller.
 
 The following REST Web Service API resources are used:
 
-* /daily_plan/orders/delete
-
-.PARAMETER OrderId
-Optionally specifies the order ID of the daily plan order that should be removed.
-
-.PARAMETER WorkflowPath
-Optionally specifies the path and name of a workflow for which daily plan orders should be removed.
-
-.PARAMETER WorkflowFolder
-Optionally specifies the folder with workflows for which daily plan orders should be removed.
-
-.PARAMETER SchedulePath
-Optionally specifies the path and name of a schedule for which daily plan orders should be removed.
-
-.PARAMETER ScheduleFolder
-Optionally specifies the folder with schedules for which daily plan orders should be removed.
-
-.PARAMETER Recursive
-When used with the -WorkflowFolder or -ScheduleFolder parameters then any sub-folders of the specified folder will be looked up.
+* /daily_plan/submissions/delete
 
 .PARAMETER ControllerId
-Specifies the Controller from which daily plan orders should be removed.
-
-.PARAMETER Late
-Specifies that daily plan orders are removed that are late or that started later than expected.
+Specifies the Controller from which daily plan submissions should be removed.
 
 .PARAMETER DateFrom
-Optionally specifies the date starting from which daily plan orders should be removed.
+Optionally specifies the date starting from which daily plan submissions should be removed.
 Consider that a UTC date has to be provided.
 
 Default: Begin of the current day as a UTC date
 
 .PARAMETER DateTo
-Optionally specifies the date until which daily plan orders should be removed.
+Optionally specifies the date until which daily plan submissions should be removed.
 Consider that a UTC date has to be provided.
 
 Default: End of the current day as a UTC date
 
 .PARAMETER RelativeDateFrom
-Specifies a relative date starting from which daily plan orders should be removed, e.g.
+Specifies a relative date starting from which daily plan submissions should be removed, e.g.
 
 * -1d, -2d: one day ago, two days ago
 * +1d, +2d: one day later, two days later
@@ -64,7 +43,7 @@ Optionally a time offset can be specified, e.g. -1d+02:00, as otherwise midnight
 This parameter takes precedence over the -DateFrom parameter.
 
 .PARAMETER RelativeDateTo
-Specifies a relative date until which daily plan orders should be removed, e.g.
+Specifies a relative date until which daily plan submissions should be removed, e.g.
 
 * -1d, -2d: one day ago, two days ago
 * +1d, +2d: one day later, two days later
@@ -101,24 +80,14 @@ It can be useful when integrated with a ticket system that logs interventions wi
 This cmdlet returns no output.
 
 .EXAMPLE
-Remove-JS7DailyPlanOrder -DateFrom "2020-12-31"
+Remove-JS7DailyPlanSubmission -DateFrom "2020-12-31"
 
-Removes any daily plan orders for the given date.
-
-.EXAMPLE
-Remove-JS7DailyPlanOrder -DateTo (Get-Date).AddDays(3)
-
-Removes any daily plan orders starting from today until a date three days from now.
+Removes daily plan submissions for the given date.
 
 .EXAMPLE
-Remove-JS7DailyPlanOrder -OrderId "#2020-11-19#P0000000498-orderSampleWorfklow2a"
+Remove-JS7DailyPlanSubmission -DateTo (Get-Date).AddDays(3)
 
-Removes the order with the given order ID from the daily plan.
-
-.EXAMPLE
-Remove-JS7DailyPlanOrder -WorkflowPath /some_folder/some_workflow
-
-Removes the daily plan orders for the indicated workflow in today's daily plan.
+Removes any daily plan submissions starting from today until a date three days from now.
 
 .LINK
 about_JS7
@@ -128,23 +97,9 @@ about_JS7
 param
 (
     [Parameter(Mandatory=$False,ValueFromPipelinebyPropertyName=$True)]
-    [string] $OrderId,
-    [Parameter(Mandatory=$False,ValueFromPipelinebyPropertyName=$True)]
-    [string] $WorkflowPath,
-    [Parameter(Mandatory=$False,ValueFromPipelinebyPropertyName=$True)]
-    [string] $WorkflowFolder,
-    [Parameter(Mandatory=$False,ValueFromPipeline=$False,ValueFromPipelinebyPropertyName=$True)]
-    [string] $SchedulePath,
-    [Parameter(Mandatory=$False,ValueFromPipeline=$False,ValueFromPipelinebyPropertyName=$True)]
-    [string] $ScheduleFolder,
-    [Parameter(Mandatory=$False,ValueFromPipeline=$False,ValueFromPipelinebyPropertyName=$True)]
-    [switch] $Recursive,
-    [Parameter(Mandatory=$False,ValueFromPipelinebyPropertyName=$True)]
     [string] $ControllerId,
     [Parameter(Mandatory=$False,ValueFromPipelinebyPropertyName=$True)]
-    [switch] $Late,
-    [Parameter(Mandatory=$False,ValueFromPipelinebyPropertyName=$True)]
-    [DateTime] $DateFrom = (Get-Date (Get-Date).ToUniversalTime() -Format 'yyyy-MM-dd'),
+    [DateTime] $DateFrom,
     [Parameter(Mandatory=$False,ValueFromPipelinebyPropertyName=$True)]
     [DateTime] $DateTo,
     [Parameter(Mandatory=$False,ValueFromPipelinebyPropertyName=$True)]
@@ -162,81 +117,11 @@ param
     {
         Approve-JS7Command $MyInvocation.MyCommand
         $stopWatch = Start-JS7StopWatch
-
-        $orderIds = @()
-        $workflowPaths = @()
-        $workflowFolders = @()
-        $schedulePaths = @()
-        $scheduleFolders = @()
-        $controllerIds = @()
     }
 
     Process
     {
-        Write-Debug ".. $($MyInvocation.MyCommand.Name): parameter OrderId=$OrderId, WorkflowPath=$WorkflowPath, WorkflowFolder=$WorkflowFolder, SchedulePath=$SchedulePath, ScheduleFolder=$ScheduleFolder"
-
-        if ( $WorkflowFolder -and $WorkflowFolder -ne '/' )
-        {
-            if ( !$WorkflowFolder.startsWith( '/' ) ) {
-                $WorkflowFolder = '/' + $WorkflowFolder
-            }
-
-            if ( $WorkflowFolder.endsWith( '/' ) )
-            {
-                $WorkflowFolder = $WorkflowFolder.Substring( 0, $WorkflowFolder.Length-1 )
-            }
-        }
-
-        if ( $ScheduleFolder -and $ScheduleFolder -ne '/' )
-        {
-            if ( !$ScheduleFolder.startsWith( '/' ) ) {
-                $ScheduleFolder = '/' + $ScheduleFolder
-            }
-
-            if ( $ScheduleFolder.endsWith( '/' ) )
-            {
-                $ScheduleFolder = $ScheduleFolder.Substring( 0, $ScheduleFolder.Length-1 )
-            }
-        }
-
-
-        if ( $OrderId )
-        {
-            $orderIds += $OrderId
-        }
-
-        if ( $WorkflowPath )
-        {
-            $workflowPaths += $WorkflowPath
-        }
-
-        if ( $WorkflowFolder )
-        {
-            $objFolder = New-Object PSObject
-            Add-Member -Membertype NoteProperty -Name 'folder' -value $WorkflowFolder -InputObject $objFolder
-            Add-Member -Membertype NoteProperty -Name 'recursive' -value ($Recursive -eq $True) -InputObject $objFolder
-
-            $workflowFolders += $objFolder
-        }
-
-        if ( $SchedulePath )
-        {
-            $schedulePaths += $SchedulePath
-        }
-
-        if ( $ScheduleFolder )
-        {
-            $objFolder = New-Object PSObject
-            Add-Member -Membertype NoteProperty -Name 'folder' -value $ScheduleFolder -InputObject $objFolder
-            Add-Member -Membertype NoteProperty -Name 'recursive' -value ($Recursive -eq $True) -InputObject $objFolder
-
-            $scheduleFolders += $objFolder
-        }
-
-        if ( $ControllerId )
-        {
-            $controllerIds += $ControllerId
-        }
+        Write-Debug ".. $($MyInvocation.MyCommand.Name): parameter ControllerId=$ControllerId"
     }
 
     End
@@ -280,7 +165,7 @@ param
             $dailyPlanDateTo = Get-Date (Get-Date $DateTo)
         }
 
-        Write-Verbose ".. $($MyInvocation.MyCommand.Name): removing daily plan orders for date range $dailyPlanDateFrom - $dailyPlanDateTo"
+        Write-Verbose ".. $($MyInvocation.MyCommand.Name): removing daily plan submissions for date range $dailyPlanDateFrom - $dailyPlanDateTo"
         $loops = 0
 
         for( $day=$dailyPlanDateFrom; $day -le $dailyPlanDateTo; $day=$day.AddDays(1) )
@@ -292,44 +177,9 @@ param
             } else {
                 Add-Member -Membertype NoteProperty -Name 'controllerId' -value $script:jsWebService.ControllerId -InputObject $body
             }
-            
+
             $filter = New-Object PSObject
-            Add-Member -Membertype NoteProperty -Name 'dailyPlanDate' -value (Get-Date $day -Format 'yyyy-MM-dd') -InputObject $filter
-
-            if ( $orderIds )
-            {
-                Add-Member -Membertype NoteProperty -Name 'orderIds' -value $orderIds -InputObject $filter
-            }
-
-            if ( $workflowPaths )
-            {
-                Add-Member -Membertype NoteProperty -Name 'workflowPaths' -value $workflowPaths -InputObject $filter
-            }
-
-            if ( $workflowFolders )
-            {
-                Add-Member -Membertype NoteProperty -Name 'workflowFolders' -value $workflowFolders -InputObject $filter
-            }
-
-            if ( $schedulePaths )
-            {
-                Add-Member -Membertype NoteProperty -Name 'schedulePaths' -value $schedulePaths -InputObject $filter
-            }
-
-            if ( $scheduleFolders )
-            {
-                Add-Member -Membertype NoteProperty -Name 'scheduleFolders' -value $scheduleFolders -InputObject $filter
-            }
-
-            if ( $controllerIds )
-            {
-                Add-Member -Membertype NoteProperty -Name 'controllerIds' -value $controllerIds -InputObject $filter
-            }
-
-            if ( $Late )
-            {
-                Add-Member -Membertype NoteProperty -Name 'late' -value ( $Late -eq $True ) -InputObject $filter
-            }
+            Add-Member -Membertype NoteProperty -Name 'dateFor' -value (Get-Date $day -Format 'yyyy-MM-dd') -InputObject $filter
 
             if ( $filter )
             {
@@ -354,10 +204,10 @@ param
                 Add-Member -Membertype NoteProperty -Name 'auditLog' -value $objAuditLog -InputObject $body
             }
 
-            if ( $PSCmdlet.ShouldProcess( 'orders', '/daily_plan/orders/delete' ) )
+            if ( $PSCmdlet.ShouldProcess( 'submissions', '/daily_plan/submissions/delete' ) )
             {
                 [string] $requestBody = $body | ConvertTo-Json -Depth 100
-                $response = Invoke-JS7WebRequest -Path '/daily_plan/orders/delete' -Body $requestBody
+                $response = Invoke-JS7WebRequest -Path '/daily_plan/submissions/delete' -Body $requestBody
 
                 if ( $response.StatusCode -eq 200 )
                 {
@@ -371,7 +221,7 @@ param
                     throw ( $response | Format-List -Force | Out-String )
                 }
 
-                Write-Verbose ".. $($MyInvocation.MyCommand.Name): Daily Plan orders removed for: $(Get-Date $day -Format 'yyyy-MM-dd')"
+                Write-Verbose ".. $($MyInvocation.MyCommand.Name): Daily Plan submissions removed for: $(Get-Date $day -Format 'yyyy-MM-dd')"
             }
 
             $loops++
@@ -379,9 +229,9 @@ param
 
         if ( $loops )
         {
-            Write-Verbose ".. $($MyInvocation.MyCommand.Name): Daily Plan orders removed for $loops days"
+            Write-Verbose ".. $($MyInvocation.MyCommand.Name): Daily Plan submissions removed for $loops days"
         } else {
-            Write-Verbose ".. $($MyInvocation.MyCommand.Name): no Daily Plan orders removed"
+            Write-Verbose ".. $($MyInvocation.MyCommand.Name): no Daily Plan submissions removed"
         }
 
         Trace-JS7StopWatch -CommandName $MyInvocation.MyCommand.Name -StopWatch $stopWatch

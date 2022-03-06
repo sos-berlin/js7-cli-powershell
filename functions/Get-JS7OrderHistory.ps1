@@ -6,7 +6,7 @@ Returns the order execution history
 
 .DESCRIPTION
 History information is returned for orders from a JS7 Controller.
-Order executions can be selected by workflow, order ID, folder, history status etc.
+Order executions can be selected by workflow, Order ID, folder, history status etc.
 
 The history information returned includes start time, end time, return code etc.
 
@@ -28,14 +28,18 @@ Specifies that any sub-folders should be looked up when used with the -Folder pa
 By default no sub-folders will be looked up for workflow paths.
 
 .PARAMETER ExcludeOrder
-This parameter accepts a hashmap of order IDs and optionally workflow paths that are excluded from the results.
+This parameter accepts a hashmap of Order IDs and optionally workflow paths that are excluded from the results.
 If a workflow path is specified then all orders of the given workflow are excluded.
 
    Get-JSOrderHistory -folder /some_folder -ExcludeOrder @{ 'workflowPath'='/some_folder/some_sub_folder/some_workflow' }
 
 .PARAMETER RegularExpression
-Specifies a regular expression that filters orders to be returned.
-The regular expression is applied to the order ID.
+Specifies that a regular expession is applied to Order IDs to filter results.
+The Order ID includes the Order Name attribute that is specified when adding the order like this for an Order Name "myIdentifier":
+
+    "#2020-11-19#P0000000498-myIdentifier"
+    
+A regular expression 'Identifier$' matches the above Order ID.
 
 .PARAMETER DateFrom
 Specifies the date starting from which history items should be returned.
@@ -122,9 +126,9 @@ $items = Get-JS7OrderHistory
 Returns today's order execution history for any orders.
 
 .EXAMPLE
-$items = Get-JS7OrderHistory -RegularExpression "sos$'
+$items = Get-JS7OrderHistory -RegularExpression 'sos$'
 
-Returns today's order execution history for any orders with an order ID that ends with the string "sos".
+Returns today's order execution history for any orders with an Order ID that ends with the string "sos".
 
 .EXAMPLE
 $items = Get-JS7OrderHistory -Timezone (Get-Timezone)

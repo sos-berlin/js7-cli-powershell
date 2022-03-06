@@ -11,7 +11,7 @@ Reporting information includes e.g. the number of successfully executed tasks wi
 
 The following REST Web Service API resources are used:
 
-* /report/agents
+* /agents/report
 
 .PARAMETER Agents
 Specifies an array of URLs that point to Agents. This is useful if specific Agents
@@ -94,7 +94,7 @@ param
         }
 
         [string] $requestBody = $body | ConvertTo-Json -Depth 100
-        $response = Invoke-JS7WebRequest -Path '/report/agents' -Body $requestBody
+        $response = Invoke-JS7WebRequest -Path '/agents/report' -Body $requestBody
 
         if ( $response.StatusCode -eq 200 )
         {
@@ -105,14 +105,18 @@ param
 
         if ( $Display -and $returnReport.agents )
         {
+            $totalNumOfJobs = 0
+            $totalnumOfSuccessfulTasks = 0
 
             foreach( $reportAgent in $returnReport.agents )
             {
-                $output += "
+                $totalNumOfJobs += $reportAgent.numOfJobs
+                $totalNumOfSuccessfulTasks += $reportAgent.numOfSuccessfulTasks
+                $output = "
 ________________________________________________________________________
-JobScheduler Agent URL: $($reportAgent.agent)
-.......JobScheduler ID: $($reportAgent.jobschedulerId)
-................ cause: $($reportAgent.cause)
+............ Agent URL: $($reportAgent.url)
+............. Agent ID: $($reportAgent.agentId)
+........ Controller ID: $($reportAgent.controllerId)
 ................. jobs: $($reportAgent.numOfJobs)
 ..... successful tasks: $($reportAgent.numOfSuccessfulTasks)
 ________________________________________________________________________
@@ -122,8 +126,8 @@ ________________________________________________________________________
 
             $output = "
 ________________________________________________________________________
-........... Total Jobs:  $($returnReport.totalNumOfJobs)
-. Total Job Executions:  $($returnReport.totalNumOfSuccessfulTasks)
+........... Total Jobs:  $($totalNumOfJobs)
+. Total Job Executions:  $($totalNumOfSuccessfulTasks)
 ________________________________________________________________________
                     "
             Write-Output $output

@@ -5,7 +5,7 @@ function Get-JS7ControllerInstance
 Returns information about a JS7 Controller instance from JOC Cockpit
 
 .DESCRIPTION
-Returns any JS7 standalone Controller instace or JS7 Controller Cluster members that are connected to JOC Cockpit.
+Returns any JS7 standalone Controller instance or JS7 Controller Cluster members that are connected to JOC Cockpit.
 
 The following REST Web Service API resources are used:
 

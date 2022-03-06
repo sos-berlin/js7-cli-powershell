@@ -2,10 +2,10 @@ function Get-JS7DailyPlanOrder
 {
 <#
 .SYNOPSIS
-Returns the daily plan orders for workflows scheduled for a JS7 Controller
+Returns the daily plan orders scheduled for a number of JS7 Controllers
 
 .DESCRIPTION
-The daily plan orders for workflows are returned.
+The daily plan orders for workflows of a number of JS7 Controllers are returned.
 
 The following REST Web Service API resources are used:
 
@@ -82,17 +82,14 @@ Default: Dates are returned in UTC.
 .PARAMETER Late
 Specifies that daily plan orders are returned that are late or that started later than expected.
 
-.PARAMETER Successful
-Specifies that daily plan orders are returned completed successfully.
-
-.PARAMETER Failed
-Specifies that daily plan orders are returned that completed with errors.
-
-.PARAMETER InProgress
-Specifies that daily plan orders are returned for workflows that did not yet complete.
-
 .PARAMETER Planned
-Specifies that daily plan orders are returned that did not yet start.
+Specifies that daily plan orders are returned that have not been submitted.
+
+.PARAMETER Submitted
+Specifies that daily plan orders are returned that are submitted to a Controller for scheduled execution.
+
+.PARAMETER Finished
+Specifies that daily plan orders are returned that did complete.
 
 .OUTPUTS
 This cmdlet returns an array of daily plan orders.
@@ -124,14 +121,14 @@ Returns the daily plan orders for the last three days.
 The daily plan is reported starting from midnight UTC.
 
 .EXAMPLE
-$orders = Get-JS7DailyPlanOrder -Failed -Late
+$orders = Get-JS7DailyPlanOrder -Submitted -Late
 
-Returns today's daily plan orders that failed or are late, i.e. that did not start at the expected point in time.
+Returns today's daily plan orders that have been submitted but are late, i.e. that did not start at the expected point in time.
 
 .EXAMPLE
 $orders = Get-JS7DailyPlanOrder -WorkflowPath /ap/apWorkflow1b
 
-Returns the daily plan orders for the given workflow.
+Returns the daily plan orders for the indicated workflow.
 
 .LINK
 about_JS7
@@ -191,6 +188,11 @@ param
     Process
     {
         Write-Debug ".. $($MyInvocation.MyCommand.Name): parameter WorkfowFolder=$WorkflowFolder, WorkflowPath=$WorkflowPath, SchedulePath=$SchedulePath, ScheduleFolder=$ScheduleFolder"
+
+        if ( ( $Planned -and $Submitted ) -or ( $Planned -and $Finished ) -or ( $Submitted -and $Finished ) )
+        {
+            throw "$($MyInvocation.MyCommand.Name): only one of the parameters -Planned or -Submitted or -Finished can be used"            
+        }
 
         if ( $WorkflowFolder -and $WorkflowFolder -ne '/' )
         {

@@ -9,7 +9,7 @@ Orders are selected from the JS7 Controller
 
 * by the folder of the order location including sub-folders,
 * by the workflow that is assigned to an order,
-* by an individual order ID.
+* by an individual Order ID.
 
 Resulting orders can be forwarded to other cmdlets for pipelined bulk operations.
 
@@ -43,7 +43,7 @@ By default no sub-folders will be searched for orders.
 Specifies the date until which orders should be returned.
 Consider that a UTC date has to be provided.
 
-Default should no order ID be provided: End of the current day as a UTC date
+Default should no Order ID be provided: End of the current day as a UTC date
 
 .PARAMETER RelativeDateTo
 Specifies a relative date until which orders should be returned, e.g.
@@ -73,7 +73,12 @@ All dates in JS7 are UTC and can be converted e.g. to the local time zone like t
 Default: Dates are converted to UTC.
 
 .PARAMETER RegularExpression
-Specifies that a regular expession is applied to the order IDs to filter results.
+Specifies that a regular expession is applied to Order IDs to filter results.
+The Order ID includes the Order Name attribute that is specified when adding the order like this for an Order Name "myIdentifier":
+
+    "#2020-11-19#P0000000498-myIdentifier"
+    
+A regular expression 'Identifier$' matches the above Order ID.
 
 .PARAMETER Compact
 Specifies that fewer attributes of orders are returned.
@@ -142,6 +147,11 @@ Returns the orders for workflow "workflow1" from the folder "/test/globals".
 $orders = Get-JS7Order -OrderId "#2020-11-19#P0000000498-orderSampleWorfklow2a"
 
 Returns the order with the respective identifier.
+
+.EXAMPLE
+$orders = Get-JS7Order -RegularExpression 'sos$'
+
+Returns orders with an Order ID that ends with the string "sos".
 
 .EXAMPLE
 $orders = Get-JS7Order -Suspended -Waiting

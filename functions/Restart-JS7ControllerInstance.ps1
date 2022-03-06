@@ -2,26 +2,31 @@ function Restart-JS7ControllerInstance
 {
 <#
 .SYNOPSIS
-Restarts a JS7 Controller Instance
+Restarts a JS7 Controller Instance and optionally performs cluster fail-over
 
 .DESCRIPTION
 A JS7 Controller instance is restarted. In a JS7 cluster by default a fail-over
-to the passive cluster member is performed.
+to the standby cluster member is performed.
+
+The following REST Web Service API resources are used:
+
+* /inventory/releasable
+
 
 .PARAMETER Url
 Optionally the Url of the Controller to be restarted can be specified.
-Without this parameter the active Controller will be restarted.
-Consider that restarting a passive Controller in a JS7 cluster cannot perform
-a fail-over as the current cluster member is passive.
+Without this parameter the active Controller instance will be restarted.
+Consider that restarting a standby Controller instance in a JS7 cluster does not perform
+a fail-over operation.
 
 .PARAMETER Action
-Restarting a Controller includes the following actions:
+Restarting a Controller instance includes the following actions:
 
 * Action 'terminate' (Default)
 ** no new tasks are started.
 ** running tasks are continued to complete:
 *** shell jobs will continue until their normal termination.
-*** API jobs complete a current spooler_process() call.
+*** API jobs complete a current process step.
 ** JS7 Controller terminates normally.
 
 * Action 'abort'
@@ -30,8 +35,8 @@ Restarting a Controller includes the following actions:
 ** JS7 Controller terminates normally.
 
 .PARAMETER NoFailover
-This switch prevents a fail-over to happen when restarting the active Controller
-in a cluster. Instead, the restarted Controller will remain the active cluster member.
+This switch prevents a fail-over to happen when restarting the active Controller instance
+in a cluster. Instead, the restarted Controller instance will remain the active cluster member.
 
 .PARAMETER Service
 Retarts the JS7 Windows service.
@@ -61,7 +66,7 @@ It can be useful when integrated with a ticket system that logs interventions wi
 Restart-JS7ControllerInstance
 
 Terminates and restarts the JS7 Controller. In a cluster the active cluster member is restarted
-and a fail-over takes place to the passive cluster member. Use -of the -NoFailover switch prevents
+and a fail-over takes place to the standby cluster member. Use -of the -NoFailover switch prevents
 the switch-over.
 
 .EXAMPLE
@@ -72,8 +77,8 @@ Retarts the JS7 Controller active cluster member or standalone instance.
 .EXAMPLE
 Restart-JS7ControllerInstance -Url (Get-JS7ControllerStatus).Passive.Url -NoFailover
 
-Retarts the JS7 Controller passive cluster member. Consider use of the -NoFailover switch
-as a passive cluster member cannot switch-over to an active cluster member.
+Restarts the JS7 Controller standby cluster member. Consider use of the -NoFailover switch
+as a standby cluster member cannot switch-over to an active cluster member.
 
 .EXAMPLE
 Restart-JS7ControllerInstance -Service

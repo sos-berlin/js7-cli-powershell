@@ -5,7 +5,7 @@ function Get-JS7TaskLog
 Returns the task log from the JS7 History
 
 .DESCRIPTION
-Returns a task log for a given task ID. This cmdlet is mostly used for pipelined input from the
+Returns a task log for a given Task ID. This cmdlet is mostly used for pipelined input from the
 Get-JS7TaskHistory cmdlet that allows to search the execution history of tasks and
 that returns task IDs that are used by this cmdlet to retrieve the task's log output.
 
@@ -69,15 +69,15 @@ Writes the task log to a file.
 .EXAMPLE
 Get-JS7TaskHistory -RelativeDateFrom -8h | Get-JS7TaskLog | Select-Object @{name='path'; expression={ "/tmp/history/$(Get-Date $_.startTime -f 'yyyyMMdd-hhmmss')-$([io.path]::GetFileNameWithoutExtension($_.job)).log"}}, @{name='value'; expression={ $_.log }} | Set-Content
 
-Read the logs of tasks that completed within the last 8 hours and writes the log output to individual files. The log file names are created from the start time and the job name of each task.
+Reads the logs of tasks that completed within the last 8 hours and writes the log output to individual files. The log file names are created from the start time and the job name of each task.
 
 .EXAMPLE
 # execute once
 $lastHistory = Get-JS7TaskHistory -RelativeDateFrom -8h | Sort-Object -Property startTime
-# execute by interval
+# execute in intervals
 Get-JS7TaskHistory -DateFrom $lastHistory[0].startTime | Tee-Object -Variable lastHistory | Get-JS7TaskLog | Select-Object @{name='path'; expression={ "/tmp/history/$(Get-Date $_.startTime -f 'yyyyMMdd-hhmmss')-$([io.path]::GetFileNameWithoutExtension($_.job)).log"}}, @{name='value'; expression={ $_.log }} | Set-Content
 
-Provides a mechanism to subsequently retrieve previous logs. Starting from intial execution of the Get-JS7TaskHistory cmdlet the resulting $lastHistory object is used for any subsequent calls.
+Provides a mechanism to subsequently retrieve previous logs. Starting from initial execution of the Get-JS7TaskHistory cmdlet the resulting $lastHistory object is used for any subsequent calls.
 Consider use of the Tee-Object cmdlet in the pipeline that updates the $lastHistory object that can be used for later executions of the same pipeline.
 The pipeline can e.g. be executed in a cyclic job.
 

@@ -220,10 +220,12 @@ ________________________________________________________________________"
 ________________________________________________________________________
 Order Summary
 ............. pending: $($orderSummary.pending)
+........... scheduled: $($orderSummary.scheduled)
 ......... in progress: $($orderSummary.inProgress)
 ............. running: $($orderSummary.running)
 ........... suspended: $($orderSummary.suspended)
-............. calling: $($orderSummary.calling)
+........... completed: $($orderSummary.terminated)
+........... prompting: $($orderSummary.prompting)
 ............. waiting: $($orderSummary.waiting)
 ............. blocked: $($orderSummary.blocked)
 .............. failed: $($orderSummary.failed)
@@ -295,8 +297,8 @@ Order History
 .......... successful: $($orderHistory.successful)
 .............. failed: $($orderHistory.failed)
 Task History
-............. pending: $($jobHistory.successful)
-............. running: $($jobHistory.failed)
+.......... successful: $($jobHistory.successful)
+.............. failed: $($jobHistory.failed)
 ________________________________________________________________________"
                 Write-Output $output
             }

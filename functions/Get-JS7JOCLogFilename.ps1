@@ -2,7 +2,7 @@ function Get-JS7JOCLogFilename
 {
 <#
 .SYNOPSIS
-Return the list of available JOC Cockpit log file names
+Returns the list of available JOC Cockpit log file names
 
 .DESCRIPTION
 Returns the list of JOC Cockpit log file names.

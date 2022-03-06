@@ -5,16 +5,16 @@ function Get-JS7OrderLog
 Reads the order log from the JS7 History
 
 .DESCRIPTION
-Reads an order log for a given workflow, order ID and history ID. This cmdlet is mostly used for pipelined input from the
+Reads an order log for a given workflow, Order ID and History ID. This cmdlet is mostly used for pipelined input from the
 Get-JS7OrderHistory cmdlet that allows to search the execution history of orders and
-that returns history IDs that are used by this cmdlet to retrieve the order's log output.
+that returns History IDs that are used by this cmdlet to retrieve the order's log output.
 
 The following REST Web Service API resources are used:
 
 * /order/log/download
 
 .PARAMETER HistoryId
-Specifies the history ID that the order was running for. This information is provided by the
+Specifies the History ID that the order was running for. This information is provided by the
 Get-JS7OrderHistory cmdlet.
 
 .PARAMETER ControllerId
@@ -60,12 +60,12 @@ Writes the order log to a file.
 .EXAMPLE
 Get-JS7OrderHistory -RelativeDateFrom -8h | Get-JS7OrderLog | Select-Object @{name='path'; expression={ "/tmp/history/$(Get-Date $_.startTime -f 'yyyyMMdd-hhmmss')-$([io.path]::GetFileNameWithoutExtension($_.workflow))-$($_.orderId).log"}}, @{name='value'; expression={ $_.log }} | Set-Content
 
-Read the logs of orders that completed within the last 8 hours and writes the log output to individual files. The log file names are created from the start time, the workflow name and order ID.
+Reads the logs of orders that completed within the last 8 hours and writes the log output to individual files. The log file names are created from the start time, the workflow name and Order ID.
 
 .EXAMPLE
 # execute once
 $lastHistory = Get-JS7OrderHistory -RelativeDateFrom -8h | Sort-Object -Property startTime
-# execute by interval
+# execute in intervals
 Get-JS7OrderHistory -DateFrom $lastHistory[0].startTime | Tee-Object -Variable lastHistory | Get-JS7OrderLog | Select-Object @{name='path'; expression={ "/tmp/history/$(Get-Date $_.startTime -f 'yyyyMMdd-hhmmss')-$([io.path]::GetFileNameWithoutExtension($_.workflow))-$($_.orderId).log"}}, @{name='value'; expression={ $_.log }} | Set-Content
 
 Provides a mechanism to subsequently retrieve previous logs. Starting from initial execution of the Get-JS7OrderHistory cmdlet the resulting $lastHistory object is used for any subsequent calls.

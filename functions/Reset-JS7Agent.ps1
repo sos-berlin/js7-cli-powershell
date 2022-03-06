@@ -25,7 +25,7 @@ This switch should be used with care as it kills any tasks running with an Agent
 from the Agent and forces the Agent to drop its journal and to restart.
 
 The purpose of this switch is to hijack an Agent that is assigned a different Controller or that holds
-information in its journal that is no longer applicable, for example if the AGent ID should be modified.
+information in its journal that is no longer applicable, for example if the Agent ID should be modified.
 
 .PARAMETER AuditComment
 Specifies a free text that indicates the reason for the current intervention, e.g. "business requirement", "maintenance window" etc.

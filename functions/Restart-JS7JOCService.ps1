@@ -7,7 +7,7 @@ Restarts a JOC Cockpit background service in the current JOC Cockpit instance
 .DESCRIPTION
 A number of JOC Cockpit services such as the cluster service, history service and daily plan service are available
 with a currently active JOC Cockpit instance. Forcing a restart is an altenative to switching over to a standby
-JOC Cockpit instances as e.g. offered with the Switch-JS7JOCInstance cmdlet.
+JOC Cockpit instance as e.g. offered with the Switch-JS7JOCInstance cmdlet.
 
 Consider that restart of a JOC Cockpit service can be performed when being connected to the
 currently active JOC Cockpit instance only.
@@ -22,6 +22,8 @@ Specifies the the service to be restarted which is one of:
 * CLUSTER
 * HISTORY
 * DAILYPLAN
+* CLEANUP
+* MONITOR
 
 .PARAMETER AuditComment
 Specifies a free text that indicates the reason for the current intervention, e.g. "business requirement", "maintenance window" etc.
@@ -55,7 +57,7 @@ about_JS7
 param
 (
     [Parameter(Mandatory=$True,ValueFromPipeline=$False,ValueFromPipelinebyPropertyName=$True)]
-    [ValidateSet('CLUSTER','HISTORY','DAILYPLAN','CLEANUP','RESTART')]
+    [ValidateSet('CLUSTER','HISTORY','DAILYPLAN','CLEANUP','MONITOR')]
     [string] $Service,
     [Parameter(Mandatory=$False,ValueFromPipeline=$False,ValueFromPipelinebyPropertyName=$True)]
     [string] $AuditComment,

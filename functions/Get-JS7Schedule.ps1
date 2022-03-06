@@ -11,7 +11,7 @@ Schedules are selected from the JOC Cockpit inventory
 * by the folder of the schedule location including sub-folders,
 * by the path and name of a workflow.
 
-Resulting calendars can be forwarded to other cmdlets for pipelined bulk operations.
+Resulting schedules can be forwarded to other cmdlets for pipelined bulk operations.
 
 The following REST Web Service API resources are used:
 
@@ -20,12 +20,11 @@ The following REST Web Service API resources are used:
 .PARAMETER SchedulePath
 Optionally specifies the path and name of a schedule that should be returned.
 
-One of the parameters -Folder, -SchedulePath or -WorkflowPath has to be specified if no pipelined path properties are provided.
+.PARAMETER WorkflowPath
+Optionally specifies the path and name of a workflow for which schedules should be returned.
 
 .PARAMETER Folder
 Optionally specifies the folder for which schedules should be returned.
-
-One of the parameters -Folder, -SchedulePath or -WorkflowPath has to be specified if no pipelined path properties are provided.
 
 .PARAMETER Recursive
 Specifies that any sub-folders should be looked up if the -Folder parameter is used.
@@ -51,7 +50,7 @@ $schedule = Get-JS7Schedule -SchedulePath /BusinessDays
 Returns the schedule that is stored with the path "/BusinessDays".
 
 .EXAMPLE
-$calendars = Get-JS7Schedule -WorkflowPath /some/path
+$schedules = Get-JS7Schedule -WorkflowPath /some/path
 
 Returns the schedules that are assigned the given workflow.
 
@@ -69,7 +68,9 @@ param
     [Parameter(Mandatory=$False,ValueFromPipeline=$False,ValueFromPipelinebyPropertyName=$True)]
     [string] $Folder = '/',
     [Parameter(Mandatory=$False,ValueFromPipeline=$False,ValueFromPipelinebyPropertyName=$False)]
-    [switch] $Recursive
+    [switch] $Recursive,
+    [Parameter(Mandatory=$False,ValueFromPipeline=$False,ValueFromPipelinebyPropertyName=$True)]
+    [string] $ControllerId
 )
     Begin
     {
@@ -81,7 +82,7 @@ param
             throw "$($MyInvocation.MyCommand.Name): only one of the parameters -WorkingDays or -NonWorkingDays can be used"
         }
 
-        $returnSchedules = @()
+        $controllerIds = @()
         $schedulePaths = @()
         $workflowPaths = @()
         $folders = @()
@@ -111,16 +112,6 @@ param
             $WorkflowPath = '/' + $WorkflowPath
         }
 
-        if ( !$Folder -and !$SchedulePath -and !$WorkflowPath )
-        {
-            throw "$($MyInvocation.MyCommand.Name): no folder, no workflow or no schedule is specified, use -Folder or -SchedulePath or -WorkflowPath"
-        }
-
-        if ( $Folder -and $Folder -ne '/' -and $SchedulePath )
-        {
-            throw "$($MyInvocation.MyCommand.Name): only on of the parameterrs -SchedulePath or -Folder can be used"
-        }
-
         if ( $Folder -and $Folder -ne '/' )
         {
             if ( !$Folder.StartsWith( '/' ) )
@@ -137,6 +128,12 @@ param
         if ( $Folder -eq '/' -and !$WorkflowPath -and !$SchedulePath -and !$Recursive )
         {
             $Recursive = $True
+        }
+
+
+        if ( $ControllerId )
+        {
+            $controllerIds += $ControllerId
         }
 
         if ( $SchedulePath )
@@ -161,39 +158,49 @@ param
 
     End
     {
+        $body = New-Object PSObject
+        Add-Member -Membertype NoteProperty -Name 'controllerId' -value $script:jsWebService.ControllerId -InputObject $body
+
         if ( $schedulePaths.count -or $workflowPaths.count -or $folders.count )
         {
-            $body = New-Object PSObject
+            $selector = New-Object PSObject
+
+            if ( $controllerIds.count )
+            {
+                Add-Member -Membertype NoteProperty -Name 'controllerIds' -value $controllerIds -InputObject $selector
+            }
 
             if ( $schedulePaths.count )
             {
-                Add-Member -Membertype NoteProperty -Name 'schedulePaths' -value $schedulePaths -InputObject $body
+                Add-Member -Membertype NoteProperty -Name 'schedulePaths' -value $schedulePaths -InputObject $selector
             }
 
             if ( $workflowPaths.count )
             {
-                Add-Member -Membertype NoteProperty -Name 'workflowPaths' -value $workflowPaths -InputObject $body
+                Add-Member -Membertype NoteProperty -Name 'workflowPaths' -value $workflowPaths -InputObject $selector
             }
 
             if ( $folders.count )
             {
-                Add-Member -Membertype NoteProperty -Name 'folders' -value $folders -InputObject $body
+                Add-Member -Membertype NoteProperty -Name 'folders' -value $folders -InputObject $selector
             }
 
-            [string] $requestBody = $body | ConvertTo-Json -Depth 100
-            $response = Invoke-JS7WebRequest -Path '/schedules' -Body $requestBody
-
-            if ( $response.StatusCode -eq 200 )
-            {
-                $returnSchedules = ( $response.Content | ConvertFrom-JSON ).schedules
-            } else {
-                throw ( $response | Format-List -Force | Out-String )
-            }
-
-            $returnSchedules
+            Add-Member -Membertype NoteProperty -Name 'selector' -value $selector -InputObject $body
         }
 
-        if ( $returnCalendars.count )
+        [string] $requestBody = $body | ConvertTo-Json -Depth 100
+        $response = Invoke-JS7WebRequest -Path '/schedules' -Body $requestBody
+
+        if ( $response.StatusCode -eq 200 )
+        {
+            $returnSchedules = ( $response.Content | ConvertFrom-Json ).schedules
+        } else {
+            throw ( $response | Format-List -Force | Out-String )
+        }
+
+        $returnSchedules
+
+        if ( $returnSchedules.count )
         {
             Write-Verbose ".. $($MyInvocation.MyCommand.Name): $($returnSchedules.count) schedules found"
         } else {

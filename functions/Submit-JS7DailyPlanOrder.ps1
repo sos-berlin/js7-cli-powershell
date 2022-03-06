@@ -357,12 +357,14 @@ param
                 throw ( $response | Format-List -Force | Out-String )
             }
 
+            Write-Verbose ".. $($MyInvocation.MyCommand.Name): Daily Plan orders submitted for: $(Get-Date $day -Format 'yyyy-MM-dd')"
+
             $loops++
         }
 
         if ( $loops )
         {
-            Write-Verbose ".. $($MyInvocation.MyCommand.Name): Daily Plan orders submitted"
+            Write-Verbose ".. $($MyInvocation.MyCommand.Name): Daily Plan orders submitted for $loops days"
         } else {
             Write-Verbose ".. $($MyInvocation.MyCommand.Name): no Daily Plan orders submitted"
         }

@@ -2,10 +2,10 @@ function Switch-JS7ControllerInstance
 {
 <#
 .SYNOPSIS
-Switches the roles of the active and passive JS7 Controller instances in a cluster
+Switches the roles of the active and standby JS7 Controller instances in a cluster
 
 .DESCRIPTION
-During switchover the active Controller instance becomes passive and vice versa.
+During switch-over the active Controller instance switches to standby mode and vice versa.
 
 The following REST Web Service API resources are used:
 
@@ -32,8 +32,8 @@ It can be useful when integrated with a ticket system that logs interventions wi
 .EXAMPLE
 Switch-JS7ControllerInstance
 
-Switches the roles of the active and passive JS7 Controller instances:
-The active instance becomes passive and vice versa.
+Switches the roles of the active and standby JS7 Controller instances:
+The active instance switches to standby mode and vice versa.
 
 .LINK
 about_JS7

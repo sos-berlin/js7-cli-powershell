@@ -2,10 +2,10 @@ function Stop-JS7DailyPlanOrder
 {
 <#
 .SYNOPSIS
-Cancels daily plan orders from a number of JS7 Controllers
+Cancels daily plan orders from a JS7 Controller
 
 .DESCRIPTION
-Cancels daily plan orders from a number of JS7 Controllers.
+Cancels daily plan orders from a JS7 Controller.
 
 The following REST Web Service API resources are used:
 
@@ -185,7 +185,7 @@ param
             $dailyPlanDateTo = Get-Date (Get-Date $DateTo)
         }
 
-        Write-Verbose ".. $($MyInvocation.MyCommand.Name): removing daily plan orders for date range $dailyPlanDateFrom - $dailyPlanDateTo"
+        Write-Verbose ".. $($MyInvocation.MyCommand.Name): cancelling daily plan orders for date range $dailyPlanDateFrom - $dailyPlanDateTo"
         $loops = 0
 
         for( $day=$dailyPlanDateFrom; $day -le $dailyPlanDateTo; $day=$day.AddDays(1) )
@@ -239,6 +239,8 @@ param
                 } else {
                     throw ( $response | Format-List -Force | Out-String )
                 }
+
+                Write-Verbose ".. $($MyInvocation.MyCommand.Name): Daily Plan orders cancelled for: $(Get-Date $day -Format 'yyyy-MM-dd')"
             }
 
             $loops++
@@ -246,7 +248,7 @@ param
 
         if ( $loops )
         {
-            Write-Verbose ".. $($MyInvocation.MyCommand.Name): Daily Plan orders cancelled"
+            Write-Verbose ".. $($MyInvocation.MyCommand.Name): Daily Plan orders cancelled for $loops days"
         } else {
             Write-Verbose ".. $($MyInvocation.MyCommand.Name): no Daily Plan orders cancelled"
         }
