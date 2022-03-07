@@ -197,6 +197,8 @@ param
     [Parameter(Mandatory=$False,ValueFromPipeline=$False,ValueFromPipelinebyPropertyName=$True)]
     [switch] $Suspended,
     [Parameter(Mandatory=$False,ValueFromPipeline=$False,ValueFromPipelinebyPropertyName=$True)]
+    [switch] $Completed,
+    [Parameter(Mandatory=$False,ValueFromPipeline=$False,ValueFromPipelinebyPropertyName=$True)]
     [switch] $Prompting,
     [Parameter(Mandatory=$False,ValueFromPipeline=$False,ValueFromPipelinebyPropertyName=$True)]
     [switch] $Waiting,
@@ -273,6 +275,11 @@ param
         if ( $Suspended )
         {
             $states += 'SUSPENDED'
+        }
+
+        if ( $Completed )
+        {
+            $states += 'TERMINATED'
         }
 
         if ( $Prompting )

@@ -68,9 +68,7 @@ param
     [Parameter(Mandatory=$False,ValueFromPipeline=$False,ValueFromPipelinebyPropertyName=$True)]
     [string] $Folder = '/',
     [Parameter(Mandatory=$False,ValueFromPipeline=$False,ValueFromPipelinebyPropertyName=$False)]
-    [switch] $Recursive,
-    [Parameter(Mandatory=$False,ValueFromPipeline=$False,ValueFromPipelinebyPropertyName=$True)]
-    [string] $ControllerId
+    [switch] $Recursive
 )
     Begin
     {
@@ -82,7 +80,6 @@ param
             throw "$($MyInvocation.MyCommand.Name): only one of the parameters -WorkingDays or -NonWorkingDays can be used"
         }
 
-        $controllerIds = @()
         $schedulePaths = @()
         $workflowPaths = @()
         $folders = @()
@@ -131,11 +128,6 @@ param
         }
 
 
-        if ( $ControllerId )
-        {
-            $controllerIds += $ControllerId
-        }
-
         if ( $SchedulePath )
         {
             $SchedulePaths += $SchedulePath
@@ -164,11 +156,6 @@ param
         if ( $schedulePaths.count -or $workflowPaths.count -or $folders.count )
         {
             $selector = New-Object PSObject
-
-            if ( $controllerIds.count )
-            {
-                Add-Member -Membertype NoteProperty -Name 'controllerIds' -value $controllerIds -InputObject $selector
-            }
 
             if ( $schedulePaths.count )
             {

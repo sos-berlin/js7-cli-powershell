@@ -94,6 +94,8 @@ param
     [string] $Type,
     [Parameter(Mandatory=$False,ValueFromPipeline=$False,ValueFromPipelinebyPropertyName=$True)]
     [string] $Folder,
+    [Parameter(Mandatory=$False,ValueFromPipeline=$False,ValueFromPipelinebyPropertyName=$False)]
+    [switch] $Recursive,
     [Parameter(Mandatory=$False,ValueFromPipeline=$False,ValueFromPipelinebyPropertyName=$True)]
     [switch] $Local,
     [Parameter(Mandatory=$False,ValueFromPipeline=$False,ValueFromPipelinebyPropertyName=$True)]
@@ -153,6 +155,7 @@ param
             $updatableObj = New-Object PSObject
             Add-Member -Membertype NoteProperty -Name 'path' -value $Folder -InputObject $updatableObj
             Add-Member -Membertype NoteProperty -Name 'objectType' -value 'FOLDER' -InputObject $updatableObj
+            Add-Member -Membertype NoteProperty -Name 'recursive' -value ($Recursive -eq $True) -InputObject $updatableObj
         }
 
         $updatableConfigurationObj = New-Object PSObject
