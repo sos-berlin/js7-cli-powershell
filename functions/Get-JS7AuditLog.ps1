@@ -6,7 +6,7 @@ Returns Audit Log entries
 
 .DESCRIPTION
 Audit log information is returned from a JOC Cockpit instance.
-Audit log entries can be selected by workflow path, order ID, folder etc.
+Audit log entries can be selected by workflow path, Order ID, folder etc.
 
 The audit log information returned includes point in time, request, object etc. of a change.
 

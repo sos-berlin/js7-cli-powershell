@@ -45,13 +45,13 @@ A regular expression 'Identifier$' matches the above Order ID.
 Specifies the date starting from which history items should be returned.
 Consider that a UTC date has to be provided.
 
-Default should no order ID be provided: Begin of the current day as a UTC date
+Default should no Order ID be provided: Begin of the current day as a UTC date
 
 .PARAMETER DateTo
 Specifies the date until which history items should be returned.
 Consider that a UTC date has to be provided.
 
-Default should no order ID be provided: End of the current day as a UTC date
+Default should no Order ID be provided: End of the current day as a UTC date
 
 .PARAMETER RelativeDateFrom
 Specifies a relative date starting from which history items should be returned, e.g.
@@ -148,7 +148,7 @@ Returns today's order execution history for a given workflow.
 .EXAMPLE
 $items = Get-JS7OrderHistory -ExcludeOrder @{ 'workflowPath'='/some_path/some_workflow'; 'orderId'='2020-11-23#P0000000547-orderSampleWorkflow1a' }
 
-Returns today's order execution history for any orders excluding orders from the specified workflow paths and order IDs.
+Returns today's order execution history for any orders excluding orders from the specified workflow paths and Order IDs.
 
 .EXAMPLE
 $items = Get-JS7OrderHistory -Successful -DateFrom "2020-08-11 14:00:00Z"

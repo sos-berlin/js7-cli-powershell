@@ -12,7 +12,7 @@ The following REST Web Service API resources are used:
 * /daily_plan/orders/delete
 
 .PARAMETER OrderId
-Optionally specifies the order ID of the daily plan order that should be removed.
+Optionally specifies the Order ID of the daily plan order that should be removed.
 
 .PARAMETER WorkflowPath
 Optionally specifies the path and name of a workflow for which daily plan orders should be removed.
@@ -113,7 +113,7 @@ Removes any daily plan orders starting from today until a date three days from n
 .EXAMPLE
 Remove-JS7DailyPlanOrder -OrderId "#2020-11-19#P0000000498-orderSampleWorfklow2a"
 
-Removes the order with the given order ID from the daily plan.
+Removes the order with the given Order ID from the daily plan.
 
 .EXAMPLE
 Remove-JS7DailyPlanOrder -WorkflowPath /some_folder/some_workflow

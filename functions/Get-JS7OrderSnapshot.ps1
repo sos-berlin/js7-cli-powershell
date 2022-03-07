@@ -15,7 +15,7 @@ The following REST Web Service API resources are used:
 Specifies the date until which history items should be returned.
 Consider that a UTC date has to be provided.
 
-Default should no order ID be provided: End of the current day as a UTC date
+Default should no Order ID be provided: End of the current day as a UTC date
 
 .PARAMETER RelativeDateTo
 Specifies a relative date until which history items should be returned, e.g.

@@ -12,7 +12,7 @@ The following REST Web Service API resources are used:
 * /orders/daily_plan/cancel
 
 .PARAMETER OrderId
-Optionally specifies the order ID of the daily plan order that should be cancelled.
+Optionally specifies the Order ID of the daily plan order that should be cancelled.
 
 .PARAMETER ControllerId
 Specifies the Controller to which daily plan orders have been submitted and should be cancelled.
@@ -98,7 +98,7 @@ Cancels any daily plan orders starting from today until a date three days from n
 .EXAMPLE
 Stop-JS7DailyPlanOrder -OrderId "#2020-11-19#P0000000498-orderSampleWorfklow2a"
 
-Cancels the order with the given order ID from the daily plan.
+Cancels the order with the given Order ID from the daily plan.
 
 .LINK
 about_JS7

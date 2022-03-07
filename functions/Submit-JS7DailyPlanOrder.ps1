@@ -113,7 +113,7 @@ Submits any daily plan orders starting from today until a date three days from n
 .EXAMPLE
 Submit-JS7DailyPlanOrder -OrderId "#2020-11-19#P0000000498-orderSampleWorfklow2a"
 
-Submits the order with the given order ID to the daily plan.
+Submits the order with the given Order ID to the daily plan.
 
 .EXAMPLE
 Submit-JS7DailyPlanOrder -WorkflowPath /some_folder/some_workflow

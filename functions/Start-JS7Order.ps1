@@ -79,7 +79,7 @@ This cmdlet returns an array of order objects.
 .EXAMPLE
 Start-JS7Order -OrderId "#2020-11-23#T158058928-myTest03"
 
-Starts the order with order ID "#2020-11-23#T158058928-myTest03".
+Starts the order with Order ID "#2020-11-23#T158058928-myTest03".
 
 .EXAMPLE
 Start-JS7Order -OrderId "#2020-11-23#T158058928-myTest03" -At "now+1800"
@@ -94,7 +94,7 @@ Starts the indicated order for a later date that is specified for the "Europe/Be
 .EXAMPLE
 Start-JS7Order -OrderId "#2020-11-23#T158058928-myTest03" -At "now+3600" -Variables @{'var1' = 'value1'; 'var2' = 'value2'}
 
-Starts the order with the specified order ID. The order will start one hour later and will use the
+Starts the order with the specified Order ID. The order will start one hour later and will use the
 arguments from the specified hashmap.
 
 .LINK
@@ -162,7 +162,7 @@ param
 
             if ( !$returnOrder.orderId )
             {
-                throw "$($MyInvocation.MyCommand.Name): could not find order ID: $OrderId"
+                throw "$($MyInvocation.MyCommand.Name): could not find Order ID: $OrderId"
             }
 
             if ( $returnOrder.state._text -ne 'PENDING' )

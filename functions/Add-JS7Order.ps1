@@ -16,7 +16,7 @@ Specifies the path and name of a workflow for which an order should be added.
 
 .PARAMETER OrderName
 Specifies the name of an order. The JOC Cockpit web service will consider the order name
-when creating unique order IDs from the pattern #<YYYY-MM-DD>#<qualifier><timestamp>-<order-name>
+when creating unique Order IDs from the pattern #<YYYY-MM-DD>#<qualifier><timestamp>-<order-name>
 such as #2020-11-22#T072521128-Some_Order_Name.
 
 * YYYY-MM-DD: Date for which the order is scheduled
