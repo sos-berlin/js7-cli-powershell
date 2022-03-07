@@ -38,7 +38,7 @@ Specifies that a regular expession is applied to Order IDs to filter results.
 The Order ID includes the Order Name attribute that is specified when adding the order like this for an Order Name "myIdentifier":
 
     "#2020-11-19#P0000000498-myIdentifier"
-    
+
 A regular expression 'Identifier$' matches the above Order ID.
 
 .PARAMETER DateFrom

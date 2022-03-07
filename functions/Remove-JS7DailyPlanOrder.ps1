@@ -292,7 +292,7 @@ param
             } else {
                 Add-Member -Membertype NoteProperty -Name 'controllerId' -value $script:jsWebService.ControllerId -InputObject $body
             }
-            
+
             $filter = New-Object PSObject
             Add-Member -Membertype NoteProperty -Name 'dailyPlanDate' -value (Get-Date $day -Format 'yyyy-MM-dd') -InputObject $filter
 

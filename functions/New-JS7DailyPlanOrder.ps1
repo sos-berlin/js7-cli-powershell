@@ -110,8 +110,8 @@ This cmdlet returns no output.
 .EXAMPLE
 New-JS7DailyPlanOrder -DateFrom "2020-12-31" -ControllerId Controller
 
-Creates daily plan orders from any schedules for the given day that 
-make use of workflows deployed to the indicated Controller. 
+Creates daily plan orders from any schedules for the given day that
+make use of workflows deployed to the indicated Controller.
 
 .EXAMPLE
 New-JS7DailyPlanOrder -DateFrom "2020-12-15" -DateTo "2020-12-31" -Submit -Overwrite
@@ -299,76 +299,76 @@ param
             $body = New-Object PSObject
             Add-Member -Membertype NoteProperty -Name 'controllerId' -value $script:jsWebService.ControllerId -InputObject $body
             Add-Member -Membertype NoteProperty -Name 'dailyPlanDate' -value (Get-Date $day -Format 'yyyy-MM-dd') -InputObject $body
-    
+
             if ( $workflowPaths -or $workflowFolders )
             {
                 $workflowPathsObj = New-Object PSObject
-    
+
                 if ( $workflowPaths )
                 {
                     Add-Member -Membertype NoteProperty -Name 'singles' -value $workflowPaths -InputObject $workflowPathsObj
                 }
-    
+
                 if ( $workflowFolders )
                 {
                     Add-Member -Membertype NoteProperty -Name 'folders' -value $workflowFolders -InputObject $workflowPathsObj
                 }
-    
+
                 Add-Member -Membertype NoteProperty -Name 'workflowPaths' -value $workflowPathsObj -InputObject $body
             }
-    
+
             if ( $schedulePaths -or $scheduleFolders )
             {
                 $schedulePathsObj = New-Object PSObject
-    
+
                 if ( $schedulePaths )
                 {
                     Add-Member -Membertype NoteProperty -Name 'singles' -value $schedulePaths -InputObject $schedulePathsObj
                 }
-    
+
                 if ( $scheduleFolders )
                 {
                     Add-Member -Membertype NoteProperty -Name 'folders' -value $scheduleFolders -InputObject $schedulePathsObj
                 }
-    
+
                 Add-Member -Membertype NoteProperty -Name 'schedulePaths' -value $schedulePathsObj -InputObject $body
             }
-    
+
             if ( $controllerIds )
             {
                 Add-Member -Membertype NoteProperty -Name 'controllerIds' -value $controllerIds -InputObject $body
             }
-    
+
             Add-Member -Membertype NoteProperty -Name 'withSubmit' -value ($Submit -eq $True) -InputObject $body
             Add-Member -Membertype NoteProperty -Name 'overwrite' -value ($Overwrite -eq $True) -InputObject $body
-    
+
             if ( $AuditComment -or $AuditTimeSpent -or $AuditTicketLink )
             {
                 $objAuditLog = New-Object PSObject
                 Add-Member -Membertype NoteProperty -Name 'comment' -value $AuditComment -InputObject $objAuditLog
-    
+
                 if ( $AuditTimeSpent )
                 {
                     Add-Member -Membertype NoteProperty -Name 'timeSpent' -value $AuditTimeSpent -InputObject $objAuditLog
                 }
-    
+
                 if ( $AuditTicketLink )
                 {
                     Add-Member -Membertype NoteProperty -Name 'ticketLink' -value $AuditTicketLink -InputObject $objAuditLog
                 }
-    
+
                 Add-Member -Membertype NoteProperty -Name 'auditLog' -value $objAuditLog -InputObject $body
             }
-    
+
             if ( $PSCmdlet.ShouldProcess( 'orders', '/daily_plan/orders/generate' ) )
             {
                 [string] $requestBody = $body | ConvertTo-Json -Depth 100
                 $response = Invoke-JS7WebRequest -Path '/daily_plan/orders/generate' -Body $requestBody
-    
+
                 if ( $response.StatusCode -eq 200 )
                 {
                     $requestResult = ( $response.Content | ConvertFrom-JSON )
-    
+
                     if ( !$requestResult.ok )
                     {
                         throw ( $response | Format-List -Force | Out-String )
@@ -376,7 +376,7 @@ param
                 } else {
                     throw ( $response | Format-List -Force | Out-String )
                 }
-    
+
                 Write-Verbose ".. $($MyInvocation.MyCommand.Name): Daily Plan orders created for: $(Get-Date $day -Format 'yyyy-MM-dd')"
             }
 

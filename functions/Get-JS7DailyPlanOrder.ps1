@@ -191,7 +191,7 @@ param
 
         if ( ( $Planned -and $Submitted ) -or ( $Planned -and $Finished ) -or ( $Submitted -and $Finished ) )
         {
-            throw "$($MyInvocation.MyCommand.Name): only one of the parameters -Planned or -Submitted or -Finished can be used"            
+            throw "$($MyInvocation.MyCommand.Name): only one of the parameters -Planned or -Submitted or -Finished can be used"
         }
 
         if ( $WorkflowFolder -and $WorkflowFolder -ne '/' )
