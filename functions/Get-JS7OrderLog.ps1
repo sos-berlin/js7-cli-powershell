@@ -26,7 +26,7 @@ This parameter is used to accept pipeline input from the Get-JS7OrderHistory cmd
 .PARAMETER Workflow
 This parameter is used to accept pipeline input from the Get-JS7OrderHistory cmdlet and forwards the parameter to the resulting object.
 
-.PARAMETER Position
+.PARAMETER PositionString
 This parameter is used to accept pipeline input from the Get-JS7OrderHistory cmdlet and forwards the parameter to the resulting object.
 
 .PARAMETER State
@@ -88,7 +88,7 @@ param
     [Parameter(Mandatory=$False,ValueFromPipeline=$False,ValueFromPipelinebyPropertyName=$True)]
     [string] $Workflow,
     [Parameter(Mandatory=$False,ValueFromPipeline=$False,ValueFromPipelinebyPropertyName=$True)]
-    [string] $Position,
+    [string] $PositionString,
     [Parameter(Mandatory=$False,ValueFromPipeline=$False,ValueFromPipelinebyPropertyName=$True)]
     [PSCustomObject] $State,
     [Parameter(Mandatory=$False,ValueFromPipeline=$False,ValueFromPipelinebyPropertyName=$True)]
@@ -123,7 +123,7 @@ param
         Add-Member -Membertype NoteProperty -Name 'historyId' -value $HistoryId -InputObject $objResult
         Add-Member -Membertype NoteProperty -Name 'orderId' -value $OrderId -InputObject $objResult
         Add-Member -Membertype NoteProperty -Name 'workflow' -value $Workflow -InputObject $objResult
-        Add-Member -Membertype NoteProperty -Name 'position' -value $Position -InputObject $objResult
+        Add-Member -Membertype NoteProperty -Name 'positionString' -value $PositionString -InputObject $objResult
         Add-Member -Membertype NoteProperty -Name 'state' -value $State -InputObject $objResult
         Add-Member -Membertype NoteProperty -Name 'plannedTime' -value $PlannedTime -InputObject $objResult
         Add-Member -Membertype NoteProperty -Name 'startTime' -value $StartTime -InputObject $objResult
