@@ -37,7 +37,7 @@ This parameter specifies the HTTP method in use.
 There should be no reason to modify the default value 'POST'.
 
 .PARAMETER ContentType
-The HTTP content type is 'application/json' for JSON based requests.
+The HTTP content type is 'application/json; charset=utf-8' for JSON based requests.
 
 .PARAMETER Headers
 A hashtable can be specified with name/value pairs for HTTP headers.
@@ -93,7 +93,7 @@ param
     [Parameter(Mandatory=$False,ValueFromPipeline=$False,ValueFromPipelinebyPropertyName=$True)]
     [string] $Method = 'POST',
     [Parameter(Mandatory=$False,ValueFromPipeline=$False,ValueFromPipelinebyPropertyName=$True)]
-    [string] $ContentType = 'application/json',
+    [string] $ContentType = 'application/json; charset=utf-8',
     [Parameter(Mandatory=$False,ValueFromPipeline=$False,ValueFromPipelinebyPropertyName=$True)]
     [hashtable] $Headers = @{'Accept' = 'application/json'},
     [Parameter(Mandatory=$False,ValueFromPipeline=$False,ValueFromPipelinebyPropertyName=$True)]

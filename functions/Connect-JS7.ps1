@@ -552,7 +552,7 @@ param
 
             if ( $response -and $response.StatusCode -eq 200 -and $response.Content )
             {
-                $content = $response.Content | ConvertFrom-JSON
+                $content = $response.Content | ConvertFrom-Json
                 $script:jsWebService.AccessToken = $content.AccessToken
                 Write-Verbose ".. $($MyInvocation.MyCommand.Name): access token: $($content.accessToken)"
             } else {

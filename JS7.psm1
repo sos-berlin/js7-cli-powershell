@@ -374,7 +374,7 @@ param
     }
 }
 
-function Invoke-JS7WebRequest( [string] $Path, [object] $Body, [string] $Method='POST', [string] $ContentType='application/json', [hashtable] $Headers=@{'Accept' = 'application/json'}, [string] $InFile, [string] $OutFile, [boolean] $Verbose )
+function Invoke-JS7WebRequest( [string] $Path, [object] $Body, [string] $Method='POST', [string] $ContentType='application/json; charset=utf-8', [hashtable] $Headers=@{'Accept' = 'application/json'}, [string] $InFile, [string] $OutFile, [boolean] $Verbose )
 {
     if ( $script:jsWebService.Url.UserInfo )
     {

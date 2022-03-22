@@ -4,7 +4,7 @@
 RootModule = 'JS7.psm1'
 
 # Version number of this module.
-ModuleVersion = '2.0.10'
+ModuleVersion = '2.0.11.0'
 
 # ID used to uniquely identify this module
 GUID = '904a35e3-39b4-40bf-ab5f-e8c4ad5ae38d'
@@ -19,7 +19,7 @@ CompanyName = 'SOS GmbH'
 Copyright = 'Copyright (c) 2020 by SOS GmbH, licensed under GPL v3 License.'
 
 # Description of the functionality provided by this module
-Description = 'Control jobs and job chains with JS7 JobScheduler Controller and Agents, access the JOC Cockpit REST Web Service.'
+Description = 'Manage and Control workflows and jobs with JS7 JobScheduler Controller and Agents, access the JS7 REST Web Service API'
 
 # Minimum version of the Windows PowerShell engine required by this module
 PowerShellVersion = '5.1'
