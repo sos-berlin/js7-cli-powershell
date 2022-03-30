@@ -89,7 +89,7 @@ This parameter takes precedence over the -DateFrom parameter.
 
 .PARAMETER Timezone
 Specifies the timezone to which dates should be converted from the history information.
-A timezone can e.g. be specified like this:
+A timezone can be specified like this:
 
   Get-JS7OrderHistory -Timezone (Get-Timezone -Id 'GMT Standard Time')
 

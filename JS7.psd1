@@ -46,6 +46,8 @@ FunctionsToExport = @(
     'Get-JS7ControllerVersion',
     'Get-JS7DailyPlanOrder',
     'Get-JS7DeployableItem',
+    'Get-JS7FileTransferHistory',
+    'Get-JS7FileTransferHistoryFile',
     'Get-JS7FileTransferItem',
     'Get-JS7InventoryItem',
     'Get-JS7InventoryStatistics',
