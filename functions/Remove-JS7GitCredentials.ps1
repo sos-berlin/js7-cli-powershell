@@ -1,24 +1,23 @@
-function Remove-JS7Folder
+function Remove-JS7GitCredentials
 {
 <#
 .SYNOPSIS
-Removes a folder from the JOC Cockpit inventory
+Removes Git credentials for the current user account
 
 .DESCRIPTION
-This cmdlet marks for deletion a folder and its contents, i.e. deployable and releasable objects
-in the JOC Cockpit inventory.
+This cmdlet removes Git credentials for the current user account. The functionality considers the security level:
 
-The objects from the folder are not immediately erased, instead this change has to be committed:
-
-* For deployable objects use of the cmdlet the Publish-JS7DeployableItem cmdlet with the -Delete switch is required.
-* For releasable objects use of the cmdlet the Publish-JS7ReleasableItem cmdlet with the -Delete switch is required.
+* LOW: credentials are added to the default account, typically the root account
+* MEDIUM: credentials are added per user account
+* HIGH: no credentials are added
 
 The following REST Web Service API resources are used:
 
-* /inventory/remove/folder
+* /inventory/repository/git/credentials/remove
 
-.PARAMETER Folder
-Specifies the folder and optionally sub-folders to be removed.
+.PARAMETER Server
+Specifies the hostname and optionally the port of the Git server for which credentials are removed.
+A number of Git servers can be specified by separating servers with a comma.
 
 .PARAMETER AuditComment
 Specifies a free text that indicates the reason for the current intervention, e.g. "business requirement", "maintenance window" etc.
@@ -39,15 +38,15 @@ This information is visible with the Audit Log view of JOC Cockpit.
 It can be useful when integrated with a ticket system that logs interventions with JobScheduler.
 
 .INPUTS
-This cmdlet does not accept pipelined input.
+This cmdlet accepts pipelined input.
 
 .OUTPUTS
 This cmdlet returns no output.
 
 .EXAMPLE
-Remove-JS7Folder -Folder /some/folder
+Remove-JS7GitCredentials -Server github.com
 
-Removes the specified folder from the JOC Cockpit inventory.
+Removes credentials for access to the indicated Git servers.
 
 .LINK
 about_JS7
@@ -56,9 +55,8 @@ about_JS7
 [cmdletbinding(SupportsShouldProcess)]
 param
 (
-    [Alias('Path')]
     [Parameter(Mandatory=$True,ValueFromPipeline=$False,ValueFromPipelinebyPropertyName=$True)]
-    [string] $Folder,
+    [string[]] $Server,
     [Parameter(Mandatory=$False,ValueFromPipeline=$False,ValueFromPipelinebyPropertyName=$True)]
     [string] $AuditComment,
     [Parameter(Mandatory=$False,ValueFromPipeline=$False,ValueFromPipelinebyPropertyName=$True)]
@@ -79,18 +77,31 @@ param
 
     Process
     {
-        if ( $Folder.endsWith('/') )
+        $body = New-Object PSObject
+        Add-Member -Membertype NoteProperty -Name 'gitServers' -value $Server -InputObject $body
+
+        if ( $AuditComment -or $AuditTimeSpent -or $AuditTicketLink )
         {
-            $Folder = $Folder.Substring( 0, $Folder.Length-1 )
+            $objAuditLog = New-Object PSObject
+            Add-Member -Membertype NoteProperty -Name 'comment' -value $AuditComment -InputObject $objAuditLog
+
+            if ( $AuditTimeSpent )
+            {
+                Add-Member -Membertype NoteProperty -Name 'timeSpent' -value $AuditTimeSpent -InputObject $objAuditLog
+            }
+
+            if ( $AuditTicketLink )
+            {
+                Add-Member -Membertype NoteProperty -Name 'ticketLink' -value $AuditTicketLink -InputObject $objAuditLog
+            }
+
+            Add-Member -Membertype NoteProperty -Name 'auditLog' -value $objAuditLog -InputObject $body
         }
 
-        $body = New-Object PSObject
-        Add-Member -Membertype NoteProperty -Name 'path' -value $Folder -InputObject $body
-
-        if ( $PSCmdlet.ShouldProcess( $Path, '/inventory/remove/folder' ) )
+        if ( $PSCmdlet.ShouldProcess( 'credentials', '/inventory/repository/git/credentials/remove' ) )
         {
             [string] $requestBody = $body | ConvertTo-Json -Depth 100
-            $response = Invoke-JS7WebRequest -Path '/inventory/remove/folder' -Body $requestBody
+            $response = Invoke-JS7WebRequest -Path '/inventory/repository/git/credentials/remove' -Body $requestBody
 
             if ( $response.StatusCode -eq 200 )
             {
@@ -103,9 +114,9 @@ param
             } else {
                 throw ( $response | Format-List -Force | Out-String )
             }
-
-            Write-Verbose ".. $($MyInvocation.MyCommand.Name): folder removed: $Path"
         }
+
+        Write-Verbose ".. $($MyInvocation.MyCommand.Name): credentials removed from server: $Server"
     }
 
     End

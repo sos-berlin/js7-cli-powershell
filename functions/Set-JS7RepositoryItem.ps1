@@ -39,7 +39,8 @@ Specifies the scheduling object type that is one of:
 If no object type is specified then any object types will be used.
 
 .PARAMETER Folder
-Specifies the inventory folder for which items should be stored to the repository.
+Alternatively to use of -Path the parameter specifies a JOC Cockpit inventory folder to be used to
+store objects to a local Git repository.
 
 .PARAMETER Recursive
 Specifies that any sub-folders should be looked up if the -Folder parameter is used.

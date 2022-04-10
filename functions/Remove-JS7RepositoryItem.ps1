@@ -31,6 +31,16 @@ Specifies the object type which is one of:
 ** NONWORKINGDAYSCALENDAR
 ** SCHEDULE
 
+.PARAMETER Folder
+Alternatively to use of -Path the parameter specifies a JOC Cockpit inventory folder to be used to
+remove the respecive folder and objects from a local Git repository.
+
+.PARAMETER Local
+Specifies that a repository holding scheduling objects that are local to the environment should be used.
+This corresponds to the LOCAL category. If this switch is not used then the
+ROLLOUT category is assumed for a repository that holds scheduling objects
+intended for rollout to later environments such as test, prod.
+
 .PARAMETER AuditComment
 Specifies a free text that indicates the reason for the current intervention, e.g. "business requirement", "maintenance window" etc.
 
@@ -56,14 +66,19 @@ This cmdlet accepts pipelined objects.
 This cmdlet returns no output.
 
 .EXAMPLE
-Remove-JS7RepositoryItem -Path /some_folder/some_sub_folder -Type 'FOLDER'
+Remove-JS7RepositoryItem -Folder /some_folder/some_sub_folder
 
-Removes any scheduling objects from the indicated folder in the repository.
+Removes any scheduling objects from the indicated folder in the local "rollout" repository.
 
 .EXAMPLE
 Remove-JS7ReposioryItem -Path /some_folder/sampleWorkflow -Type 'WORKFLOW'
 
-Removes the indicated worfklow "sampleWorkflow" from the repository.
+Removes the indicated worfklow "sampleWorkflow" from the local "rollout" repository.
+
+.EXAMPLE
+Remove-JS7ReposioryItem -Path /some_folder/sampleSchedule -Type 'SCHEDULE' -Local
+
+Removes the indicated schedule "sampleSchedule" from the local "rollout" repository.
 
 .LINK
 about_JS7

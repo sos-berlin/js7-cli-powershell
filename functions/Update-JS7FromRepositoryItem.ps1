@@ -33,6 +33,10 @@ Specifies the scheduling object type that is one of:
 
 If no object type is specified then any object types will be used.
 
+.PARAMETER Folder
+Alternatively to use of -Path the parameter specifies a JOC Cockpit inventory folder to be used to
+which objects from a local Git repository are updated.
+
 .PARAMETER Local
 Specifies that a repository holding local scheduling objects should be used.
 This corresponds to the LOCAL category. If this switch is not used then then

@@ -1,21 +1,33 @@
-function Add-JS7Folder
+function Invoke-JS7GitRepositoryAdd
 {
 <#
 .SYNOPSIS
-Adds a folder to the JOC Cockpit inventory
+Adds all unstaged changes to the local Git repository staging area
 
 .DESCRIPTION
-This cmdlet adds folders and optionally sub-folders to the JOC Cockpit inventory.
+This cmdlet adds changes from directories and sub-directories of the local repository
+to the repository staging area. This cmdlet typically is used after having stored changes
+from JOC Cockpit inventory folders to the local repository by use of the Set-JS7RepositoryItem cmdlet.
+
+A local directory located in JETTY_BASE/resources/joc/repositories/rollout/TestCases
+maps to a JOC Cockpit /TestCases inventory folder.
+
+This cmdlet corresponds to using the following Git command:
+
+* git add .
 
 The following REST Web Service API resources are used:
 
-* /inventory/store
+* /inventory/repository/git/add
 
 .PARAMETER Folder
-Specifies the folder and optionally sub-folders that should be added.
+Specifies the JOC Cockpit inventory folder that maps to the Git repository.
 
-.PARAMETER DocPath
-Specifies the path to the documentation that is assigned the object.
+.PARAMETER Local
+Specifies that a repository holding scheduling objects that are local to the environment should be used.
+This corresponds to the LOCAL category. If this switch is not used then the
+ROLLOUT category is assumed for a repository that holds scheduling objects
+intended for rollout to later environments such as test, prod.
 
 .PARAMETER AuditComment
 Specifies a free text that indicates the reason for the current intervention, e.g. "business requirement", "maintenance window" etc.
@@ -42,9 +54,9 @@ This cmdlet accepts pipelined input.
 This cmdlet returns no output.
 
 .EXAMPLE
-Add-JS7Folder -Folder /TestCases
+Invoke-JS7GitRepositoryAdd -Folder /TestCases
 
-Creates a folder /TestCases in the JOC Cockpit inventory.
+Adds changes from the local repository that maps to the JOC Cockpit /TestCases inventory folder to the repository staging area.
 
 .LINK
 about_JS7
@@ -53,11 +65,10 @@ about_JS7
 [cmdletbinding()]
 param
 (
-    [Alias('Path')]
     [Parameter(Mandatory=$True,ValueFromPipeline=$False,ValueFromPipelinebyPropertyName=$True)]
     [string] $Folder,
     [Parameter(Mandatory=$False,ValueFromPipeline=$False,ValueFromPipelinebyPropertyName=$True)]
-    [string] $DocPath,
+    [switch] $Local,
     [Parameter(Mandatory=$False,ValueFromPipeline=$False,ValueFromPipelinebyPropertyName=$True)]
     [string] $AuditComment,
     [Parameter(Mandatory=$False,ValueFromPipeline=$False,ValueFromPipelinebyPropertyName=$True)]
@@ -84,31 +95,52 @@ param
         }
 
         $body = New-Object PSObject
-        Add-Member -Membertype NoteProperty -Name 'path' -value $Folder -InputObject $body
-        Add-Member -Membertype NoteProperty -Name 'objectType' -value 'FOLDER' -InputObject $body
-        Add-Member -Membertype NoteProperty -Name 'valid' -value $True -InputObject $body
+        Add-Member -Membertype NoteProperty -Name 'folder' -value $Folder -InputObject $body
 
-        if ( $DocPath )
+        if ( $Local )
         {
-            Add-Member -Membertype NoteProperty -Name 'docPath' -value $DocPath -InputObject $body
+            Add-Member -Membertype NoteProperty -Name 'category' -value 'LOCAL' -InputObject $body
+        } else {
+            Add-Member -Membertype NoteProperty -Name 'category' -value 'ROLLOUT' -InputObject $body
+        }
+
+        if ( $AuditComment -or $AuditTimeSpent -or $AuditTicketLink )
+        {
+            $objAuditLog = New-Object PSObject
+            Add-Member -Membertype NoteProperty -Name 'comment' -value $AuditComment -InputObject $objAuditLog
+
+            if ( $AuditTimeSpent )
+            {
+                Add-Member -Membertype NoteProperty -Name 'timeSpent' -value $AuditTimeSpent -InputObject $objAuditLog
+            }
+
+            if ( $AuditTicketLink )
+            {
+                Add-Member -Membertype NoteProperty -Name 'ticketLink' -value $AuditTicketLink -InputObject $objAuditLog
+            }
+
+            Add-Member -Membertype NoteProperty -Name 'auditLog' -value $objAuditLog -InputObject $body
         }
 
         [string] $requestBody = $body | ConvertTo-Json -Depth 100
-        $response = Invoke-JS7WebRequest -Path '/inventory/store' -Body $requestBody
+        $response = Invoke-JS7WebRequest -Path '/inventory/repository/git/add' -Body $requestBody
 
         if ( $response.StatusCode -eq 200 )
         {
             $requestResult = ( $response.Content | ConvertFrom-Json )
 
-            if ( !$requestResult.path )
+            if ( !$requestResult )
             {
                 throw ( $response | Format-List -Force | Out-String )
             }
+
+            Write-Verbose ".. $($MyInvocation.MyCommand.Name): output to stdout: $($requestResult.stdout)"
+            Write-Verbose ".. $($MyInvocation.MyCommand.Name): output to stderr: $($requestResult.stdout)"
         } else {
             throw ( $response | Format-List -Force | Out-String )
         }
 
-        Write-Verbose ".. $($MyInvocation.MyCommand.Name): folder added: $Folder"
+        Write-Verbose ".. $($MyInvocation.MyCommand.Name): objects added from folder: $Folder"
     }
 
     End

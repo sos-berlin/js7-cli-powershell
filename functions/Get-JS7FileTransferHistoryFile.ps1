@@ -42,6 +42,10 @@ Optionally specifies the name of a target file to limit the file items returned.
 
 This parameter accepts any number of target file names separated by a comma.
 
+.PARAMETER Hash
+YADE can be configured to check the integrity of a file by a hash value.
+The hash value is stored to the database and can be looked up by use of this parameter.
+
 .PARAMETER State
 Optionally specifies the state of a file transfer to limit the file items returned.
 
@@ -73,6 +77,11 @@ $items = Get-JS7FileTransferHistoryFile
 Returns file items for today's file transfers.
 
 .EXAMPLE
+$items = Get-JS7FileTransferHistoryFile -Hash 'd41d8cd98f00b204e9800998ecf8427e'
+
+Returns the file item for the file that matches the indicated hash.
+
+.EXAMPLE
 $items = Get-JS7FileTransferHistoryFile -SourceFile accounting.csv
 
 Returns file items for the indicated file name.
@@ -81,7 +90,7 @@ Returns file items for the indicated file name.
 $items = Get-JS7FileTransferHistoryFile -TransferId 32767
 
 Returns the file item for the file transfer identified with the indicated key.
-The identifier for a file transfer can retrieved by use of the Get-JS7FileTransferHistory cmdlet.
+The identifier for a file transfer can be retrieved by use of the Get-JS7FileTransferHistory cmdlet.
 
 .EXAMPLE
 $files = Get-JS7FileTransferHistory -RelativeDateFrom -1w -Successful | Get-JS7FileTransferHistoryFile
@@ -107,6 +116,8 @@ param
     [string[]] $SourceFile,
     [Parameter(Mandatory=$False,ValueFromPipeline=$False,ValueFromPipelinebyPropertyName=$True)]
     [string[]] $TargetFile,
+    [Parameter(Mandatory=$False,ValueFromPipeline=$False,ValueFromPipelinebyPropertyName=$True)]
+    [string] $Hash,
     [Parameter(Mandatory=$False,ValueFromPipeline=$False,ValueFromPipelinebyPropertyName=$True)]
     [int] $Limit
 )
@@ -170,6 +181,11 @@ param
         if ( $targetFiles )
         {
             Add-Member -Membertype NoteProperty -Name 'targetFiles' -value $targetFiles -InputObject $body
+        }
+
+        if ( $Hash )
+        {
+            Add-Member -Membertype NoteProperty -Name 'integrityHash' -value $Hash -InputObject $body
         }
 
         if ( $states )
