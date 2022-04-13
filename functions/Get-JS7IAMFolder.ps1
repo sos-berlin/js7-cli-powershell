@@ -64,11 +64,7 @@ param
         $body = New-Object PSObject
         Add-Member -Membertype NoteProperty -Name 'identityServiceName' -value $Service -InputObject $body
         Add-Member -Membertype NoteProperty -Name 'roleName' -value $Role -InputObject $body
-
-        if ( $ControllerId )
-        {
-            Add-Member -Membertype NoteProperty -Name 'controllerId' -value $ControllerId -InputObject $body
-        }
+        Add-Member -Membertype NoteProperty -Name 'controllerId' -value $ControllerId -InputObject $body
 
         [string] $requestBody = $body | ConvertTo-Json -Depth 100
         $response = Invoke-JS7WebRequest -Path '/iam/folders' -Body $requestBody
@@ -82,12 +78,12 @@ param
                 throw ( $response | Format-List -Force | Out-String )
             }
 
-            $requestResult
+            $requestResult.folders
         } else {
             throw ( $response | Format-List -Force | Out-String )
         }
 
-        Write-Verbose ".. $($MyInvocation.MyCommand.Name): $($requestResult.folders.count) folders returned"
+        Write-Verbose ".. $($MyInvocation.MyCommand.Name): folders returned"
     }
 
     End

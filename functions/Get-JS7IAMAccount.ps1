@@ -17,6 +17,9 @@ Specifies the unique name of the Identity Service.
 .PARAMETER Account
 Optionally limits the result to the specified user account.
 
+.PARAMETER Disabled
+Optionally returns disabled accounts only. By default enabled accounts only are returned.
+
 .INPUTS
 This cmdlet accepts pipelined input.
 
@@ -45,7 +48,9 @@ param
     [string] $Service,
     [Alias('AccountName')]
     [Parameter(Mandatory=$False,ValueFromPipeline=$False,ValueFromPipelinebyPropertyName=$True)]
-    [string] $Account
+    [string] $Account,
+    [Parameter(Mandatory=$False,ValueFromPipeline=$False,ValueFromPipelinebyPropertyName=$True)]
+    [switch] $Disabled
 )
 	Begin
 	{
@@ -57,6 +62,7 @@ param
     {
         $body = New-Object PSObject
         Add-Member -Membertype NoteProperty -Name 'identityServiceName' -value $Service -InputObject $body
+        Add-Member -Membertype NoteProperty -Name 'disabled' -value ($Disabled -eq $True) -InputObject $body
 
         if ( $Account )
         {
@@ -68,19 +74,24 @@ param
 
         if ( $response.StatusCode -eq 200 )
         {
-            $requestResult = ( $response.Content | ConvertFrom-Json ).accountItems
+            $requestResult = ( $response.Content | ConvertFrom-Json )
 
             if ( !$requestResult )
             {
                 throw ( $response | Format-List -Force | Out-String )
             }
 
-            $requestResult
+            if ( $requestResult.accountItems )
+            {
+                $requestResult.accountItems
+            } else {
+                $requestResult
+            }
         } else {
             throw ( $response | Format-List -Force | Out-String )
         }
 
-        Write-Verbose ".. $($MyInvocation.MyCommand.Name): $($requestResult.count) accounts returned"
+        Write-Verbose ".. $($MyInvocation.MyCommand.Name): account returned"
     }
 
     End

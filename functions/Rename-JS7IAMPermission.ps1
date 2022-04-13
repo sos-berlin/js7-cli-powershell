@@ -1,39 +1,27 @@
-function Set-JS7IAMAccount
+function Rename-JS7IAMPermission
 {
 <#
 .SYNOPSIS
-Stores an account to a JOC Cockpit Identity Service
+Renames am existing permission assigned a role in a JOC Cockpit Identity Service
 
 .DESCRIPTION
-This cmdlet stores an account to a JOC Cockpit Identity Service.
+This cmdlet renames an existing permission assigned a role in a JOC Cockpit Identity Service.
 
 The following REST Web Service API resources are used:
 
-* /iam/account/store
+* /iam/permission/rename
 
 .PARAMETER Service
-Specifies the unique name of the Identity Service that the accounts is managed with.
-
-.PARAMETER Account
-Specifies the unique name of the account that should be managed.
-
-.PARAMETER Password
-Optionally specifies the account's password. If this parameter is not used then the initial password
-managed with the JOC Cockpit Identity Service settings is used.
-
-The password has to be specified as a secure string, for example:
-
-$securePassword = ConvertTo-SecureString 'secret' -AsPlainText -Force
-Set-JS7IAMAccount -Service JOC -Account 'user1' -Password $secureString -Role 'application_manager
-
-.PARAMETER Disabled
-Specifies that the account cannot be used to login.
-
-.PARAMETER ForcePasswordChange
-Specifies that the account has to change the password with the next login.
+Specifies the unique name of the Identity Service.
 
 .PARAMETER Role
-Specifies the unique names of one or more roles that are assigned the account.
+Specifies the unique name of a role that is available with the Identity Service.
+
+.PARAMETER Permission
+Specifies the path of the existing permission in the JOC Cockpit inventory and role that should be renamed.
+
+.PARAMETER NewPermission
+Specifies the new permission path.
 
 .PARAMETER AuditComment
 Specifies a free text that indicates the reason for the current intervention,
@@ -62,17 +50,9 @@ This cmdlet accepts pipelined input.
 This cmdlet returns no output.
 
 .EXAMPLE
-Set-JS7IAMAccount -Service JOC -Account 'user1' -Role 'application_manager'
+Rename-JS7IAMPermission -Service JOC -Role 'application_manager' -ControllerId 'testsuite' -Permission 'sos:products:controller:deployment:deploy' -NewPermission 'sos:products:controller:deployment:view'
 
-Adds an account to JOC Cockpit that is assigned the indicated role. The account is assigned
-the initial password that is configured with the global Identity Service settings.
-On first login the account has to change the password.
-
-.EXAMPLE
-$securePassword = ConvertTo-SecureString 'secret' -AsPlainText -Force
-Set-JS7IAMAccount -Service JOC -Account 'user1' -Password $secureString -Role 'application_manager','incident_manager'
-
-Adds an account to JOC Cockpit that is assigned a password and the indicated roles.
+Renames an existing permission assigned a role.
 
 .LINK
 about_JS7
@@ -84,18 +64,18 @@ param
     [Alias('IdentityServiceName')]
     [Parameter(Mandatory=$True,ValueFromPipeline=$False,ValueFromPipelinebyPropertyName=$True)]
     [string] $Service,
-    [Alias('AccountName')]
-    [Parameter(Mandatory=$True,ValueFromPipeline=$False,ValueFromPipelinebyPropertyName=$True)]
-    [string] $Account,
-    [Parameter(Mandatory=$False,ValueFromPipeline=$False,ValueFromPipelinebyPropertyName=$True)]
-    [SecureString] $Password,
-    [Parameter(Mandatory=$False,ValueFromPipeline=$False,ValueFromPipelinebyPropertyName=$True)]
-    [switch] $Disabled,
-    [Parameter(Mandatory=$False,ValueFromPipeline=$False,ValueFromPipelinebyPropertyName=$True)]
-    [switch] $ForcePasswordChange,
     [Alias('RoleName')]
     [Parameter(Mandatory=$True,ValueFromPipeline=$False,ValueFromPipelinebyPropertyName=$True)]
-    [string[]] $Role,
+    [string] $Role,
+    [Alias('PermissionPath')]
+    [Parameter(Mandatory=$True,ValueFromPipeline=$False,ValueFromPipelinebyPropertyName=$True)]
+    [string] $Permission,
+    [Parameter(Mandatory=$True,ValueFromPipeline=$False,ValueFromPipelinebyPropertyName=$True)]
+    [string] $NewPermission,
+    [Parameter(Mandatory=$True,ValueFromPipeline=$False,ValueFromPipelinebyPropertyName=$True)]
+    [string] $ControllerId,
+    [Parameter(Mandatory=$False,ValueFromPipeline=$False,ValueFromPipelinebyPropertyName=$True)]
+    [switch] $Excluded,
     [Parameter(Mandatory=$False,ValueFromPipeline=$False,ValueFromPipelinebyPropertyName=$True)]
     [string] $AuditComment,
     [Parameter(Mandatory=$False,ValueFromPipeline=$False,ValueFromPipelinebyPropertyName=$True)]
@@ -114,19 +94,15 @@ param
         $body = New-Object PSObject
 
         Add-Member -Membertype NoteProperty -Name 'identityServiceName' -value $Service -InputObject $body
-        Add-Member -Membertype NoteProperty -Name 'accountName' -value $Account -InputObject $body
+        Add-Member -Membertype NoteProperty -Name 'roleName' -value $Role -InputObject $body
+        Add-Member -Membertype NoteProperty -Name 'oldPermissionPath' -value $Permission -InputObject $body
+        Add-Member -Membertype NoteProperty -Name 'controllerId' -value $ControllerId -InputObject $body
 
-        if ( $Password )
-        {
-            $ptr = [System.Runtime.InteropServices.Marshal]::SecureStringToCoTaskMemUnicode( $Password )
-            Add-Member -Membertype NoteProperty -Name 'password' -value ( [System.Runtime.InteropServices.Marshal]::PtrToStringUni( $ptr ) ) -InputObject $body
-            [System.Runtime.InteropServices.Marshal]::ZeroFreeCoTaskMemUnicode( $ptr )
-        }
+            $objPermission = New-Object PSObject
+            Add-Member -Membertype NoteProperty -Name 'permissionPath' -value $NewPermission -InputObject $objPermission
+            Add-Member -Membertype NoteProperty -Name 'excluded' -value ($Excluded -eq $True) -InputObject $objPermission
 
-        Add-Member -Membertype NoteProperty -Name 'disabled' -value ($Disabled -eq $True) -InputObject $body
-        Add-Member -Membertype NoteProperty -Name 'forcePasswordChange' -value ($ForcePasswordChange -eq $True) -InputObject $body
-
-        Add-Member -Membertype NoteProperty -Name 'roles' -value $Role -InputObject $body
+        Add-Member -Membertype NoteProperty -Name 'newPermission' -value $objPermission -InputObject $body
 
         if ( $AuditComment -or $AuditTimeSpent -or $AuditTicketLink )
         {
@@ -146,10 +122,10 @@ param
             Add-Member -Membertype NoteProperty -Name 'auditLog' -value $objAuditLog -InputObject $body
         }
 
-        if ( $PSCmdlet.ShouldProcess( 'account', '/iam/account/store' ) )
+        if ( $PSCmdlet.ShouldProcess( 'folder', '/iam/permission/rename' ) )
         {
             [string] $requestBody = $body | ConvertTo-Json -Depth 100
-            $response = Invoke-JS7WebRequest -Path '/iam/account/store' -Body $requestBody
+            $response = Invoke-JS7WebRequest -Path '/iam/permission/rename' -Body $requestBody
 
             if ( $response.StatusCode -eq 200 )
             {
@@ -164,7 +140,7 @@ param
             }
         }
 
-        Write-Verbose ".. $($MyInvocation.MyCommand.Name): account stored"
+        Write-Verbose ".. $($MyInvocation.MyCommand.Name): permission $Permission renamed to: $NewPermission"
     }
 
     End

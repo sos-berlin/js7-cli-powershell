@@ -82,7 +82,7 @@ param
             throw ( $response | Format-List -Force | Out-String )
         }
 
-        Write-Verbose ".. $($MyInvocation.MyCommand.Name): $($requestResult.permissions.count) permissions returned"
+        Write-Verbose ".. $($MyInvocation.MyCommand.Name): $($requestResult.permissions.count) permissions returned for role: $Role"
     }
 
     End

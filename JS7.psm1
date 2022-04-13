@@ -374,7 +374,7 @@ param
     }
 }
 
-function Invoke-JS7WebRequest( [string] $Path, [object] $Body, [string] $Method='POST', [string] $ContentType='application/json; charset=utf-8', [hashtable] $Headers=@{'Accept' = 'application/json'}, [string] $InFile, [string] $OutFile, [boolean] $Verbose )
+function Invoke-JS7WebRequest( [string] $Path, [object] $Body, [string] $Method='POST', [string] $ContentType='application/json; charset=utf-8', [hashtable] $Headers=@{'Accept' = 'application/json'}, [string] $InFile, [string] $OutFile, [int] $Timeout, [boolean] $Verbose )
 {
     if ( $script:jsWebService.Url.UserInfo )
     {
@@ -411,8 +411,10 @@ function Invoke-JS7WebRequest( [string] $Path, [object] $Body, [string] $Method=
         $requestParams.Add( 'SkipHttpErrorCheck', $true )
     }
 
-    if ( $script:jsWebService.Timeout )
+    if ( $Timeout )
     {
+        $requestParams.Add( 'TimeoutSec', $Timeout )
+    } elseif ( $script:jsWebService.Timeout ) {
         $requestParams.Add( 'TimeoutSec', $script:jsWebService.Timeout )
     }
 
