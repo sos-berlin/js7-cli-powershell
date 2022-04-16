@@ -1,53 +1,50 @@
-function Set-JS7Agent
+function Set-JS7Subagent
 {
 <#
 .SYNOPSIS
-Stores a Standalone Agent to the JOC Cockpit inventory
+Stores a Subagent to a Cluster Agent
 
 .DESCRIPTION
-This cmdlet stores a Standalone Agent to the JOC Cockpit inventory.
+This cmdlet stores a Subagent to a Cluster Agent.
 
-Consider that the Agent identification specified with the -AgentId parameter cannot be modified
-for the lifetime of a Standalone Agent.
+Consider that the Subgent identification specified with the -SubagentId parameter cannot be modified
+for the lifetime of a Subagent.
 
 The following REST Web Service API resources are used:
 
-* /agents/inventory/store
+* /agents/inventory/cluster/subagents/store
 
 .PARAMETER AgentId
-Specifies a unique identifier for a Standalone Agent. This identifier cannot be modified during the lifetime of an Agent.
-In order to modify the Agent identifier the Standalone Agent has to be removed and added.
+Specifies a unique identifier of a Cluster Agent. The Subagent will be assgigned the given Cluster Agent.
 
-.PARAMETER AgentName
-The name of a Standalone Agent is used e.g. in job assignments of a workflow. During deployment the Agent Name
-is replaced by the respective Agent ID for the Controller to which the workflow is deployed.
-
-Should deployments of the same workflows be performed to a number of Controllers then for each Controller
-the same Agent Name has to be configured (pointing to a different Agent ID).
+.PARAMETER SubagentId
+Specifies a unique identifier for the Subagent. The Subagent ID cannot be chaned during the lifetime of a Subagent.
 
 .PARAMETER Url
-Specifies the URL for which the Standalone Agent is available. A URL includes the protocol (http, https), hostname and port
+Specifies the URL for which the Subagent is available. A URL includes the protocol (http, https), hostname and port
 for which an Agent is operated.
 
-.PARAMETER AgentAlias
-Optionally specifies a number of alias names for a Standalone Agent that separated by a comma.
-An alias name is an alternative name for the same Agent that can be used when assigning Agents to jobs.
+.PARAMETER Title
+Optionally specifies a title for the Subagent that can later on be used for searching.
+
+.PARAMETER DirectorType
+Specifies if the Subagent acts as a Director Agent or Subagent only. The following values can be used:
+
+* NO_DIRECTOR: the Agent acts as a Subagent only
+* PRIMARY_DIRECTOR: the Agent acts as a Primary Director Agent and includes a Subagent
+* SECONDARY_DIRECTOR: the Agent acts as a Secondary Director Agent and includes a Subagent
+
+.PARAMETER Ordering
+Optionally specifies the sequence in which Subagents are returned and displayed by JOC Cockpit.
+The ordering is specified in ascening numbers.
+
+.PARAMETER GenerateSubagentCluster
+Optionally specifies if a Subagent Cluster should be created that holds the Subagent as its unique member.
+This option is useful if the Subagent Cluster should be assigned directly to jobs that rely on being
+executed with the Subagent only.
 
 .PARAMETER ControllerId
-Specifies the identification of the Controller to which the Standalone Agent is dedicated.
-
-.PARAMETER WatchCluster
-A JS7 Controller Cluster requires one Agent to be assigned the role of a cluster watcher.
-Such an Agent will be considered if the JS7 Controller Cluster decides about a fail-over situation with
-no network connection being available between primary and secondary JS7 Controller instances.
-
-.PARAMETER Disable
-A Standalone Agent can be disabled to prevent further execution of jobs by the Agent. Orders for deployed workflows will
-be put in a blocked state when processing a job that is assigned a disabled Standalone Agent.
-
-.PARAMETER Hide
-A Standalone Agent can be hidden to prevent further use in workflow configurations. Deployed workflows still can
-use a hidden Agent.
+Specifies the identification of the Controller to which Agents are added.
 
 .PARAMETER AuditComment
 Specifies a free text that indicates the reason for the current intervention, e.g. "business requirement", "maintenance window" etc.
@@ -74,14 +71,9 @@ This cmdlet accepts pipelined input.
 This cmdlet returns no output.
 
 .EXAMPLE
-Set-JS7Agent -AgentId agent_001 -AgentName primaryAgent -Url https://agent-2-0-primary:4443 -ControllerId 'testsuite'
+Set-JS7Subagent -AgentId agent_001 -SubagentId subagent_001 -Url https://subagent-2-0-primary:4443 -ControllerId 'testsuite'
 
-Stores a Standalone Agent with the specified attributes to the given Controller.
-
-.EXAMPLE
-Set-JS7Agent -AgentId agent_002 -AgentName secondaryAgent -Url https://agent-2-0-secondary:4443 -Disable -Hide
-
-Stores a Standalone Agent that is disabled in its Controller and hidden from assignment to jobs.
+Stores a Subagent with the specified attributes to the given Cluster Agent and Controller.
 
 .LINK
 about_JS7
@@ -93,19 +85,20 @@ param
     [Parameter(Mandatory=$True,ValueFromPipeline=$False,ValueFromPipelinebyPropertyName=$True)]
     [string] $AgentId,
     [Parameter(Mandatory=$True,ValueFromPipeline=$False,ValueFromPipelinebyPropertyName=$True)]
-    [string] $AgentName,
+    [string] $SubagentId,
     [Parameter(Mandatory=$True,ValueFromPipeline=$False,ValueFromPipelinebyPropertyName=$True)]
     [Uri] $Url,
     [Parameter(Mandatory=$False,ValueFromPipeline=$False,ValueFromPipelinebyPropertyName=$True)]
-    [string[]] $AgentAlias,
+    [string] $Title,
+    [Parameter(Mandatory=$False,ValueFromPipeline=$False,ValueFromPipelinebyPropertyName=$True)]
+    [ValidateSet('NO_DIRECTOR','PRIMARY_DIRECTOR','SECONDARY_DIRECTOR',IgnoreCase = $False)]
+    [string] $DirectorType = 'NO_DIRECTOR',
+    [Parameter(Mandatory=$False,ValueFromPipeline=$False,ValueFromPipelinebyPropertyName=$True)]
+    [int] $Ordering,
+    [Parameter(Mandatory=$False,ValueFromPipeline=$False,ValueFromPipelinebyPropertyName=$True)]
+    [switch] $GenerateSubagentCluster,
     [Parameter(Mandatory=$False,ValueFromPipeline=$False,ValueFromPipelinebyPropertyName=$True)]
     [string] $ControllerId,
-    [Parameter(Mandatory=$False,ValueFromPipeline=$False,ValueFromPipelinebyPropertyName=$True)]
-    [switch] $WatchCluster,
-    [Parameter(Mandatory=$False,ValueFromPipeline=$False,ValueFromPipelinebyPropertyName=$True)]
-    [switch] $Disable,
-    [Parameter(Mandatory=$False,ValueFromPipeline=$False,ValueFromPipelinebyPropertyName=$True)]
-    [switch] $Hide,
     [Parameter(Mandatory=$False,ValueFromPipeline=$False,ValueFromPipelinebyPropertyName=$True)]
     [string] $AuditComment,
     [Parameter(Mandatory=$False,ValueFromPipeline=$False,ValueFromPipelinebyPropertyName=$True)]
@@ -123,26 +116,33 @@ param
             throw "$($MyInvocation.MyCommand.Name): Audit Log comment required, use parameter -AuditComment if one of the parameters -AuditTimeSpent or -AuditTicketLink is used"
         }
 
-        $agents = @()
+        $subagents = @()
     }
 
     Process
     {
-        $agentObj = New-Object PSObject
-        Add-Member -Membertype NoteProperty -Name 'agentId' -value $AgentId -InputObject $agentObj
-        Add-Member -Membertype NoteProperty -Name 'agentName' -value $AgentName -InputObject $agentObj
+        $subagentObj = New-Object PSObject
+        Add-Member -Membertype NoteProperty -Name 'subagentId' -value $SubagentId -InputObject $subagentObj
+        Add-Member -Membertype NoteProperty -Name 'url' -value $Url -InputObject $subagentObj
 
-        if ( $AgentAlias )
+        if ( $Title )
         {
-            Add-Member -Membertype NoteProperty -Name 'agentNameAliases' -value $AgentAlias -InputObject $agentObj
+            Add-Member -Membertype NoteProperty -Name 'title' -value $Title -InputObject $subagentObj
         }
 
-        Add-Member -Membertype NoteProperty -Name 'url' -value $Url -InputObject $agentObj
-        Add-Member -Membertype NoteProperty -Name 'disabled' -value ($Disable -eq $True) -InputObject $agentObj
-        Add-Member -Membertype NoteProperty -Name 'hidden' -value ($Hide -eq $True) -InputObject $agentObj
-        Add-Member -Membertype NoteProperty -Name 'isClusterWatcher' -value ($WatchCluster -eq $True) -InputObject $agentObj
+        if ( $Ordering )
+        {
+            Add-Member -Membertype NoteProperty -Name 'ordering' -value $Ordering -InputObject $subagentObj
+        }
 
-        $agents += $agentObj
+        if ( $DirectorType )
+        {
+            Add-Member -Membertype NoteProperty -Name 'isDirector' -value $DirectorType -InputObject $subagentObj
+        }
+
+        Add-Member -Membertype NoteProperty -Name 'withGenerateSubagentCluster' -value ($GenerateSubagentCluster -eq $True) -InputObject $subagentObj
+
+        $subagents += $subagentObj
     }
 
     End
@@ -156,7 +156,8 @@ param
             Add-Member -Membertype NoteProperty -Name 'controllerId' -value $script:jsWebService.ControllerId -InputObject $body
         }
 
-        Add-Member -Membertype NoteProperty -Name 'agents' -value $agents -InputObject $body
+        Add-Member -Membertype NoteProperty -Name 'agentId' -value $AgentId -InputObject $agentObj
+        Add-Member -Membertype NoteProperty -Name 'subagents' -value $subagents -InputObject $body
 
         if ( $AuditComment -or $AuditTimeSpent -or $AuditTicketLink )
         {
@@ -176,10 +177,10 @@ param
             Add-Member -Membertype NoteProperty -Name 'auditLog' -value $objAuditLog -InputObject $body
         }
 
-        if ( $PSCmdlet.ShouldProcess( 'agents', '/agents/inventory/store' ) )
+        if ( $PSCmdlet.ShouldProcess( 'agents', '/agents/inventory/cluster/subagents/store' ) )
         {
             [string] $requestBody = $body | ConvertTo-Json -Depth 100
-            $response = Invoke-JS7WebRequest -Path '/agents/inventory/store' -Body $requestBody
+            $response = Invoke-JS7WebRequest -Path '/agents/inventory/cluster/subagents/store' -Body $requestBody
 
             if ( $response.StatusCode -eq 200 )
             {
@@ -193,7 +194,7 @@ param
                 throw ( $response | Format-List -Force | Out-String )
             }
 
-            Write-Verbose ".. $($MyInvocation.MyCommand.Name): Agent stored to inventory: $AgentId"
+            Write-Verbose ".. $($MyInvocation.MyCommand.Name): $($subagents.count) Subagents stored to inventory Cluster Agent: $AgentId"
         }
 
         Trace-JS7StopWatch -CommandName $MyInvocation.MyCommand.Name -StopWatch $stopWatch

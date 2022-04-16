@@ -1,23 +1,22 @@
-function Remove-JS7Agent
+function Show-JS7Agent
 {
 <#
 .SYNOPSIS
-Removes an Agent from a Controller and from JOC Cockpit
+Shows a previously hidden Standalone Agent in JOC Cockpit
 
 .DESCRIPTION
-This cmdlet removes an Agent. It is required to complete or to cancel any orders attached the Agent
-prior to removing the Agent.
+This cmdlet show a Standalone Agent that was previously hidden. A hidden Standalone Agent cannot be assigned a job in a workflow.
 
 The following REST Web Service API resources are used:
 
-* /agent/delete
+* /agents
+* /agents/inventory/store
 
 .PARAMETER AgentId
-Specifies a unique identifier for an Agent. More than one Agent can be specified
-by separating Agent IDs by a comma.
+Specifies the unique identifier of the Standalone Agent.
 
 .PARAMETER ControllerId
-Specifies the identification of the Controller from which Agents are removed.
+Specifies the identification of the Controller to which the Standalone Agent is dedicated.
 
 .PARAMETER AuditComment
 Specifies a free text that indicates the reason for the current intervention, e.g. "business requirement", "maintenance window" etc.
@@ -44,14 +43,9 @@ This cmdlet accepts pipelined input.
 This cmdlet returns no output.
 
 .EXAMPLE
-Remove-JS7Agent -AgentId agent_001 -ControllerId 'testsuite'
+Show-JS7Agent -AgentId agent_001
 
-Removes the indicated Agent from the given Controller.
-
-.EXAMPLE
-Remove-JS7Agent -AgentId agent_001,agent_002 -ControllerId 'testsuite'
-
-Removes the indicated Agents from the given Controller.
+Makes the indicated Standalone Agent visible in JOC Cockpit.
 
 .LINK
 about_JS7
@@ -82,6 +76,7 @@ param
         }
 
         $agentIds = @()
+        $agents = @()
     }
 
     Process
@@ -91,7 +86,35 @@ param
 
     End
     {
-        foreach( $agentItemId in $agentIds )
+        $body = New-Object PSObject
+
+        if ( $ControllerId )
+        {
+            Add-Member -Membertype NoteProperty -Name 'controllerId' -value $ControllerId -InputObject $body
+        } else {
+            Add-Member -Membertype NoteProperty -Name 'controllerId' -value $script:jsWebService.ControllerId -InputObject $body
+        }
+
+        Add-Member -Membertype NoteProperty -Name 'agentIds' -value $agentIds -InputObject $body
+
+        [string] $requestBody = $body | ConvertTo-Json -Depth 100
+        $response = Invoke-JS7WebRequest -Path '/agents' -Body $requestBody
+
+        if ( $response.StatusCode -eq 200 )
+        {
+            $requestResult = ( $response.Content | ConvertFrom-Json ).agents
+
+            if ( !$requestResult )
+            {
+                throw ( $response | Format-List -Force | Out-String )
+            }
+
+            $agents = $requestResult
+        } else {
+            throw ( $response | Format-List -Force | Out-String )
+        }
+
+        foreach( $agent in $agents )
         {
             $body = New-Object PSObject
 
@@ -102,7 +125,21 @@ param
                 Add-Member -Membertype NoteProperty -Name 'controllerId' -value $script:jsWebService.ControllerId -InputObject $body
             }
 
-            Add-Member -Membertype NoteProperty -Name 'agentId' -value $agentItemId -InputObject $body
+            $agentObj = New-Object PSObject
+            Add-Member -Membertype NoteProperty -Name 'agentId' -value $agent.AgentId -InputObject $agentObj
+            Add-Member -Membertype NoteProperty -Name 'agentName' -value $agent.AgentName -InputObject $agentObj
+
+            if ( $agent.AgentNameAliases )
+            {
+                Add-Member -Membertype NoteProperty -Name 'agentNameAliases' -value $agent.AgentNameAliases -InputObject $agentObj
+            }
+
+            Add-Member -Membertype NoteProperty -Name 'url' -value $agent.Url -InputObject $agentObj
+            Add-Member -Membertype NoteProperty -Name 'isClusterWatcher' -value $agent.isClusterWatcher -InputObject $agentObj
+            Add-Member -Membertype NoteProperty -Name 'disabled' -value $agent.disabled -InputObject $agentObj
+            Add-Member -Membertype NoteProperty -Name 'hidden' -value $False -InputObject $agentObj
+
+            Add-Member -Membertype NoteProperty -Name 'agents' -value @( $agentObj ) -InputObject $body
 
             if ( $AuditComment -or $AuditTimeSpent -or $AuditTicketLink )
             {
@@ -122,10 +159,10 @@ param
                 Add-Member -Membertype NoteProperty -Name 'auditLog' -value $objAuditLog -InputObject $body
             }
 
-            if ( $PSCmdlet.ShouldProcess( 'agents', '/agent/delete' ) )
+            if ( $PSCmdlet.ShouldProcess( 'agents', '/agents/inventory/store' ) )
             {
                 [string] $requestBody = $body | ConvertTo-Json -Depth 100
-                $response = Invoke-JS7WebRequest -Path '/agent/delete' -Body $requestBody
+                $response = Invoke-JS7WebRequest -Path '/agents/inventory/store' -Body $requestBody
 
                 if ( $response.StatusCode -eq 200 )
                 {
@@ -139,7 +176,7 @@ param
                     throw ( $response | Format-List -Force | Out-String )
                 }
 
-                Write-Verbose ".. $($MyInvocation.MyCommand.Name): Agent removed: $agentItemId"
+                Write-Verbose ".. $($MyInvocation.MyCommand.Name): $($agentIds.count) Agents made visible"
             }
         }
 

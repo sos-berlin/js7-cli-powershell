@@ -1,34 +1,38 @@
-function Reset-JS7Agent
+function Set-JS7SubagentCluster
 {
 <#
 .SYNOPSIS
-Resets an Agent to revoke current orders, workflows etc. and to initialize the Agent
+Store a Subagent Cluster to the JOC Cockpit inventory
 
 .DESCRIPTION
-This cmdlet resets an Agent. In a first step any orders, workflows and other deployable objects are revoked from an Agent.
-In a second step the Agent performs a restart and initialiszes its journal.
-In a final step the Controller reconnects to the Agent and deploys any required deployable objects.
+This cmdlet stores a Subagent Cluster to the JOC Cockpit inventory.
 
-It is recommended to first check the state of orders prior to resetting the Agent and to complete or to cancel any attached orders.
-Consider that orders have to be re-submitted to an Agent after reset.
+Consider that the Subagent Cluster identification specified with the -SubagentClusterId parameter cannot be modified
+for the lifetime of a Subagent Cluster.
 
 The following REST Web Service API resources are used:
 
-* /agent/reset
+* /agents/cluster/store
 
 .PARAMETER AgentId
-Specifies a unique identifier for an Agent. This identifier cannot be modified during the lifetime of an Agent.
-In order to modify the Agent identifier the Agent has to be removed and added.
+Specifies the unique identifier of the Cluster Agent.
 
-.PARAMETER ControllerId
-Specifies the identification of the Controller from which Agents are removed.
+.PARAMETER SubagentClusterId
+Specifies a unique identifier for the Subagent Cluster. This identifier cannot be modified during the lifetime of a Subagent Cluster.
+In order to modify the Subagent Cluster identifier the Subagent Cluster has to be removed and added.
 
-.PARAMETER Force
-This switch should be used with care as it kills any tasks running with an Agent, revokes any orders and workflows
-from the Agent and forces the Agent to drop its journal and to restart.
+.PARAMETER Title
+Optionally specifies a title for the Subagent Cluster that can be searched for.
 
-The purpose of this switch is to hijack an Agent that is assigned a different Controller or that holds
-information in its journal that is no longer applicable, for example if the Agent ID should be modified.
+.PARAMETER SubagentId
+Specifies the unique identifier of one or more Subagents that make up a cluster.
+A number of Subagent IDs can be specified spearated by a comma.
+
+.PARAMETER Priority
+Optionally specifies the scheduling mode in the Subagent Cluster:
+
+* If all Subagents use the same priority then this results in an active-active cluster.
+* If Subagents use different priorities then this results in an active-passive cluster.
 
 .PARAMETER AuditComment
 Specifies a free text that indicates the reason for the current intervention, e.g. "business requirement", "maintenance window" etc.
@@ -55,9 +59,14 @@ This cmdlet accepts pipelined input.
 This cmdlet returns no output.
 
 .EXAMPLE
-Reset-JS7Agent -AgentId agent_001
+Set-JS7SubagentCluster -AgentId agent_001 -SubagentClusterId subagent_cluster_001 -SubagentId subagent_001,subagent_002 -Priority 1,1
 
-Resets the indicated Agent.
+Stores a Subagent Cluster with two Subagents as an active-active cluster.
+
+.EXAMPLE
+Set-JS7SubagentCluster -AgentId agent_001 -SubagentClusterId subagent_cluster_001 -SubagentId subagent_001,subagent_002 -Priority 2,1
+
+Stores a Subagent Cluster with two Subagents as an active-passive cluster.
 
 .LINK
 about_JS7
@@ -68,10 +77,14 @@ param
 (
     [Parameter(Mandatory=$True,ValueFromPipeline=$False,ValueFromPipelinebyPropertyName=$True)]
     [string] $AgentId,
+    [Parameter(Mandatory=$True,ValueFromPipeline=$False,ValueFromPipelinebyPropertyName=$True)]
+    [string] $SubagentClusterId,
     [Parameter(Mandatory=$False,ValueFromPipeline=$False,ValueFromPipelinebyPropertyName=$True)]
-    [string] $ControllerId,
+    [string] $Title,
+    [Parameter(Mandatory=$True,ValueFromPipeline=$False,ValueFromPipelinebyPropertyName=$True)]
+    [string[]] $SubagentId,
     [Parameter(Mandatory=$False,ValueFromPipeline=$False,ValueFromPipelinebyPropertyName=$True)]
-    [switch] $Force,
+    [int[]] $Priority = @(1),
     [Parameter(Mandatory=$False,ValueFromPipeline=$False,ValueFromPipelinebyPropertyName=$True)]
     [string] $AuditComment,
     [Parameter(Mandatory=$False,ValueFromPipeline=$False,ValueFromPipelinebyPropertyName=$True)]
@@ -88,21 +101,40 @@ param
         {
             throw "$($MyInvocation.MyCommand.Name): Audit Log comment required, use parameter -AuditComment if one of the parameters -AuditTimeSpent or -AuditTicketLink is used"
         }
+
+        $subagents = @()
     }
 
     Process
     {
-        $body = New-Object PSObject
-
-        if ( $ControllerId )
+        for( $i=0; $i -lt $SubagentId.count; $i++ )
         {
-            Add-Member -Membertype NoteProperty -Name 'controllerId' -value $ControllerId -InputObject $body
-        } else {
-            Add-Member -Membertype NoteProperty -Name 'controllerId' -value $script:jsWebService.ControllerId -InputObject $body
+            $subagentObj = New-Object PSObject
+            Add-Member -Membertype NoteProperty -Name 'subagentId' -value $SubagentId[$i] -InputObject $subagentObj
+
+            if ( $Priority.count -gt $i )
+            {
+                $subagentPriority = $Priority[$i]
+            } else {
+                $subagentPriority = 1
+            }
+
+            Add-Member -Membertype NoteProperty -Name 'priority' -value $subagentPriority -InputObject $subagentObj
+            $subagents += $subagentObj
         }
 
-        Add-Member -Membertype NoteProperty -Name 'agentId' -value $AgentId -InputObject $body
-        Add-Member -Membertype NoteProperty -Name 'force' -value ($Force -eq $True) -InputObject $body
+        $body = New-Object PSObject
+        $subagentClusterObj = New-Object PSObject
+        Add-Member -Membertype NoteProperty -Name 'agentId' -value $AgentId -InputObject $subagentClusterObj
+        Add-Member -Membertype NoteProperty -Name 'subagentClusterId' -value $SubagentClusterId -InputObject $subagentClusterObj
+        Add-Member -Membertype NoteProperty -Name 'subagentIds' -value $subagents -InputObject $subagentClusterObj
+
+        if ( $Title )
+        {
+            Add-Member -Membertype NoteProperty -Name 'title' -value $Title -InputObject $subagentClusterObj
+        }
+
+        Add-Member -Membertype NoteProperty -Name 'subagentClusters' -value @( $subagentClusterObj ) -InputObject $body
 
         if ( $AuditComment -or $AuditTimeSpent -or $AuditTicketLink )
         {
@@ -122,10 +154,10 @@ param
             Add-Member -Membertype NoteProperty -Name 'auditLog' -value $objAuditLog -InputObject $body
         }
 
-        if ( $PSCmdlet.ShouldProcess( 'agents', '/agent/reset' ) )
+        if ( $PSCmdlet.ShouldProcess( 'agents', '/agents/cluster/store' ) )
         {
             [string] $requestBody = $body | ConvertTo-Json -Depth 100
-            $response = Invoke-JS7WebRequest -Path '/agent/reset' -Body $requestBody
+            $response = Invoke-JS7WebRequest -Path '/agents/cluster/store' -Body $requestBody
 
             if ( $response.StatusCode -eq 200 )
             {
@@ -139,7 +171,7 @@ param
                 throw ( $response | Format-List -Force | Out-String )
             }
 
-            Write-Verbose ".. $($MyInvocation.MyCommand.Name): Agent reset: $AgentId"
+            Write-Verbose ".. $($MyInvocation.MyCommand.Name): $($SubagentId.count) Subagents stored to Subagent Cluster: $SubagentClusterId"
         }
     }
 

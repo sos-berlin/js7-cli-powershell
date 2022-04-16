@@ -1,33 +1,35 @@
-function Reset-JS7Agent
+function Reset-JS7Subagent
 {
 <#
 .SYNOPSIS
-Resets an Agent to revoke current orders, workflows etc. and to initialize the Agent
+Resets a Subagent to revoke current orders, workflows etc. and to initialize the Subagent
 
 .DESCRIPTION
-This cmdlet resets an Agent. In a first step any orders, workflows and other deployable objects are revoked from an Agent.
-In a second step the Agent performs a restart and initialiszes its journal.
-In a final step the Controller reconnects to the Agent and deploys any required deployable objects.
+This cmdlet resets a Subagent. In a first step any orders, workflows and other deployable objects are revoked from the Subagent.
+In a second step the Subagent performs a restart.
+In case of a Director Agents in a final step the Controller reconnects to the Agent and deploys any required deployable objects.
+In case of a Subagent in a final step the Director Agent connects to the Subagent.
 
-It is recommended to first check the state of orders prior to resetting the Agent and to complete or to cancel any attached orders.
-Consider that orders have to be re-submitted to an Agent after reset.
+It is recommended to first check the state of orders prior to resetting the Subagent and to complete or to cancel any attached orders.
+Consider that orders have to be continued if they failed due to reset of a Subagent.
 
 The following REST Web Service API resources are used:
 
-* /agent/reset
+* /agents/inventory/cluster/subagent/reset
 
-.PARAMETER AgentId
-Specifies a unique identifier for an Agent. This identifier cannot be modified during the lifetime of an Agent.
+.PARAMETER SubagentId
+Specifies a unique identifier for a Subagent. This identifier cannot be modified during the lifetime of an Agent.
 In order to modify the Agent identifier the Agent has to be removed and added.
 
 .PARAMETER ControllerId
 Specifies the identification of the Controller from which Agents are removed.
 
 .PARAMETER Force
-This switch should be used with care as it kills any tasks running with an Agent, revokes any orders and workflows
+This switch should be used with care as it kills any tasks running with a Subagent.
+In case of a Director Agent this switch revokes any orders and workflows
 from the Agent and forces the Agent to drop its journal and to restart.
 
-The purpose of this switch is to hijack an Agent that is assigned a different Controller or that holds
+The purpose of this switch is to seize an Agent that is assigned a different Controller or Cluster Agent or that holds
 information in its journal that is no longer applicable, for example if the Agent ID should be modified.
 
 .PARAMETER AuditComment
@@ -55,7 +57,7 @@ This cmdlet accepts pipelined input.
 This cmdlet returns no output.
 
 .EXAMPLE
-Reset-JS7Agent -AgentId agent_001
+Reset-JS7Subagent -AgentId subagent_001
 
 Resets the indicated Agent.
 
@@ -67,7 +69,7 @@ about_JS7
 param
 (
     [Parameter(Mandatory=$True,ValueFromPipeline=$False,ValueFromPipelinebyPropertyName=$True)]
-    [string] $AgentId,
+    [string] $SubagentId,
     [Parameter(Mandatory=$False,ValueFromPipeline=$False,ValueFromPipelinebyPropertyName=$True)]
     [string] $ControllerId,
     [Parameter(Mandatory=$False,ValueFromPipeline=$False,ValueFromPipelinebyPropertyName=$True)]
@@ -101,7 +103,7 @@ param
             Add-Member -Membertype NoteProperty -Name 'controllerId' -value $script:jsWebService.ControllerId -InputObject $body
         }
 
-        Add-Member -Membertype NoteProperty -Name 'agentId' -value $AgentId -InputObject $body
+        Add-Member -Membertype NoteProperty -Name 'subagentId' -value $SubagentId -InputObject $body
         Add-Member -Membertype NoteProperty -Name 'force' -value ($Force -eq $True) -InputObject $body
 
         if ( $AuditComment -or $AuditTimeSpent -or $AuditTicketLink )
@@ -122,10 +124,10 @@ param
             Add-Member -Membertype NoteProperty -Name 'auditLog' -value $objAuditLog -InputObject $body
         }
 
-        if ( $PSCmdlet.ShouldProcess( 'agents', '/agent/reset' ) )
+        if ( $PSCmdlet.ShouldProcess( 'agents', '/agents/inventory/cluster/subagent/reset' ) )
         {
             [string] $requestBody = $body | ConvertTo-Json -Depth 100
-            $response = Invoke-JS7WebRequest -Path '/agent/reset' -Body $requestBody
+            $response = Invoke-JS7WebRequest -Path '/agents/inventory/cluster/subagent/reset' -Body $requestBody
 
             if ( $response.StatusCode -eq 200 )
             {

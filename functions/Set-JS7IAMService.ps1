@@ -73,9 +73,9 @@ This cmdlet accepts pipelined input.
 This cmdlet returns the Identity Service object.
 
 .EXAMPLE
-$service = Set-JS7IAMService -Service JOC -Type 'JOC'
+$service = Set-JS7IAMService -Service JOC -Type 'JOC' -SingleFactorPassword
 
-Stores the Identity Service to JOC Cockpit.
+Stores the Identity Service to JOC Cockpit for use with passwords as a single factor.
 
 .EXAMPLE
 $service = Set-JS7IAMService -Service JOC -Type 'JOC' -AuthenticationScheme 'SINGLE-FACTOR' -SingleFactorCertificate -SingleFactorPassword
@@ -103,7 +103,8 @@ param
     [Parameter(Mandatory=$False,ValueFromPipeline=$False,ValueFromPipelinebyPropertyName=$True)]
     [switch] $Disabled,
     [Parameter(Mandatory=$False,ValueFromPipeline=$False,ValueFromPipelinebyPropertyName=$True)]
-    [string] $AuthenticationScheme,
+    [ValidateSet('SINGLE-FACTOR','TWO-FACTOR',IgnoreCase = $False)]
+    [string] $AuthenticationScheme = 'SINGLE-FACTOR',
     [Parameter(Mandatory=$False,ValueFromPipeline=$False,ValueFromPipelinebyPropertyName=$True)]
     [switch] $SingleFactorCertificate,
     [Parameter(Mandatory=$False,ValueFromPipeline=$False,ValueFromPipelinebyPropertyName=$True)]
@@ -130,7 +131,7 @@ param
             throw "$($MyInvocation.MyCommand.Name): one of the authentication schemes 'SINGLE-FACTOR' or 'TWO-FACTOR' has to be used"
         }
 
-        if ( $AuthenticationScheme -and !$SingleFactorCertificate -and !$SingleFactorPassword )
+        if ( $AuthenticationScheme  -eq 'SINGLE-FACTOR' -and !$SingleFactorCertificate -and !$SingleFactorPassword )
         {
             throw "$($MyInvocation.MyCommand.Name): one of the authentication factors -SingleFactorCertificate or -SingleFactorPassword has to be used"
         }

@@ -1,23 +1,22 @@
-function Remove-JS7Agent
+function Disable-JS7Agent
 {
 <#
 .SYNOPSIS
-Removes an Agent from a Controller and from JOC Cockpit
+Disables a Standalone Agent in the JS7 Controller
 
 .DESCRIPTION
-This cmdlet removes an Agent. It is required to complete or to cancel any orders attached the Agent
-prior to removing the Agent.
+This cmdlet disables Standalone Agent. A disabled Standalone Agent is not considered for job execution
+by the Controller.
 
 The following REST Web Service API resources are used:
 
-* /agent/delete
+* /agents/inventory/dissable
 
 .PARAMETER AgentId
-Specifies a unique identifier for an Agent. More than one Agent can be specified
-by separating Agent IDs by a comma.
+Specifies the unique identifier of the Standalone Agent.
 
 .PARAMETER ControllerId
-Specifies the identification of the Controller from which Agents are removed.
+Specifies the identification of the Controller to which the Standalone Agent is dedicated.
 
 .PARAMETER AuditComment
 Specifies a free text that indicates the reason for the current intervention, e.g. "business requirement", "maintenance window" etc.
@@ -44,14 +43,9 @@ This cmdlet accepts pipelined input.
 This cmdlet returns no output.
 
 .EXAMPLE
-Remove-JS7Agent -AgentId agent_001 -ControllerId 'testsuite'
+Disable-JS7Agent -AgentId agent_001
 
-Removes the indicated Agent from the given Controller.
-
-.EXAMPLE
-Remove-JS7Agent -AgentId agent_001,agent_002 -ControllerId 'testsuite'
-
-Removes the indicated Agents from the given Controller.
+Disables the indicated Standalone Agent.
 
 .LINK
 about_JS7
@@ -91,56 +85,53 @@ param
 
     End
     {
-        foreach( $agentItemId in $agentIds )
+        $body = New-Object PSObject
+
+        if ( $ControllerId )
         {
-            $body = New-Object PSObject
+            Add-Member -Membertype NoteProperty -Name 'controllerId' -value $ControllerId -InputObject $body
+        } else {
+            Add-Member -Membertype NoteProperty -Name 'controllerId' -value $script:jsWebService.ControllerId -InputObject $body
+        }
 
-            if ( $ControllerId )
+        Add-Member -Membertype NoteProperty -Name 'agentIds' -value $agentIds -InputObject $body
+
+        if ( $AuditComment -or $AuditTimeSpent -or $AuditTicketLink )
+        {
+            $objAuditLog = New-Object PSObject
+            Add-Member -Membertype NoteProperty -Name 'comment' -value $AuditComment -InputObject $objAuditLog
+
+            if ( $AuditTimeSpent )
             {
-                Add-Member -Membertype NoteProperty -Name 'controllerId' -value $ControllerId -InputObject $body
-            } else {
-                Add-Member -Membertype NoteProperty -Name 'controllerId' -value $script:jsWebService.ControllerId -InputObject $body
+                Add-Member -Membertype NoteProperty -Name 'timeSpent' -value $AuditTimeSpent -InputObject $objAuditLog
             }
 
-            Add-Member -Membertype NoteProperty -Name 'agentId' -value $agentItemId -InputObject $body
-
-            if ( $AuditComment -or $AuditTimeSpent -or $AuditTicketLink )
+            if ( $AuditTicketLink )
             {
-                $objAuditLog = New-Object PSObject
-                Add-Member -Membertype NoteProperty -Name 'comment' -value $AuditComment -InputObject $objAuditLog
-
-                if ( $AuditTimeSpent )
-                {
-                    Add-Member -Membertype NoteProperty -Name 'timeSpent' -value $AuditTimeSpent -InputObject $objAuditLog
-                }
-
-                if ( $AuditTicketLink )
-                {
-                    Add-Member -Membertype NoteProperty -Name 'ticketLink' -value $AuditTicketLink -InputObject $objAuditLog
-                }
-
-                Add-Member -Membertype NoteProperty -Name 'auditLog' -value $objAuditLog -InputObject $body
+                Add-Member -Membertype NoteProperty -Name 'ticketLink' -value $AuditTicketLink -InputObject $objAuditLog
             }
 
-            if ( $PSCmdlet.ShouldProcess( 'agents', '/agent/delete' ) )
+            Add-Member -Membertype NoteProperty -Name 'auditLog' -value $objAuditLog -InputObject $body
+        }
+
+        if ( $PSCmdlet.ShouldProcess( 'agents', '/agents/inventory/disable' ) )
+        {
+            [string] $requestBody = $body | ConvertTo-Json -Depth 100
+            $response = Invoke-JS7WebRequest -Path '/agents/inventory/disable' -Body $requestBody
+
+            if ( $response.StatusCode -eq 200 )
             {
-                [string] $requestBody = $body | ConvertTo-Json -Depth 100
-                $response = Invoke-JS7WebRequest -Path '/agent/delete' -Body $requestBody
+                $requestResult = ( $response.Content | ConvertFrom-Json )
 
-                if ( $response.StatusCode -eq 200 )
+                if ( !$requestResult.ok )
                 {
-                    $requestResult = ( $response.Content | ConvertFrom-Json )
-
-                    if ( !$requestResult.ok )
-                    {
-                        throw ( $response | Format-List -Force | Out-String )
-                    }
-                } else {
                     throw ( $response | Format-List -Force | Out-String )
                 }
-
-                Write-Verbose ".. $($MyInvocation.MyCommand.Name): Agent removed: $agentItemId"
+            } else {
+                throw ( $response | Format-List -Force | Out-String )
             }
+
+            Write-Verbose ".. $($MyInvocation.MyCommand.Name): $($agentIds.count) Agents disabled"
         }
 
         Trace-JS7StopWatch -CommandName $MyInvocation.MyCommand.Name -StopWatch $stopWatch
