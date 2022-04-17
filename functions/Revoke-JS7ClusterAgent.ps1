@@ -2,10 +2,10 @@ function Revoke-JS7ClusterAgent
 {
 <#
 .SYNOPSIS
-Revokes a Cluster Agent and any related Subagents from a Controller
+Revokes a Cluster Agent and related Subagents from a Controller
 
 .DESCRIPTION
-This cmdlet revokes a Cluster Agent and any related Subagents from a Controller.
+This cmdlet revokes a Cluster Agent and related Subagents from a Controller.
 The Cluster Agent configuration remains in place with the inventory and can later on
 be deployed to the given Controller.
 
@@ -14,10 +14,12 @@ The following REST Web Service API resources are used:
 * /agents/inventory/cluster/revoke
 
 .PARAMETER AgentId
-Specifies a unique identifier for a Cluster Agent. This identifier cannot be modified during the lifetime of an Agent.
+Specifies the unique identifier of the Cluster Agent.
+
+More than one Cluster Agent can be specified by separating Agent IDs by a comma.
 
 .PARAMETER ControllerId
-Specifies the identification of the Controller from which Agents are revoked.
+Specifies the identification of the Controller from which Cluster Agents are revoked.
 
 .PARAMETER AuditComment
 Specifies a free text that indicates the reason for the current intervention, e.g. "business requirement", "maintenance window" etc.
@@ -44,7 +46,7 @@ This cmdlet accepts pipelined input.
 This cmdlet returns no output.
 
 .EXAMPLE
-Revoke-JS7ClusterAgent -AgentId agent_001 -ControllerId 'testsuite'
+Revoke-JS7ClusterAgent -AgentId 'agent_001' -ControllerId 'testsuite'
 
 Revokes the indicated Cluster Agent from the given Controller.
 

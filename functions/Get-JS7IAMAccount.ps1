@@ -2,10 +2,10 @@ function Get-JS7IAMAccount
 {
 <#
 .SYNOPSIS
-Returns accounts of a JOC Cockpit Identity Service
+Returns accounts from a JOC Cockpit Identity Service
 
 .DESCRIPTION
-This cmdlet returns accounts in a JOC Cockpit Identity Service.
+This cmdlet returns accounts from a JOC Cockpit Identity Service.
 
 The following REST Web Service API resources are used:
 
@@ -27,12 +27,12 @@ This cmdlet accepts pipelined input.
 This cmdlet returns an array of accounts.
 
 .EXAMPLE
-$accounts = Get-JS7IAMAccount -Service JOC
+$accounts = Get-JS7IAMAccount -Service 'JOC'
 
 Returns the accounts from the indicated JOC Cockpit Identity Service.
 
 .EXAMPLE
-$accounts = Get-JS7IAMAccount -Service JOC -Account 'matt'
+$account = Get-JS7IAMAccount -Service 'JOC' -Account 'matt'
 
 Returns the given account from the indicated JOC Cockpit Identity Service.
 

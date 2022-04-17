@@ -153,6 +153,7 @@ param
                 throw ( $response | Format-List -Force | Out-String )
             }
 
+            $requestResult
             Write-Verbose ".. $($MyInvocation.MyCommand.Name): output to stdout: $($requestResult.stdout)"
             Write-Verbose ".. $($MyInvocation.MyCommand.Name): output to stderr: $($requestResult.stdout)"
         } else {

@@ -12,10 +12,12 @@ The following REST Web Service API resources are used:
 * /iam/accounts/forcepasswordchange
 
 .PARAMETER Service
-Specifies the unique name of the Identity Service that the accounts is managed with.
+Specifies the unique name of the Identity Service that accounts are managed with.
 
 .PARAMETER Account
-Specifies the unique names of one or more accounts for which change of the password is enforced.
+Specifies the unique name of an account for which change of the password is enforced.
+
+More than one account can be specified by use of a comma.
 
 .INPUTS
 This cmdlet accepts pipelined input.
@@ -24,12 +26,12 @@ This cmdlet accepts pipelined input.
 This cmdlet returns no output.
 
 .EXAMPLE
-Invoke-JS7IAMForcePasswordChange -Service JOC -Account 'user1'
+Invoke-JS7IAMForcePasswordChange -Service 'JOC' -Account 'user1'
 
 Enforces change of the account's password with the next login.
 
 .EXAMPLE
-Invoke-JS7IAMForcePasswordChange -Service JOC -Account 'user1','user2'
+Invoke-JS7IAMForcePasswordChange -Service 'JOC' -Account 'user1','user2'
 
 Enforces change of the password for both indicated accounts with the next login.
 

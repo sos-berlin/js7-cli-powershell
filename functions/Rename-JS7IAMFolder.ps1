@@ -2,7 +2,7 @@ function Rename-JS7IAMFolder
 {
 <#
 .SYNOPSIS
-Renames am existing folder assigned a role in a JOC Cockpit Identity Service
+Renames a folder assigned a role in a JOC Cockpit Identity Service
 
 .DESCRIPTION
 This cmdlet renames an existing folder assigned a role in a JOC Cockpit Identity Service.
@@ -54,9 +54,9 @@ This cmdlet accepts pipelined input.
 This cmdlet returns no output.
 
 .EXAMPLE
-Rename-JS7IAMFolder -Service JOC -Role 'application_manager' -Folder '/accounting' -NewFolder /accounting2 -Recursive
+Rename-JS7IAMFolder -Service 'JOC' -Role 'application_manager' -Folder '/accounting' -NewFolder '/accounting2' -Recursive
 
-Renames an existing folder assigned a role.
+Renames an existing folder assigned the indicated role.
 
 .LINK
 about_JS7

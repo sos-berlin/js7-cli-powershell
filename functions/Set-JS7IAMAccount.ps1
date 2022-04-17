@@ -12,7 +12,7 @@ The following REST Web Service API resources are used:
 * /iam/account/store
 
 .PARAMETER Service
-Specifies the unique name of the Identity Service that the accounts is managed with.
+Specifies the unique name of the Identity Service that accounts are managed with.
 
 .PARAMETER Account
 Specifies the unique name of the account that should be managed.
@@ -24,7 +24,7 @@ managed with the JOC Cockpit Identity Service settings is used.
 The password has to be specified as a secure string, for example:
 
 $securePassword = ConvertTo-SecureString 'secret' -AsPlainText -Force
-Set-JS7IAMAccount -Service JOC -Account 'user1' -Password $secureString -Role 'application_manager
+Set-JS7IAMAccount -Service 'JOC' -Account 'user1' -Password $secureString -Role 'application_manager'
 
 .PARAMETER Disabled
 Specifies that the account cannot be used to login.
@@ -33,7 +33,9 @@ Specifies that the account cannot be used to login.
 Specifies that the account has to change the password with the next login.
 
 .PARAMETER Role
-Specifies the unique names of one or more roles that are assigned the account.
+Specifies the unique name of a role that is assigned the account.
+
+More than one role can be specified by a comma.
 
 .PARAMETER AuditComment
 Specifies a free text that indicates the reason for the current intervention,
@@ -62,15 +64,15 @@ This cmdlet accepts pipelined input.
 This cmdlet returns no output.
 
 .EXAMPLE
-Set-JS7IAMAccount -Service JOC -Account 'user1' -Role 'application_manager'
+Set-JS7IAMAccount -Service 'JOC' -Account 'user1' -Role 'application_manager'
 
 Adds an account to JOC Cockpit that is assigned the indicated role. The account is assigned
 the initial password that is configured with the global Identity Service settings.
 On first login the account has to change the password.
 
 .EXAMPLE
-$securePassword = ConvertTo-SecureString 'secret' -AsPlainText -Force
-Set-JS7IAMAccount -Service JOC -Account 'user1' -Password $secureString -Role 'application_manager','incident_manager'
+$securePassword = ConvertTo-SecureString 'secret' -AsPlainText -Force;
+Set-JS7IAMAccount -Service 'JOC' -Account 'user1' -Password $secureString -Role 'application_manager','incident_manager'
 
 Adds an account to JOC Cockpit that is assigned a password and the indicated roles.
 

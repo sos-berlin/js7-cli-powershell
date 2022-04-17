@@ -2,7 +2,7 @@ function Publish-JS7SubagentCluster
 {
 <#
 .SYNOPSIS
-Deploys a Subagent Clusterto a Controller
+Deploys a Subagent Cluster to a Controller
 
 .DESCRIPTION
 This cmdlet deploys a Subagent Cluster to a Controller.
@@ -12,8 +12,9 @@ The following REST Web Service API resources are used:
 * /agents/cluster/deploy
 
 .PARAMETER SubagentClusterId
-Specifies a unique identifier for the Subagent Cluster. More than one Subagent Cluster can be specified by
-separating Agent IDs with a comma.
+Specifies the unique identifier of the Subagent Cluster.
+
+More than one Subagent Cluster can be specified by separating Subagent Cluster IDs with a comma.
 
 .PARAMETER ControllerId
 Specifies the identification of the Controller to which the Subagent Cluster is deployed.
@@ -43,7 +44,7 @@ This cmdlet accepts pipelined input.
 This cmdlet returns no output.
 
 .EXAMPLE
-Deploy-JS7SubagentCluster -SubagentClusterId subagent_cluster_001 -ControllerId 'testsuite'
+Deploy-JS7SubagentCluster -SubagentClusterId 'subagent_cluster_001' -ControllerId 'testsuite'
 
 Deploys the indicated Subagent Cluster to the given Controller.
 

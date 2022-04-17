@@ -71,6 +71,7 @@ FunctionsToExport = @(
     'Get-JS7JOCLogFilename',
     'Get-JS7JOCProperties',
     'Get-JS7Lock',
+    'Get-JS7Notification',
     'Get-JS7Order',
     'Get-JS7OrderHistory',
     'Get-JS7OrderLog',

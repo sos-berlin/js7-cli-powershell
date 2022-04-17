@@ -78,7 +78,7 @@ Removes the indicated worfklow "sampleWorkflow" from the local "rollout" reposit
 .EXAMPLE
 Remove-JS7ReposioryItem -Path /some_folder/sampleSchedule -Type 'SCHEDULE' -Local
 
-Removes the indicated schedule "sampleSchedule" from the local "rollout" repository.
+Removes the indicated schedule "sampleSchedule" from the "local" repository.
 
 .LINK
 about_JS7

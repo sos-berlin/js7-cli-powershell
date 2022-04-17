@@ -6,7 +6,7 @@ Clones a remote Git repository to a local repository
 
 .DESCRIPTION
 This cmdlet clones a remote Git repository to a local repository.
-The local repsitory is populated from the remote Git repository and
+The local repository is populated from the remote Git repository and
 is linked to the remote Git repository.
 
 A local directory located in JETTY_BASE/resources/joc/repositories/rollout/TestCases
@@ -59,7 +59,7 @@ This cmdlet returns no output.
 .EXAMPLE
 Invoke-JS7GitRepositoryClone -Folder /TestCases -Uri git@github.com:sos-berlin/JS7Demo.git
 
-Clones the remote Git repository to a local repsitory that is mapped to the /TestCases folder in the JOC Cockpit inventory.
+Clones the remote Git repository to a local repository that is mapped to the /TestCases folder in the JOC Cockpit inventory.
 
 .LINK
 about_JS7
@@ -143,6 +143,7 @@ param
                 throw ( $response | Format-List -Force | Out-String )
             }
 
+            $requestResult
             Write-Verbose ".. $($MyInvocation.MyCommand.Name): output to stdout: $($requestResult.stdout)"
             Write-Verbose ".. $($MyInvocation.MyCommand.Name): output to stderr: $($requestResult.stdout)"
         } else {

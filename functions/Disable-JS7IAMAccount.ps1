@@ -12,10 +12,12 @@ The following REST Web Service API resources are used:
 * /iam/accounts/disable
 
 .PARAMETER Service
-Specifies the unique name of the Identity Service that the accounts is managed with.
+Specifies the unique name of the Identity Service that accounts are managed with.
 
 .PARAMETER Account
-Specifies the unique names of one or more accounts for which the password is reset.
+Specifies the unique name of an account that should be disabled.
+
+More than one account can be specified by use of a comma.
 
 .INPUTS
 This cmdlet accepts pipelined input.
@@ -24,14 +26,14 @@ This cmdlet accepts pipelined input.
 This cmdlet returns no output.
 
 .EXAMPLE
-Enable-JS7IAMAccount -Service JOC -Account 'user1'
+Disable-JS7IAMAccount -Service 'JOC' -Account 'user1'
 
-Enables the account.
+Disables the specified account in the given Identity Service.
 
 .EXAMPLE
-Enable-JS7IAMAccount -Service JOC -Account 'user1','user2'
+Disable-JS7IAMAccount -Service 'JOC' -Account 'user1','user2'
 
-Enables both indicated accounts.
+Disables both accounts.
 
 .LINK
 about_JS7

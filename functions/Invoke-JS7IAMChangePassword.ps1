@@ -2,23 +2,23 @@ function Invoke-JS7IAMChangePassword
 {
 <#
 .SYNOPSIS
-Modifies the password for one or more accounts in a JOC Cockpit Identity Service
+Modifies the password of an account in a JOC Cockpit Identity Service
 
 .DESCRIPTION
-This cmdlet modifies the password of one or more accounts in a JOC Cockpit Identity Service.
+This cmdlet modifies the password of an account in a JOC Cockpit Identity Service.
 
 The following REST Web Service API resources are used:
 
 * /iam/account/changepassword
 
 .PARAMETER Service
-Specifies the unique name of the Identity Service that the accounts is managed with.
+Specifies the unique name of the Identity Service that accounts are managed with.
 
 .PARAMETER Account
-Specifies the unique names of one or more accounts for which the password is reset.
+Specifies the unique name of an account for which the password should be modified.
 
 .PARAMETER Password
-Specifies the account's password.
+Specifies the account's existing password.
 
 The password has to be specified as a secure string, for example:
 
@@ -41,9 +41,9 @@ This cmdlet accepts pipelined input.
 This cmdlet returns no output.
 
 .EXAMPLE
-$oldPassword = ConvertTo-SecureString 'secret' -AsPlainText -Force
-$newPassword = ConvertTo-SecureString 'very-secret' -AsPlainText -Force
-Invoke-JS7IAMChangePassword -Service JOC -Account 'user1' -Password $oldPassword -NewPassword $newPassword
+$oldPassword = ConvertTo-SecureString 'secret' -AsPlainText -Force;
+$newPassword = ConvertTo-SecureString 'very-secret' -AsPlainText -Force;
+Invoke-JS7IAMChangePassword -Service 'JOC' -Account 'user1' -Password $oldPassword -NewPassword $newPassword
 
 Sets the account's password.
 

@@ -14,9 +14,6 @@ The following REST Web Service API resources are used:
 .PARAMETER Service
 Specifies the unique name of the Identity Service.
 
-.PARAMETER Disabled
-Specifies that disabld Identity Services should be returned.
-
 .INPUTS
 This cmdlet accepts pipelined input.
 
@@ -29,7 +26,7 @@ $services = Get-JS7IAMService
 Returns the collection of JOC Cockpit Identity Services.
 
 .EXAMPLE
-$service = Get-JS7IAMService -Service JOC
+$service = Get-JS7IAMService -Service 'JOC'
 
 Returns the indicated "JOC" Identity Service.
 
@@ -42,9 +39,7 @@ param
 (
     [Alias('IdentityServiceName')]
     [Parameter(Mandatory=$False,ValueFromPipeline=$False,ValueFromPipelinebyPropertyName=$True)]
-    [string] $Service,
-    [Parameter(Mandatory=$False,ValueFromPipeline=$False,ValueFromPipelinebyPropertyName=$True)]
-    [switch] $Disabled
+    [string] $Service
 )
 	Begin
 	{
@@ -56,7 +51,6 @@ param
     {
         $body = New-Object PSObject
         Add-Member -Membertype NoteProperty -Name 'identityServiceName' -value $Service -InputObject $body
-        Add-Member -Membertype NoteProperty -Name 'disabled' -value ($Disabled -eq $True) -InputObject $body
 
         [string] $requestBody = $body | ConvertTo-Json -Depth 100
         $response = Invoke-JS7WebRequest -Path '/iam/identityservices' -Body $requestBody

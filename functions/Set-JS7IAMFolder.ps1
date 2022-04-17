@@ -15,14 +15,16 @@ The following REST Web Service API resources are used:
 Specifies the unique name of the Identity Service.
 
 .PARAMETER Role
-Specifies the unique name of a role that is added to the Identity Service.
+Specifies the unique name of the role that folders should be assigned in the Identity Service.
 
 .PARAMETER Folder
 Specifies the folder in the JOC Cockpit inventory to which a role will be limited.
 
+More than one folder can be specified by use of a comma.
+
 .PARAMETER Recursive
 Specifies that any sub-folders of the folder specified with the -Folder parameter
-are accessible to the role.
+should be accessible to the role.
 
 .PARAMETER AuditComment
 Specifies a free text that indicates the reason for the current intervention,
@@ -51,14 +53,14 @@ This cmdlet accepts pipelined input.
 This cmdlet returns no output.
 
 .EXAMPLE
-Set-JS7IAMFolder -Service JOC -Role 'application_manager' -Folder '/accounting' -Recursive
+Set-JS7IAMFolder -Service 'JOC' -Role 'application_manager' -Folder '/accounting' -Recursive
 
 Assigns a folder and any sub-folders the given role in the indicated Identity Service.
 
 .EXAMPLE
-Set-JS7IAMFolder -Service JOC -Role 'application_manager' -Folder '/accounting','/sales'' -Recursive
+Set-JS7IAMFolder -Service 'JOC' -Role 'application_manager' -Folder '/accounting','/sales' -Recursive
 
-Assigns two folders the the given role in the indicated Identity Service.
+Assigns two folders the given role in the indicated Identity Service.
 
 .LINK
 about_JS7
@@ -108,11 +110,7 @@ param
         }
 
         Add-Member -Membertype NoteProperty -Name 'folders' -value $folderItems -InputObject $body
-
-        if ( $ControllerId )
-        {
-            Add-Member -Membertype NoteProperty -Name 'controllerId' -value $ControllerId -InputObject $body
-        }
+        Add-Member -Membertype NoteProperty -Name 'controllerId' -value $ControllerId -InputObject $body
 
         if ( $AuditComment -or $AuditTimeSpent -or $AuditTicketLink )
         {

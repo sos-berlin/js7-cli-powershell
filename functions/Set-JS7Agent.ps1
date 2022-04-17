@@ -5,7 +5,7 @@ function Set-JS7Agent
 Stores a Standalone Agent to the JOC Cockpit inventory
 
 .DESCRIPTION
-This cmdlet stores a Standalone Agent to the JOC Cockpit inventory.
+This cmdlet stores a Standalone Agent to the JOC Cockpit inventory that later on can be deployed to a Controller.
 
 Consider that the Agent identification specified with the -AgentId parameter cannot be modified
 for the lifetime of a Standalone Agent.
@@ -30,7 +30,7 @@ Specifies the URL for which the Standalone Agent is available. A URL includes th
 for which an Agent is operated.
 
 .PARAMETER AgentAlias
-Optionally specifies a number of alias names for a Standalone Agent that separated by a comma.
+Optionally specifies a number of alias names for a Standalone Agent that are separated by a comma.
 An alias name is an alternative name for the same Agent that can be used when assigning Agents to jobs.
 
 .PARAMETER ControllerId
@@ -48,6 +48,8 @@ be put in a blocked state when processing a job that is assigned a disabled Stan
 .PARAMETER Hide
 A Standalone Agent can be hidden to prevent further use in workflow configurations. Deployed workflows still can
 use a hidden Agent.
+
+In addition, a hidden Agent it not considered with the Agent Component Status and Agent Cluster Status widgets in the JS7 Dashboard.
 
 .PARAMETER AuditComment
 Specifies a free text that indicates the reason for the current intervention, e.g. "business requirement", "maintenance window" etc.
@@ -74,12 +76,12 @@ This cmdlet accepts pipelined input.
 This cmdlet returns no output.
 
 .EXAMPLE
-Set-JS7Agent -AgentId agent_001 -AgentName primaryAgent -Url https://agent-2-0-primary:4443 -ControllerId 'testsuite'
+Set-JS7Agent -AgentId 'agent_001' -AgentName 'primaryAgent' -Url https://agent-2-0-primary:4443 -ControllerId 'testsuite'
 
 Stores a Standalone Agent with the specified attributes to the given Controller.
 
 .EXAMPLE
-Set-JS7Agent -AgentId agent_002 -AgentName secondaryAgent -Url https://agent-2-0-secondary:4443 -Disable -Hide
+Set-JS7Agent -AgentId 'agent_002' -AgentName 'secondaryAgent' -Url https://agent-2-0-secondary:4443 -Disable -Hide
 
 Stores a Standalone Agent that is disabled in its Controller and hidden from assignment to jobs.
 

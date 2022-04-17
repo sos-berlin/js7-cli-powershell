@@ -45,7 +45,7 @@ This cmdlet accepts pipelined input.
 This cmdlet returns no output.
 
 .EXAMPLE
-Revoke-JS7SubagentCluster -SubagentClusterId subagent_cluster_001 -ControllerId 'testsuite'
+Revoke-JS7SubagentCluster -SubagentClusterId 'subagent_cluster_001' -ControllerId 'testsuite'
 
 Revokes the indicated Subagent Cluster from the given Controller.
 

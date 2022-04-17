@@ -2,7 +2,7 @@ function Rename-JS7IAMRole
 {
 <#
 .SYNOPSIS
-Renames am existing role in a JOC Cockpit Identity Service
+Renames an existing role in a JOC Cockpit Identity Service
 
 .DESCRIPTION
 This cmdlet renames an existing role in a JOC Cockpit Identity Service.
@@ -15,10 +15,10 @@ The following REST Web Service API resources are used:
 Specifies the unique name of the Identity Service.
 
 .PARAMETER Role
-Specifies the unique name of a role that is available with the Identity Service.
+Specifies the unique name of the role that should be renamed.
 
 .PARAMETER NewRole
-Specifies the new role name.
+Specifies the role's new name.
 
 .PARAMETER AuditComment
 Specifies a free text that indicates the reason for the current intervention,
@@ -47,9 +47,9 @@ This cmdlet accepts pipelined input.
 This cmdlet returns no output.
 
 .EXAMPLE
-Rename-JS7IAMRole -Service JOC -Role 'application_manager' -NewRole 'incident_manager'
+Rename-JS7IAMRole -Service 'JOC' -Role 'application_manager' -NewRole 'incident_manager'
 
-Renames and existing role.
+Renames an existing role.
 
 .LINK
 about_JS7

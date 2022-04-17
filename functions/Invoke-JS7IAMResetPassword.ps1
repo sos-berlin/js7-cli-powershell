@@ -15,10 +15,12 @@ The following REST Web Service API resources are used:
 * /iam/accounts/resetpassword
 
 .PARAMETER Service
-Specifies the unique name of the Identity Service that the accounts is managed with.
+Specifies the unique name of the Identity Service that accounts are managed with.
 
 .PARAMETER Account
-Specifies the unique names of one or more accounts for which the password is reset.
+Specifies the unique name of an account for which the password is reset.
+
+More than one account can be specified by use of a comma.
 
 .INPUTS
 This cmdlet accepts pipelined input.
@@ -27,12 +29,12 @@ This cmdlet accepts pipelined input.
 This cmdlet returns no output.
 
 .EXAMPLE
-Invoke-JS7IAMResetPassword -Service JOC -Account 'user1'
+Invoke-JS7IAMResetPassword -Service 'JOC' -Account 'user1'
 
 Resets the account's password.
 
 .EXAMPLE
-Invoke-JS7IAMResetPassword -Service JOC -Account 'user1','user2'
+Invoke-JS7IAMResetPassword -Service 'JOC -Account 'user1','user2'
 
 Resets the password for both indicated accounts.
 

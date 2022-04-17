@@ -2,10 +2,10 @@ function Add-JS7GitCredentials
 {
 <#
 .SYNOPSIS
-Adds Git credentials for the current user account
+Adds Git credentials to the profile of the current user account
 
 .DESCRIPTION
-This cmdlet adds Git credentials for the current user account. The functionality considers the security level:
+This cmdlet adds Git credentials to the profile of the current user account. The functionality considers the security level:
 
 * LOW: credentials are added to the default account, typically the root account
 * MEDIUM: credentials are added per user account
@@ -14,7 +14,7 @@ This cmdlet adds Git credentials for the current user account. The functionality
 Credentials are added for one of the following authentication methods:
 
 * Password: A larger number of Git servers is configured to deny password authentication.
-* Access Token: Such tokens are created and stored with the Git server.
+* Access Token: Such tokens are created and stored with the Git Server.
 * Private Key: Makes use of SSH authentication with a private key file
 
 The following REST Web Service API resources are used:
@@ -22,7 +22,7 @@ The following REST Web Service API resources are used:
 * /inventory/repository/git/credentials/add
 
 .PARAMETER Server
-Specifies the hostname and optionally the port of the Git server for which credentials are added.
+Specifies the hostname and optionally the port of the Git Server for which credentials are added.
 
 .PARAMETER Account
 Specifies the Git account.
@@ -34,19 +34,19 @@ Specifies the Git user name.
 Specifies the Git user e-mail address.
 
 .PARAMETER Password
-Specifies the passwword for Git authentication. Use of passwords is considered insecure and
-a larger number of Git servers will deny password authentication.
+Specifies the password for Git authentication. Use of passwords is considered insecure and
+a larger number of Git Servers will deny password authentication.
 
 The password has to be specified from a SecureString data type, for example like this:
 
-* $securePassword = ConvertTo-SecureString 'root' -AsPlainText -Force
+* $securePassword = ConvertTo-SecureString 'secret' -AsPlainText -Force
 
 .PARAMETER AccessToken
-Specifies an access token for authentication that is configured with the Git Sever.
+Specifies an access token for authentication that is configured with the Git Server.
 Access tokens are a replacement for passwords and do not tend to increase security.
 
 .PARAMETER KeyFile
-Specifies the path to a file that holds the private key. The corresponding public key has to be configured with the Git server.
+Specifies the path to a file that holds the private key. The corresponding public key has to be configured with the Git Server.
 Use of private keys includes the following options:
 
 * Empty path to private key file: The private key file is looked up from its default location
@@ -83,12 +83,12 @@ This cmdlet returns no output.
 $securePassword = ConvertTo-SecureString 'secret' -AsPlainText -Force
 Add-JS7GitCredentials -Server github.com -Account someone -Password $secureString
 
-Adds credentials for access to a Git server by password authentication.
+Adds credentials for access to a Git Server by password authentication.
 
 .EXAMPLE
 Add-JS7GitCredentials -Server github.com -Account someone -KeyFile /home/sos/git_rsa
 
-Adds credentials for access to a Git server using a private key file specified by its absolute path.
+Adds credentials for access to a Git Server using a private key file specified by its absolute path.
 
 .LINK
 about_JS7

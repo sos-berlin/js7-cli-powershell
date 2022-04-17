@@ -53,9 +53,9 @@ This cmdlet accepts pipelined input.
 This cmdlet returns no output.
 
 .EXAMPLE
-Invoke-JS7GitRepositoryCommit -Folder /TestCases -Message "changes for release v1.13"
+Invoke-JS7GitRepositoryCommit -Folder /TestCases -Message 'changes for release v1.13'
 
-Commits changes that have been performed to the local repository to the repsitory staging area.
+Commits changes that have been performed to the local repository to the repository staging area.
 The local repository is mapped to the /TestCases inventory folder in JOC Cockpit.
 
 .LINK
@@ -138,6 +138,7 @@ param
                 throw ( $response | Format-List -Force | Out-String )
             }
 
+            $requestResult
             Write-Verbose ".. $($MyInvocation.MyCommand.Name): output to stdout: $($requestResult.stdout)"
             Write-Verbose ".. $($MyInvocation.MyCommand.Name): output to stderr: $($requestResult.stdout)"
         } else {

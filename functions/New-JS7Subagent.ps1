@@ -2,16 +2,16 @@ function New-JS7Subagent
 {
 <#
 .SYNOPSIS
-Returns an array of Subagent objects
+Returns an array with a Subagent object
 
 .DESCRIPTION
-This cmdlet returns an array of Subagent objects.
+This cmdlet returns an array with a Subagent object.
 
-Consider that the Subgent identification specified with the -SubagentId parameter cannot be modified
+Consider that the Subagent identification specified with the -SubagentId parameter cannot be modified
 for the lifetime of a Subagent.
 
 .PARAMETER SubagentId
-Specifies a unique identifier for the Subagent. The Subagent ID cannot be chaned during the lifetime of a Subagent.
+Specifies a unique identifier for the Subagent. The Subagent ID cannot be changed during the lifetime of a Subagent.
 
 .PARAMETER Url
 Specifies the URL for which the Subagent is available. A URL includes the protocol (http, https), hostname and port
@@ -44,7 +44,8 @@ This cmdlet returns an array of Subagent objects.
 
 .EXAMPLE
 $subagents = @()
-$subagents += New-JS7Subagent -SubagentId subagent_001 -Url https://subagent-2-0-primary:4443
+$subagents += New-JS7Subagent -SubagentId 'subagent_001' -Url https://subagent-2-0-primary:4443
+$subagents += New-JS7Subagent -SubagentId 'subagent_0021' -Url https://subagent-2-0-secondary:4443
 
 Returns an array of Subagent objects with the specified Subagent ID and URL.
 

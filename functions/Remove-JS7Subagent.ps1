@@ -14,6 +14,8 @@ The following REST Web Service API resources are used:
 .PARAMETER SubagentId
 Specifies the unique identifier of the Subagent to be removed.
 
+More than one Subagent can be specified by separating Subagent IDs by a comma.
+
 .PARAMETER ControllerId
 Specifies the identification of the Controller from which Subagents should be removed.
 
@@ -42,7 +44,7 @@ This cmdlet accepts pipelined input.
 This cmdlet returns no output.
 
 .EXAMPLE
-Remove-JS7Subagent -SubagentId subagent_001 -ControllerId 'testsuite'
+Remove-JS7Subagent -SubagentId 'subagent_001' -ControllerId 'testsuite'
 
 Removes the indicated Subagent from the given Controller.
 

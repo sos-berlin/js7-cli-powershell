@@ -5,15 +5,16 @@ function Enable-JS7Agent
 Enables a previously disabled Standalone Agent in the JS7 Controller
 
 .DESCRIPTION
-This cmdlet enables a previously disabled Standalone Agent. An enabled Standalone Agent is considered for job execution
-by the Controller.
+This cmdlet enables a previously disabled Standalone Agent. An enabled Standalone Agent is considered for job execution by the Controller.
 
 The following REST Web Service API resources are used:
 
-* /agents/inventory/ensable
+* /agents/inventory/enable
 
 .PARAMETER AgentId
 Specifies the unique identifier of the Standalone Agent.
+
+More than one Agent can be specified by separating Agent IDs by a comma.
 
 .PARAMETER ControllerId
 Specifies the identification of the Controller to which the Standalone Agent is dedicated.
@@ -43,7 +44,7 @@ This cmdlet accepts pipelined input.
 This cmdlet returns no output.
 
 .EXAMPLE
-Enable-JS7Agent -AgentId agent_001
+Enable-JS7Agent -AgentId 'agent_001'
 
 Enables the indicated Standalone Agent.
 

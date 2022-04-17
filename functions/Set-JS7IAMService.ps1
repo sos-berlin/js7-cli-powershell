@@ -5,7 +5,7 @@ function Set-JS7IAMService
 Stores a JOC Cockpit Identity Service
 
 .DESCRIPTION
-This cmdlet removes one or more accounts from a JOC Cockpit Identity Service.
+This cmdlet stores a JOC Cockpit Identity Service.
 
 The following REST Web Service API resources are used:
 
@@ -25,11 +25,10 @@ Specifies the type of the Identity Service which is one of:
 * VAULT_JOC_ACTIVE: manage accounts with Vault Server and JOC Cockpit, manage roles with JOC Cockpit
 
 .PARAMETER Ordering
-Optionally specifies the position in the list of Identity Services
+Optionally specifies the position in the list of Identity Services.
 
-.PARAMETER Requires
-Specifies if the Identity Service is required. For any required Identity Services
-the user performs a login.
+.PARAMETER Required
+Specifies if the Identity Service is required. For any required Identity Services users have to perform a login.
 
 .PARAMETER Disabled
 The Identity Service is disabled, i.e. it is not used for authentication of user accounts.
@@ -41,10 +40,10 @@ The Identity Service is disabled, i.e. it is not used for authentication of user
 * TWO-FACTOR: Certificate and Password have to be used for authentication.
 
 .PARAMETER SingleFactorCertificate
-iF single-factor authentication is used then this switch specifies if a certificates is accepted as a single factor.
+iF single-factor authentication is used then this switch specifies if certificates are accepted as a single factor.
 
 .PARAMETER SingleFactorPassword
-iF single-factor authentication is used then this switch specifies if a password is accepted as a single factor.
+iF single-factor authentication is used then this switch specifies if passwords are accepted as a single factor.
 
 .PARAMETER AuditComment
 Specifies a free text that indicates the reason for the current intervention,
@@ -73,12 +72,12 @@ This cmdlet accepts pipelined input.
 This cmdlet returns the Identity Service object.
 
 .EXAMPLE
-$service = Set-JS7IAMService -Service JOC -Type 'JOC' -SingleFactorPassword
+$service = Set-JS7IAMService -Service 'JOC' -Type 'JOC' -SingleFactorPassword
 
 Stores the Identity Service to JOC Cockpit for use with passwords as a single factor.
 
 .EXAMPLE
-$service = Set-JS7IAMService -Service JOC -Type 'JOC' -AuthenticationScheme 'SINGLE-FACTOR' -SingleFactorCertificate -SingleFactorPassword
+$service = Set-JS7IAMService -Service 'JOC' -Type 'JOC' -AuthenticationScheme 'SINGLE-FACTOR' -SingleFactorCertificate -SingleFactorPassword
 
 Stores the Identity Service to JOC Cockpit and allows any of certificates and passwords to be used as a single factor for authentication.
 

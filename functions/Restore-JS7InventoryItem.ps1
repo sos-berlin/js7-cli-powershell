@@ -2,11 +2,12 @@ function Restore-JS7InventoryItem
 {
 <#
 .SYNOPSIS
-Restores objects such as workflows in the JOC Cockpit inventory
+Restores objects such as workflows from the JOC Cockpit inventory trash
 
 .DESCRIPTION
-This cmdlet restores objects such as workflows that have perviously been removed provided
-that the deletion of the objects has not yet been committed with one of the cmdlets:
+This cmdlet restores objects such as workflows that have previously been removed and that are available from the trash.
+
+Typically removal of objects is committed and objects are added to the trash with one of the cmdlets:
 
 * For deployable objects use of the cmdlet the Publish-JS7DeployableItem cmdlet with the -Delete switch commits permanent deletion.
 * For releasable objects use of the cmdlet the Publish-JS7ReleasableOItem cmdlet with the -Delete switch commits permanent deletion.

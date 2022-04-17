@@ -37,6 +37,10 @@ If no object type is specified then any object types will be used.
 Alternatively to use of -Path the parameter specifies a JOC Cockpit inventory folder to be used to
 which objects from a local Git repository are updated.
 
+.PARAMETER Recursive
+Specifies that any sub-folders should be looked up if the -Folder parameter is used.
+By default no sub-folders will be looked up.
+
 .PARAMETER Local
 Specifies that a repository holding local scheduling objects should be used.
 This corresponds to the LOCAL category. If this switch is not used then then

@@ -9,13 +9,13 @@ This cmdlet renames an account in a JOC Cockpit Identity Service.
 
 The following REST Web Service API resources are used:
 
-* /iam/account/renmae
+* /iam/account/rename
 
 .PARAMETER Service
-Specifies the unique name of the Identity Service that the accounts is managed with.
+Specifies the unique name of the Identity Service that accounts are managed with.
 
 .PARAMETER Account
-Specifies the existing names of an accounts.
+Specifies the existing name of the account.
 
 .PARAMETER NewAccount
 Specifies the account's new name.
@@ -27,7 +27,7 @@ This cmdlet accepts pipelined input.
 This cmdlet returns no output.
 
 .EXAMPLE
-Rename-JS7IAMAccount -Service JOC -Account 'user1' -NewAccount 'user2'
+Rename-JS7IAMAccount -Service 'JOC' -Account 'user1' -NewAccount 'user2'
 
 Renames the account.
 

@@ -2,10 +2,10 @@ function Remove-JS7IAMFolder
 {
 <#
 .SYNOPSIS
-Removes roles from a JOC Cockpit Identity Service
+Permanently removes one or more folders from a role in JOC Cockpit Identity Service
 
 .DESCRIPTION
-This cmdlet removes one or more roles from a JOC Cockpit Identity Service.
+This cmdlet permanently removes one or more folders from a role in a JOC Cockpit Identity Service.
 
 The following REST Web Service API resources are used:
 
@@ -15,14 +15,15 @@ The following REST Web Service API resources are used:
 Specifies the unique name of the Identity Service.
 
 .PARAMETER Role
-Specifies the unique name of a role that is added to the Identity Service.
+Specifies the unique name of the role for which folders are removed from the Identity Service.
 
 .PARAMETER Folder
-Specifies one or more folders to be removed from the indicated role.
+Specifies the folder that should be removed from the indicated role.
+
+More than one folder can be specified by use of a comma.
 
 .PARAMETER ControllerId
-Optionally specifies the unique identifier of a Controller should permissions for this
-Controller be returned.
+Optionally specifies the unique identifier of the Controller for which folders with Controller permissions should be removed.
 
 .PARAMETER AuditComment
 Specifies a free text that indicates the reason for the current intervention,
@@ -51,9 +52,9 @@ This cmdlet accepts pipelined input.
 This cmdlet returns no output.
 
 .EXAMPLE
-Remove-JS7IAMFolder -Service JOC -Role 'application_manager'
+Remove-JS7IAMFolder -Service 'JOC' -Role 'application_manager' -Folder '/accounting','/sales'
 
-Removes a role from the indicated JOC Cockpit Identity Service.
+Removes the indicated folders from the specified role in the JOC Cockpit Identity Service.
 
 .LINK
 about_JS7

@@ -16,8 +16,8 @@ The following REST Web Service API resources are used:
 * /inventory/repository/git/credentials/remove
 
 .PARAMETER Server
-Specifies the hostname and optionally the port of the Git server for which credentials are removed.
-A number of Git servers can be specified by separating servers with a comma.
+Specifies the hostname and optionally the port of the Git Server for which credentials are removed.
+A number of Git Servers can be specified by separating servers with a comma.
 
 .PARAMETER AuditComment
 Specifies a free text that indicates the reason for the current intervention, e.g. "business requirement", "maintenance window" etc.
@@ -46,7 +46,7 @@ This cmdlet returns no output.
 .EXAMPLE
 Remove-JS7GitCredentials -Server github.com
 
-Removes credentials for access to the indicated Git servers.
+Removes credentials for access to the indicated Git Servers.
 
 .LINK
 about_JS7

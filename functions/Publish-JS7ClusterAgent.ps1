@@ -12,8 +12,9 @@ The following REST Web Service API resources are used:
 * /agents/inventory/cluster/deploy
 
 .PARAMETER AgentId
-Specifies a unique identifier for a Cluster Agent. More than one Cluster Agent can be specified by
-separating Agent IDs with a comma.
+Specifies the unique identifier of the Cluster Agent.
+
+More than one Cluster Agent can be specified by separating Agent IDs with a comma.
 
 .PARAMETER ControllerId
 Specifies the identification of the Controller to which Agents are deployed.
@@ -43,7 +44,7 @@ This cmdlet accepts pipelined input.
 This cmdlet returns no output.
 
 .EXAMPLE
-Deploy-JS7ClusterAgent -AgentId agent_001 -ControllerId 'testsuite'
+Deploy-JS7ClusterAgent -AgentId 'agent_001' -ControllerId 'testsuite'
 
 Deploys the indicated Cluster Agent and any Subagents to the given Controller.
 

@@ -2,10 +2,10 @@ function Set-JS7SubagentCluster
 {
 <#
 .SYNOPSIS
-Store a Subagent Cluster to the JOC Cockpit inventory
+Stores a Subagent Cluster to the JOC Cockpit inventory
 
 .DESCRIPTION
-This cmdlet stores a Subagent Cluster to the JOC Cockpit inventory.
+This cmdlet stores a Subagent Cluster to the JOC Cockpit inventory that later on can be deployed to a Controller.
 
 Consider that the Subagent Cluster identification specified with the -SubagentClusterId parameter cannot be modified
 for the lifetime of a Subagent Cluster.
@@ -26,13 +26,17 @@ Optionally specifies a title for the Subagent Cluster that can be searched for.
 
 .PARAMETER SubagentId
 Specifies the unique identifier of one or more Subagents that make up a cluster.
-A number of Subagent IDs can be specified spearated by a comma.
+A number of Subagent IDs can be specified separated by a comma.
 
 .PARAMETER Priority
 Optionally specifies the scheduling mode in the Subagent Cluster:
 
 * If all Subagents use the same priority then this results in an active-active cluster.
 * If Subagents use different priorities then this results in an active-passive cluster.
+
+If more than one Subagent is specified with the -SubagentId parameter then accordingly priorities have to be specified separated by a comma.
+
+By default the same priority is applied to all Subagents which results in an active-active cluster.
 
 .PARAMETER AuditComment
 Specifies a free text that indicates the reason for the current intervention, e.g. "business requirement", "maintenance window" etc.
@@ -59,12 +63,12 @@ This cmdlet accepts pipelined input.
 This cmdlet returns no output.
 
 .EXAMPLE
-Set-JS7SubagentCluster -AgentId agent_001 -SubagentClusterId subagent_cluster_001 -SubagentId subagent_001,subagent_002 -Priority 1,1
+Set-JS7SubagentCluster -AgentId 'agent_001' -SubagentClusterId 'subagent_cluster_001' -SubagentId 'subagent_001','subagent_002' -Priority 1,1
 
 Stores a Subagent Cluster with two Subagents as an active-active cluster.
 
 .EXAMPLE
-Set-JS7SubagentCluster -AgentId agent_001 -SubagentClusterId subagent_cluster_001 -SubagentId subagent_001,subagent_002 -Priority 2,1
+Set-JS7SubagentCluster -AgentId 'agent_001' -SubagentClusterId 'subagent_cluster_001' -SubagentId 'subagent_001','subagent_002' -Priority 2,1
 
 Stores a Subagent Cluster with two Subagents as an active-passive cluster.
 

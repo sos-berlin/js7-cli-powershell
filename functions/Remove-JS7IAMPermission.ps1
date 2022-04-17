@@ -2,10 +2,10 @@ function Remove-JS7IAMPermission
 {
 <#
 .SYNOPSIS
-Removes permissions from a role in a JOC Cockpit Identity Service
+Permanently removes permissions from a role in a JOC Cockpit Identity Service
 
 .DESCRIPTION
-This cmdlet removes one or more permissions from a role from a JOC Cockpit Identity Service.
+This cmdlet permanently removes one or more permissions from a role from a JOC Cockpit Identity Service.
 
 The following REST Web Service API resources are used:
 
@@ -15,14 +15,14 @@ The following REST Web Service API resources are used:
 Specifies the unique name of the Identity Service.
 
 .PARAMETER Role
-Specifies the unique name of a role that is added to the Identity Service.
+Specifies the unique name of the role from which permissions are removed.
 
 .PARAMETER Permission
-Specifies an array of permission objects are returned by the Get-JS7IAMPermission cmdlet.
+Specifies an array of permission objects as returned from the Get-JS7IAMPermission cmdlet.
 
 .PARAMETER ControllerId
 Optionally specifies the unique identifier of a Controller should permissions for this
-Controller be returned.
+Controller be removed.
 
 .PARAMETER AuditComment
 Specifies a free text that indicates the reason for the current intervention,
@@ -51,14 +51,14 @@ This cmdlet accepts pipelined input.
 This cmdlet returns no output.
 
 .EXAMPLE
-Remove-JS7IAMPermission -Service JOC -Role 'application_manager' -Permission
+Remove-JS7IAMPermission -Service 'JOC' -Role 'application_manager'
 
-Removes permissions role from the indicated JOC Cockpit Identity Service.
+Deletes permissions from the specified role in the indicated JOC Cockpit Identity Service.
 
 .EXAMPLE
-Get-JS7IAMPermission -Service JOC -Role 'application_manager' | Remove-JS7IAMPermission
+Get-JS7IAMPermission -Service 'JOC' -Role 'application_manager' | Remove-JS7IAMPermission
 
-Removes permissions from the indicated role in the JOC Cockpit Identity Service by pipelining.
+Deletes permissions from the indicated role in the JOC Cockpit Identity Service by pipelining.
 
 .LINK
 about_JS7

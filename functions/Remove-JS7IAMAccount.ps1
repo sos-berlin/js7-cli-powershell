@@ -2,10 +2,10 @@ function Remove-JS7IAMAccount
 {
 <#
 .SYNOPSIS
-Removes a number of accounts from a JOC Cockpit Identity Service
+Permanently removes one or more accounts from a JOC Cockpit Identity Service
 
 .DESCRIPTION
-This cmdlet removes one or more accounts from a JOC Cockpit Identity Service.
+This cmdlet permanently removes one or more accounts from a JOC Cockpit Identity Service.
 
 The following REST Web Service API resources are used:
 
@@ -16,6 +16,8 @@ Specifies the unique name of the Identity Service.
 
 .PARAMETER Account
 Specifies the user account that should be removed.
+
+More than one account can be specified by use of a comma.
 
 .PARAMETER AuditComment
 Specifies a free text that indicates the reason for the current intervention,
@@ -44,9 +46,9 @@ This cmdlet accepts pipelined input.
 This cmdlet returns no output.
 
 .EXAMPLE
-Remove-JS7IAMAccount -Service JOC -Account 'matt'
+Remove-JS7IAMAccount -Service 'JOC' -Account 'matt'
 
-Removes an account from the indicated JOC Cockpit Identity Service.
+Deletes the specified account from the indicated JOC Cockpit Identity Service.
 
 .LINK
 about_JS7

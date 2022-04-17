@@ -18,8 +18,7 @@ Specifies the unique name of the Identity Service.
 Specifies the unique name of a role that is available from the Identity Service.
 
 .PARAMETER ControllerId
-Optionally specifies the unique identifier of a Controller should permissions for this
-Controller be returned.
+Optionally specifies the unique identifier of a Controller should folders for this Controller be returned.
 
 .INPUTS
 This cmdlet accepts pipelined input.
@@ -28,12 +27,7 @@ This cmdlet accepts pipelined input.
 This cmdlet returns an array of folders.
 
 .EXAMPLE
-$folders = Get-JS7IAMFolder -Service JOC
-
-Returns the folders of the indicated JOC Cockpit Identity Service.
-
-.EXAMPLE
-$folders = Get-JS7IAMFolder -Service JOC -RoleName 'application_manager'
+$folders = Get-JS7IAMFolder -Service 'JOC' -RoleName 'application_manager'
 
 Returns the folders of the indicated JOC Cockpit Identity Service and role.
 

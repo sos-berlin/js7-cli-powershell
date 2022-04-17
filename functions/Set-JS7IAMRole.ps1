@@ -15,7 +15,7 @@ The following REST Web Service API resources are used:
 Specifies the unique name of the Identity Service.
 
 .PARAMETER Role
-Specifies the unique name of a role that is added to the Identity Service.
+Specifies the unique name of a role that is stored to the Identity Service.
 
 .PARAMETER AuditComment
 Specifies a free text that indicates the reason for the current intervention,
@@ -44,7 +44,7 @@ This cmdlet accepts pipelined input.
 This cmdlet returns no output.
 
 .EXAMPLE
-Set-JS7IAMRole -Service JOC -Role 'application_manager'
+Set-JS7IAMRole -Service 'JOC' -Role 'application_manager'
 
 Stores the indicated role.
 

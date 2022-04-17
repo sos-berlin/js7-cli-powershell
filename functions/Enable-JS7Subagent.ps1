@@ -10,10 +10,12 @@ by the Director Agent in a Subagent Cluster.
 
 The following REST Web Service API resources are used:
 
-* /agents/inventory/cluster/subagents/ensable
+* /agents/inventory/cluster/subagents/enable
 
 .PARAMETER SubagentId
 Specifies the unique identifier of the Subagent.
+
+More than one Subagent can be specified by separating Subagent IDs by a comma.
 
 .PARAMETER ControllerId
 Specifies the identification of the Controller to which the Subagent is dedicated.
@@ -43,7 +45,7 @@ This cmdlet accepts pipelined input.
 This cmdlet returns no output.
 
 .EXAMPLE
-Enable-JS7Subagent -SubagentId subagent_001
+Enable-JS7Subagent -SubagentId 'subagent_001'
 
 Enables the indicated Subagent.
 

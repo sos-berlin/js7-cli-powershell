@@ -2,7 +2,7 @@ function Set-JS7ClusterAgent
 {
 <#
 .SYNOPSIS
-Store a Cluster Agent to the JOC Cockpit inventory
+Stores a Cluster Agent to the JOC Cockpit inventory
 
 .DESCRIPTION
 This cmdlet stores a Cluster Agent to the JOC Cockpit inventory.
@@ -19,8 +19,9 @@ Specifies a unique identifier for a Cluster Agent. This identifier cannot be mod
 In order to modify the Cluster Agent identifier the Cluster Agent has to be removed and added.
 
 .PARAMETER AgentName
-The name of a Cluster Agent is used for example in job assignments of a workflow. During deployment of workflows the Agent Name
-is replaced by the respective Agent ID.
+The name of a Cluster Agent is used for example in job assignments of a workflow.
+
+During deployment of workflows the Agent Name is replaced by the respective Agent ID.
 
 Should deployments of the same workflows be performed to a number of Controllers then for each Controller
 the same Agent Name has to be configured (pointing to a different Agent ID).
@@ -28,6 +29,9 @@ the same Agent Name has to be configured (pointing to a different Agent ID).
 .PARAMETER Url
 Specifies the URL for which the Cluster Agent is available. A URL includes the protocol (http, https), hostname and port
 for which a Cluster Agent is operated.
+
+.PARAMETER Title
+Optionally specifies a title for the Cluster Agent that can be searched for.
 
 .PARAMETER AgentAlias
 Optionally specifies a number of alias names for a Cluster Agent that are separated by a comma.
@@ -37,8 +41,8 @@ An alias name is an alternative name for the same Cluster Agent that can be used
 Optionally specifies an array of Subagents objects that can be created like this:
 
 $subagents = @()
-$subagents += New-JS7Subagent -SubagentId subagent_001 -Url https://subagent-2-0-primary:4443
-$subagents += New-JS7Subagent -SubagentId subagent_002 -Url https://subagent-2-0-secondary:4443
+$subagents += New-JS7Subagent -SubagentId 'subagent_001' -Url https://subagent-2-0-primary:4443
+$subagents += New-JS7Subagent -SubagentId 'subagent_002' -Url https://subagent-2-0-secondary:4443
 
 .PARAMETER ControllerId
 Specifies the identification of the Controller to which Cluster Agents are dedicated.
@@ -68,10 +72,10 @@ This cmdlet accepts pipelined input.
 This cmdlet returns no output.
 
 .EXAMPLE
-$subagents = @()
-$subagents += New-JS7Subagent -SubagentId subagent_001 -Url https://subagent-2-0-primary:4443
-$subagents += New-JS7Subagent -SubagentId subagent_002 -Url https://subagent-2-0-secondary:4443
-Set-JS7ClusterAgent -AgentId agent_001 -AgentName clusterAgent -Url https://agent-2-0-cluster:4443 -Subagents $subagents -ControllerId 'testsuite'
+$subagents = @();
+$subagents += New-JS7Subagent -SubagentId 'subagent_001' -Url https://subagent-2-0-primary:4443;
+$subagents += New-JS7Subagent -SubagentId 'subagent_002' -Url https://subagent-2-0-secondary:4443;
+Set-JS7ClusterAgent -AgentId 'agent_001' -AgentName 'clusterAgent' -Url https://agent-2-0-cluster:4443 -Subagents $subagents -ControllerId 'testsuite'
 
 Stores a Cluster Agent with the specified attributes and Subagents to the JOC Cockpit inventory.
 

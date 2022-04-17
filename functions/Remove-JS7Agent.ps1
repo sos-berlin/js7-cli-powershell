@@ -2,22 +2,24 @@ function Remove-JS7Agent
 {
 <#
 .SYNOPSIS
-Removes an Agent from a Controller and from JOC Cockpit
+Removes a Standalone Agent or Cluster Agent from a Controller and from the JOC Cockpit inventory
 
 .DESCRIPTION
-This cmdlet removes an Agent. It is required to complete or to cancel any orders attached the Agent
-prior to removing the Agent.
+This cmdlet removes a Standalone Agent or Cluster Agent from its Controller and from the JOC Cockpit inventory.
+
+It is required to complete or to cancel any orders attached the Agent prior to removing the Agent.
 
 The following REST Web Service API resources are used:
 
 * /agent/delete
 
 .PARAMETER AgentId
-Specifies a unique identifier for an Agent. More than one Agent can be specified
-by separating Agent IDs by a comma.
+Specifies the unique identifier of the Standaone Agent or Cluster Agent.
+
+More than one Agent can be specified by separating Agent IDs by a comma.
 
 .PARAMETER ControllerId
-Specifies the identification of the Controller from which Agents are removed.
+Specifies the identification of the Controller from which the Standalone Agent or Cluster Agent is removed.
 
 .PARAMETER AuditComment
 Specifies a free text that indicates the reason for the current intervention, e.g. "business requirement", "maintenance window" etc.
@@ -44,12 +46,12 @@ This cmdlet accepts pipelined input.
 This cmdlet returns no output.
 
 .EXAMPLE
-Remove-JS7Agent -AgentId agent_001 -ControllerId 'testsuite'
+Remove-JS7Agent -AgentId 'agent_001' -ControllerId 'testsuite'
 
 Removes the indicated Agent from the given Controller.
 
 .EXAMPLE
-Remove-JS7Agent -AgentId agent_001,agent_002 -ControllerId 'testsuite'
+Remove-JS7Agent -AgentId 'agent_001','agent_002' -ControllerId 'testsuite'
 
 Removes the indicated Agents from the given Controller.
 

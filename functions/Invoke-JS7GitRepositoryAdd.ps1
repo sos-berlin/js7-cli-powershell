@@ -56,7 +56,7 @@ This cmdlet returns no output.
 .EXAMPLE
 Invoke-JS7GitRepositoryAdd -Folder /TestCases
 
-Adds changes from the local repository that maps to the JOC Cockpit /TestCases inventory folder to the repository staging area.
+Adds changes from the local repository that map to the JOC Cockpit /TestCases inventory folder to the repository staging area.
 
 .LINK
 about_JS7
@@ -134,6 +134,7 @@ param
                 throw ( $response | Format-List -Force | Out-String )
             }
 
+            $requestResult
             Write-Verbose ".. $($MyInvocation.MyCommand.Name): output to stdout: $($requestResult.stdout)"
             Write-Verbose ".. $($MyInvocation.MyCommand.Name): output to stderr: $($requestResult.stdout)"
         } else {

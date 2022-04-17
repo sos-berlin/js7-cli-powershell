@@ -45,14 +45,14 @@ It can be useful when integrated with a ticket system that logs interventions wi
 This cmdlet does not return any output.
 
 .EXAMPLE
-$xml = Get-JS7FileTransferItem -Name primaryAgent
-Set-JS7FileTransferItem -Name newConfig -Configuration $xml
+$xml = Get-JS7FileTransferItem -Name 'primaryAgent'
+Set-JS7FileTransferItem -Name 'newConfig' -Configuration $xml
 
-Stores the file transfer configuration object to a new entry and name.
+Stores the file transfer configuration object to a new entry.
 
 .EXAMPLE
 [xml] $xml = '<?xml version="1.0" encoding="UTF-8" standalone="no" ?><Configurations/>'
-Set-JS7FileTransferItem -Name newConfig -Configuration $xml
+Set-JS7FileTransferItem -Name 'newConfig' -Configuration $xml
 
 Stores the given XML file transfer configuration to the JOC Cockpit inventory.
 

@@ -7,7 +7,7 @@ Stores a Subagent to a Cluster Agent
 .DESCRIPTION
 This cmdlet stores a Subagent to a Cluster Agent.
 
-Consider that the Subgent identification specified with the -SubagentId parameter cannot be modified
+Consider that the Subagent identification specified with the -SubagentId parameter cannot be modified
 for the lifetime of a Subagent.
 
 The following REST Web Service API resources are used:
@@ -15,10 +15,10 @@ The following REST Web Service API resources are used:
 * /agents/inventory/cluster/subagents/store
 
 .PARAMETER AgentId
-Specifies a unique identifier of a Cluster Agent. The Subagent will be assgigned the given Cluster Agent.
+Specifies a unique identifier of the Cluster Agent. The Subagent will be assigned the given Cluster Agent.
 
 .PARAMETER SubagentId
-Specifies a unique identifier for the Subagent. The Subagent ID cannot be chaned during the lifetime of a Subagent.
+Specifies a unique identifier for the Subagent. The Subagent ID cannot be changed during the lifetime of a Subagent.
 
 .PARAMETER Url
 Specifies the URL for which the Subagent is available. A URL includes the protocol (http, https), hostname and port
@@ -36,7 +36,7 @@ Specifies if the Subagent acts as a Director Agent or Subagent only. The followi
 
 .PARAMETER Ordering
 Optionally specifies the sequence in which Subagents are returned and displayed by JOC Cockpit.
-The ordering is specified in ascening numbers.
+The ordering is specified in ascending numbers.
 
 .PARAMETER GenerateSubagentCluster
 Optionally specifies if a Subagent Cluster should be created that holds the Subagent as its unique member.
@@ -71,7 +71,7 @@ This cmdlet accepts pipelined input.
 This cmdlet returns no output.
 
 .EXAMPLE
-Set-JS7Subagent -AgentId agent_001 -SubagentId subagent_001 -Url https://subagent-2-0-primary:4443 -ControllerId 'testsuite'
+Set-JS7Subagent -AgentId 'agent_001' -SubagentId 'subagent_001' -Url https://subagent-2-0-primary:4443 -ControllerId 'testsuite'
 
 Stores a Subagent with the specified attributes to the given Cluster Agent and Controller.
 

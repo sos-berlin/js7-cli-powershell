@@ -12,8 +12,9 @@ The following REST Web Service API resources are used:
 * /agents/inventory/deploy
 
 .PARAMETER AgentId
-Specifies a unique identifier for a Standalone Agent. More than one Agent can be specified by
-separating Agent IDs with a comma.
+Specifies the unique identifier of the Standalone Agent to be deployed.
+
+More than one Agent can be specified by separating Agent IDs with a comma.
 
 .PARAMETER ControllerId
 Specifies the identification of the Controller to which Standalone Agents are deployed.
@@ -43,7 +44,7 @@ This cmdlet accepts pipelined input.
 This cmdlet returns no output.
 
 .EXAMPLE
-Deploy-JS7Agent -AgentId agent_001 -ControllerId 'testsuite'
+Deploy-JS7Agent -AgentId 'agent_001' -ControllerId 'testsuite'
 
 Deploys the indicated Standalone Agent to the given Controller.
 

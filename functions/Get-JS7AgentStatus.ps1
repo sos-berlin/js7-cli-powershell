@@ -7,7 +7,7 @@ Returns summary information for JS7 Agents assigned the current Controller
 .DESCRIPTION
 Summary information is returned for JS7 Agents that are assigned the current Controller.
 
-* Summary information includes e.g. the start date and JS7 Agent release.
+* Summary information includes e.g. the start date and status of an Agent.
 
 This cmdlet can be used to check if an Agent is available.
 
@@ -40,8 +40,12 @@ This indicates a volatile state, that later on is replaced by a coupling state.
 Specifies to return information about Agents only that in process of shutting down.
 This indicates that respective Agents are about to terminate.
 
-.PARAMETER Enabled
-Specifies to return information about enabled Agents only.
+.PARAMETER Unknown
+Specifies to return information about Agents only for which the status is unknown.
+An unknown status indicates that no connection can be established to the respective Agent.
+
+.PARAMETER NotHidden
+Specifies to return information about visible Agents only.
 
 .PARAMETER Compact
 Specifies to return a smaller set of information items about Agents.
@@ -55,7 +59,7 @@ Get-JS7AgentStatus -Display
 Displays summary information about all JS7 Agents configured for the current Controller.
 
 .EXAMPLE
-Get-JS7AgentStatus -AgentId agent_001 -Display
+Get-JS7AgentStatus -AgentId 'agent_001' -Display
 
 Returns summary information about the Agent with ID "agent_001". Formatted output is displayed.
 
@@ -73,6 +77,8 @@ param
 (
     [Parameter(Mandatory=$False,ValueFromPipeline=$True,ValueFromPipelinebyPropertyName=$True)]
     [string] $AgentId,
+    [Parameter(Mandatory=$False,ValueFromPipelinebyPropertyName=$True)]
+    [string] $ControllerId,
     [Parameter(Mandatory=$False,ValueFromPipeline=$False,ValueFromPipelinebyPropertyName=$False)]
     [switch] $Coupled,
     [Parameter(Mandatory=$False,ValueFromPipeline=$False,ValueFromPipelinebyPropertyName=$False)]
@@ -84,7 +90,9 @@ param
     [Parameter(Mandatory=$False,ValueFromPipeline=$False,ValueFromPipelinebyPropertyName=$False)]
     [switch] $Shutdown,
     [Parameter(Mandatory=$False,ValueFromPipeline=$False,ValueFromPipelinebyPropertyName=$False)]
-    [switch] $Enabled,
+    [switch] $Unknown,
+    [Parameter(Mandatory=$False,ValueFromPipeline=$False,ValueFromPipelinebyPropertyName=$False)]
+    [switch] $NotHidden,
     [Parameter(Mandatory=$False,ValueFromPipeline=$False,ValueFromPipelinebyPropertyName=$False)]
     [switch] $Compact,
     [Parameter(Mandatory=$False,ValueFromPipeline=$False,ValueFromPipelinebyPropertyName=$False)]
@@ -130,12 +138,23 @@ param
         {
             $states += 'SHUTDOWN'
         }
+
+        if ( $Unknown )
+        {
+            $states += 'UNKNOWN'
+        }
     }
 
     End
     {
         $body = New-Object PSObject
-        Add-Member -Membertype NoteProperty -Name 'controllerId' -value $script:jsWebService.ControllerId -InputObject $body
+
+        if ( $ControllerId )
+        {
+            Add-Member -Membertype NoteProperty -Name 'controllerId' -value $ControllerId -InputObject $body
+        } else {
+            Add-Member -Membertype NoteProperty -Name 'controllerId' -value $script:jsWebService.ControllerId -InputObject $body
+        }
 
         if ( $agentIds )
         {
@@ -147,16 +166,15 @@ param
             Add-Member -Membertype NoteProperty -Name 'states' -value $states -InputObject $body
         }
 
-        Add-Member -Membertype NoteProperty -Name 'onlyEnabledAgents' -value ($Enabled -eq $True) -InputObject $body
+        Add-Member -Membertype NoteProperty -Name 'onlyVisibleAgents' -value ($NotHidden -eq $True) -InputObject $body
         Add-Member -Membertype NoteProperty -Name 'compact' -value ($Compact -eq $True) -InputObject $body
-
 
         [string] $requestBody = $body | ConvertTo-Json -Depth 100
         $response = Invoke-JS7WebRequest -Path '/agents' -Body $requestBody
 
         if ( $response.StatusCode -eq 200 )
         {
-            $volatileStatus = ( $response.Content | ConvertFrom-JSON ).agents
+            $volatileStatus = ( $response.Content | ConvertFrom-Json ).agents
         } else {
             throw ( $response | Format-List -Force | Out-String )
         }

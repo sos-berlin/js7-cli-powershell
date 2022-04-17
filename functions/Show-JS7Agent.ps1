@@ -5,7 +5,7 @@ function Show-JS7Agent
 Shows a previously hidden Standalone Agent in JOC Cockpit
 
 .DESCRIPTION
-This cmdlet show a Standalone Agent that was previously hidden. A hidden Standalone Agent cannot be assigned a job in a workflow.
+This cmdlet shows a Standalone Agent that was previously hidden. A hidden Standalone Agent cannot be assigned a job in a workflow.
 
 The following REST Web Service API resources are used:
 
@@ -14,6 +14,8 @@ The following REST Web Service API resources are used:
 
 .PARAMETER AgentId
 Specifies the unique identifier of the Standalone Agent.
+
+More than one Agent can be specified by separating Agent IDs by a comma.
 
 .PARAMETER ControllerId
 Specifies the identification of the Controller to which the Standalone Agent is dedicated.
@@ -43,7 +45,7 @@ This cmdlet accepts pipelined input.
 This cmdlet returns no output.
 
 .EXAMPLE
-Show-JS7Agent -AgentId agent_001
+Show-JS7Agent -AgentId 'agent_001'
 
 Makes the indicated Standalone Agent visible in JOC Cockpit.
 

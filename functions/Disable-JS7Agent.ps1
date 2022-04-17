@@ -5,15 +5,17 @@ function Disable-JS7Agent
 Disables a Standalone Agent in the JS7 Controller
 
 .DESCRIPTION
-This cmdlet disables Standalone Agent. A disabled Standalone Agent is not considered for job execution
+This cmdlet disables a Standalone Agent. A disabled Standalone Agent is not considered for job execution
 by the Controller.
 
 The following REST Web Service API resources are used:
 
-* /agents/inventory/dissable
+* /agents/inventory/disable
 
 .PARAMETER AgentId
 Specifies the unique identifier of the Standalone Agent.
+
+More than one Agent can be specified by separating Agent IDs by a comma.
 
 .PARAMETER ControllerId
 Specifies the identification of the Controller to which the Standalone Agent is dedicated.
@@ -43,7 +45,7 @@ This cmdlet accepts pipelined input.
 This cmdlet returns no output.
 
 .EXAMPLE
-Disable-JS7Agent -AgentId agent_001
+Disable-JS7Agent -AgentId 'agent_001'
 
 Disables the indicated Standalone Agent.
 

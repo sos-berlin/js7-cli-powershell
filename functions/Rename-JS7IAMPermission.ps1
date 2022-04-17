@@ -2,7 +2,7 @@ function Rename-JS7IAMPermission
 {
 <#
 .SYNOPSIS
-Renames am existing permission assigned a role in a JOC Cockpit Identity Service
+Renames an existing permission assigned a role in a JOC Cockpit Identity Service
 
 .DESCRIPTION
 This cmdlet renames an existing permission assigned a role in a JOC Cockpit Identity Service.
@@ -50,7 +50,7 @@ This cmdlet accepts pipelined input.
 This cmdlet returns no output.
 
 .EXAMPLE
-Rename-JS7IAMPermission -Service JOC -Role 'application_manager' -ControllerId 'testsuite' -Permission 'sos:products:controller:deployment:deploy' -NewPermission 'sos:products:controller:deployment:view'
+Rename-JS7IAMPermission -Service 'JOC' -Role 'application_manager' -ControllerId 'testsuite' -Permission 'sos:products:controller:deployment:deploy' -NewPermission 'sos:products:controller:deployment:view'
 
 Renames an existing permission assigned a role.
 

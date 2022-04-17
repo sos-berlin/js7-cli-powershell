@@ -2,11 +2,11 @@ function Reset-JS7Agent
 {
 <#
 .SYNOPSIS
-Resets an Agent to revoke current orders, workflows etc. and to initialize the Agent
+Resets a Standalone Agent to revoke current orders, workflows etc. and to initialize the Agent
 
 .DESCRIPTION
-This cmdlet resets an Agent. In a first step any orders, workflows and other deployable objects are revoked from an Agent.
-In a second step the Agent performs a restart and initialiszes its journal.
+This cmdlet resets a Standalone Agent. In a first step any orders, workflows and other deployable objects are revoked from the Agent.
+In a second step the Agent performs a restart and initializes its journal.
 In a final step the Controller reconnects to the Agent and deploys any required deployable objects.
 
 It is recommended to first check the state of orders prior to resetting the Agent and to complete or to cancel any attached orders.
@@ -17,17 +17,16 @@ The following REST Web Service API resources are used:
 * /agent/reset
 
 .PARAMETER AgentId
-Specifies a unique identifier for an Agent. This identifier cannot be modified during the lifetime of an Agent.
-In order to modify the Agent identifier the Agent has to be removed and added.
+Specifies the unique identifier of an Agent.
 
 .PARAMETER ControllerId
-Specifies the identification of the Controller from which Agents are removed.
+Specifies the identification of the Controller for which Agents are reset.
 
 .PARAMETER Force
 This switch should be used with care as it kills any tasks running with an Agent, revokes any orders and workflows
 from the Agent and forces the Agent to drop its journal and to restart.
 
-The purpose of this switch is to hijack an Agent that is assigned a different Controller or that holds
+The purpose of this switch is to seize an Agent that is assigned a different Controller or that holds
 information in its journal that is no longer applicable, for example if the Agent ID should be modified.
 
 .PARAMETER AuditComment
@@ -55,7 +54,7 @@ This cmdlet accepts pipelined input.
 This cmdlet returns no output.
 
 .EXAMPLE
-Reset-JS7Agent -AgentId agent_001
+Reset-JS7Agent -AgentId 'agent_001'
 
 Resets the indicated Agent.
 

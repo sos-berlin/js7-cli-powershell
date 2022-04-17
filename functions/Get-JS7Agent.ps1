@@ -13,10 +13,12 @@ The following REST Web Service API resources are used:
 * /agents/inventory
 
 .PARAMETER AgentId
-Specifies the unique identifier of the Standalone Agent or Cluster Agent.
+Optionally specifies the unique identifier of the Standalone Agent or Cluster Agent.
+
+More than one Agent can be specified by separating Agent IDs by a comma.
 
 .PARAMETER ControllerId
-Specifies the identification of the Controller to which the Standalone Agent or Cluster Agent is dedicated.
+Optionally specifies the identification of the Controller to which the Standalone Agent or Cluster Agent is dedicated.
 
 .PARAMETER NotHidden
 Optionally specifies that only visible Standalone Agents or Cluster Agents should be returned.
@@ -37,12 +39,12 @@ $agents = Get-JS7Agent
 Returns all Standalone Agents and Cluster Agents.
 
 .EXAMPLE
-$agent = Get-JS7Agent -AgentId agent_001
+$agent = Get-JS7Agent -AgentId 'agent_001'
 
 Returns the indicated Standalone Agent or Cluster Agent.
 
 .EXAMPLE
-$agent = Get-JS7Agent -AgentId agent_001 -State 'COUPLED'
+$agent = Get-JS7Agent -AgentId 'agent_001' -State 'COUPLED'
 
 Returns the indicated Standalone Agent or Cluster Agent with the given state.
 
@@ -69,11 +71,6 @@ param
 	{
 		Approve-JS7Command $MyInvocation.MyCommand
         $stopWatch = Start-JS7StopWatch
-
-        if ( !$AuditComment -and ( $AuditTimeSpent -or $AuditTicketLink ) )
-        {
-            throw "$($MyInvocation.MyCommand.Name): Audit Log comment required, use parameter -AuditComment if one of the parameters -AuditTimeSpent or -AuditTicketLink is used"
-        }
 
         if ( $State -and $Persistent )
         {

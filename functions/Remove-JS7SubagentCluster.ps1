@@ -9,7 +9,7 @@ This cmdlet removes a Subagent Cluster from a Controller.
 
 The following REST Web Service API resources are used:
 
-* /agents/cluster/remove
+* /agents/cluster/delete
 
 .PARAMETER SubagentClusterId
 Specifies the unique identifier of the Subagent Cluster. A number of Subagent Cluster IDs can
@@ -43,7 +43,7 @@ This cmdlet accepts pipelined input.
 This cmdlet returns no output.
 
 .EXAMPLE
-Remove-JS7SubagentCluster -SubagentClusterId subagent_cluster_001 -ControllerId 'testsuite'
+Remove-JS7SubagentCluster -SubagentClusterId 'subagent_cluster_001' -ControllerId 'testsuite'
 
 Removes the indicated Subagent Cluster from the given Controller.
 
@@ -114,10 +114,10 @@ param
             Add-Member -Membertype NoteProperty -Name 'auditLog' -value $objAuditLog -InputObject $body
         }
 
-        if ( $PSCmdlet.ShouldProcess( 'agents', '/agents/cluster/remove' ) )
+        if ( $PSCmdlet.ShouldProcess( 'agents', '/agents/cluster/delete' ) )
         {
             [string] $requestBody = $body | ConvertTo-Json -Depth 100
-            $response = Invoke-JS7WebRequest -Path '/agents/cluster/remove' -Body $requestBody
+            $response = Invoke-JS7WebRequest -Path '/agents/cluster/delete' -Body $requestBody
 
             if ( $response.StatusCode -eq 200 )
             {

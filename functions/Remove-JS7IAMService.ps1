@@ -2,10 +2,12 @@ function Remove-JS7IAMService
 {
 <#
 .SYNOPSIS
-Removes a JOC Cockpit Identity Service
+Permanently removes a JOC Cockpit Identity Service
 
 .DESCRIPTION
-This cmdlet removes a JOC Cockpit Identity Service.
+This cmdlet permanently removes a JOC Cockpit Identity Service.
+
+Deletion of an Identity Services implies to delete any related accounts, roles and permissions.
 
 The following REST Web Service API resources are used:
 
@@ -41,9 +43,9 @@ This cmdlet accepts pipelined input.
 This cmdlet returns no output.
 
 .EXAMPLE
-Remove-JS7IAMService -Service JOC
+Remove-JS7IAMService -Service 'JOC'
 
-Removes the indicated JOC Cockpit Identity Service.
+Deletes the indicated JOC Cockpit Identity Service.
 
 .LINK
 about_JS7

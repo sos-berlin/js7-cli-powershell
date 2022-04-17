@@ -7,10 +7,12 @@ Resets a Subagent to revoke current orders, workflows etc. and to initialize the
 .DESCRIPTION
 This cmdlet resets a Subagent. In a first step any orders, workflows and other deployable objects are revoked from the Subagent.
 In a second step the Subagent performs a restart.
+
 In case of a Director Agents in a final step the Controller reconnects to the Agent and deploys any required deployable objects.
 In case of a Subagent in a final step the Director Agent connects to the Subagent.
 
-It is recommended to first check the state of orders prior to resetting the Subagent and to complete or to cancel any attached orders.
+It is recommended to first check the state of orders prior to resetting the Subagent and to complete or to cancel any orders running in a Subagent.
+
 Consider that orders have to be continued if they failed due to reset of a Subagent.
 
 The following REST Web Service API resources are used:
@@ -18,11 +20,11 @@ The following REST Web Service API resources are used:
 * /agents/inventory/cluster/subagent/reset
 
 .PARAMETER SubagentId
-Specifies a unique identifier for a Subagent. This identifier cannot be modified during the lifetime of an Agent.
-In order to modify the Agent identifier the Agent has to be removed and added.
+Specifies a unique identifier for a Subagent. This identifier cannot be modified during the lifetime of a Subagent.
+In order to modify the Subagent identifier the Subagent has to be removed and added.
 
 .PARAMETER ControllerId
-Specifies the identification of the Controller from which Agents are removed.
+Specifies the identification of the Controller from which Subagents are removed.
 
 .PARAMETER Force
 This switch should be used with care as it kills any tasks running with a Subagent.
@@ -57,9 +59,9 @@ This cmdlet accepts pipelined input.
 This cmdlet returns no output.
 
 .EXAMPLE
-Reset-JS7Subagent -AgentId subagent_001
+Reset-JS7Subagent -SubagentId 'subagent_001'
 
-Resets the indicated Agent.
+Resets the indicated Subgent.
 
 .LINK
 about_JS7

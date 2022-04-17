@@ -44,7 +44,7 @@ This information is visible with the Audit Log view of JOC Cockpit.
 It can be useful when integrated with a ticket system that logs interventions with JobScheduler.
 
 .EXAMPLE
-Restart-JS7JOCService -Service HISTORY
+Restart-JS7JOCService -Service 'HISTORY'
 
 Restarts the history service that will check for state transitions of any orders in a Controller
 and add the information to the history.
@@ -57,7 +57,7 @@ about_JS7
 param
 (
     [Parameter(Mandatory=$True,ValueFromPipeline=$False,ValueFromPipelinebyPropertyName=$True)]
-    [ValidateSet('CLUSTER','HISTORY','DAILYPLAN','CLEANUP','MONITOR')]
+    [ValidateSet('CLUSTER','HISTORY','DAILYPLAN','CLEANUP','MONITOR',IgnoreCase = $False)]
     [string] $Service,
     [Parameter(Mandatory=$False,ValueFromPipeline=$False,ValueFromPipelinebyPropertyName=$True)]
     [string] $AuditComment,

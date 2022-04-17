@@ -23,7 +23,7 @@ Specifies that any sub-folders should be looked up when used with the -Folder pa
 By default no sub-folders will be looked up for workflow paths.
 
 .PARAMETER Type
-Specifies the object types for which audit log entries should be returned. Multiyple values can be specifed by
+Specifies the object types for which audit log entries should be returned. Multiple values can be specified by
 use of comma, for example -Type WORKFLOW,SCHEDULE
 
 * WORKFLOW
@@ -106,11 +106,11 @@ This parameter takes precedence over the -DateFrom parameter.
 Specifies the timezone to which dates should be converted from the history information.
 A timezone can e.g. be specified like this:
 
-  Get-JS7OrderHistory -Timezone (Get-Timezone -Id 'GMT Standard Time')
+  Get-JS7AuditLog -Timezone (Get-Timezone -Id 'GMT Standard Time')
 
-All dates in JobScheduler are UTC and can be converted e.g. to the local time zone like this:
+All dates in JS7 are UTC and can be converted e.g. to the local time zone like this:
 
-  Get-JS7OrderHistory -Timezone (Get-Timezone)
+  Get-JS7AuditLog -Timezone (Get-Timezone)
 
 Default: Dates are returned in UTC.
 
@@ -300,9 +300,9 @@ param
 
         if ( $ControllerId )
         {
-            Add-Member -Membertype NoteProperty -Name 'controllerId' -value $script:jsWebService.ControllerId -InputObject $body
-        } else {
             Add-Member -Membertype NoteProperty -Name 'controllerId' -value $ControllerId -InputObject $body
+        } else {
+            Add-Member -Membertype NoteProperty -Name 'controllerId' -value $script:jsWebService.ControllerId -InputObject $body
         }
 
         if ( $folders )

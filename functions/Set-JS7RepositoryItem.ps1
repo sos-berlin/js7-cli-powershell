@@ -22,7 +22,7 @@ Specifies the folder, sub-folder and name of the scheduling object, for example 
 that should be stored to the repository.
 
 .PARAMETER Type
-Specifies the scheduling object type that is one of:
+Specifies the scheduling object type that is one or more of:
 
 * Deployable object types
 ** WORKFLOW
@@ -118,7 +118,7 @@ to the repository of category ROLLOUT. No sub-folders and no draft versions of o
 Set-JS7RepositoryItem -ControllerId testsuite -Folder /Samples -Recursive -Local
 
 Stores any objects such as job resources and schedules from the specified folder recursively
-to the repository of category LOCAL. Deployable objects arec considered only if
+to the repository of category LOCAL. Deployable objects are considered only if
 previously deployed to the indicated Controller.
 
 .LINK

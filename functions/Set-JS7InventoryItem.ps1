@@ -2,10 +2,10 @@ function Set-JS7InventoryItem
 {
 <#
 .SYNOPSIS
-Adds or updates the configuration of a JOC Cockpit inventory item, e.g. a workflow
+Stores the configuration of a JOC Cockpit inventory item, e.g. a workflow
 
 .DESCRIPTION
-Any inventory objects can be stored to JOC Cockpit. the objects are passed on as PowerShell
+Any inventory objects can be stored to JOC Cockpit. The objects are passed on as PowerShell
 objects and are converted by the cmdlet to their native JSON reperesentation.
 
 The following REST Web Service API resources are used:
@@ -65,10 +65,10 @@ It can be useful when integrated with a ticket system that logs interventions wi
 This cmdlet does not return any output.
 
 .EXAMPLE
-$fos = Get-JS7InventoryItem -Path /JS7Demo/08_FileWatching/jdFilesTxt -Type FILEORDERSOURCE
-Set-JS7InventoryItem -Path /JS7Demo/08_FileWatching/jdFilesTxt -Type FILEORDERSOURCE -Object $fos
+$fos = Get-JS7InventoryItem -Path '/JS7Demo/08_FileWatching/jdFilesTxt' -Type 'FILEORDERSOURCE';
+Set-JS7InventoryItem -Path '/JS7Demo/08_FileWatching/jdFilesTxt' -Type 'FILEORDERSOURCE' -Object $fos
 
-Stores the inventory object of a file order source.
+Reads and stores the inventory object of a file order source.
 
 .LINK
 about_JS7

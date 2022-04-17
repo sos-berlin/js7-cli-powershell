@@ -2,14 +2,14 @@ function Rename-JS7IAMService
 {
 <#
 .SYNOPSIS
-Renames an a JOC Cockpit Identity Service
+Renames a JOC Cockpit Identity Service
 
 .DESCRIPTION
 This cmdlet renames a JOC Cockpit Identity Service.
 
 The following REST Web Service API resources are used:
 
-* /iam/identityservice/renmae
+* /iam/identityservice/rename
 
 .PARAMETER Service
 Specifies the unique name of an existing Identity Service that should be renamed.
@@ -24,9 +24,9 @@ This cmdlet accepts pipelined input.
 This cmdlet returns no output.
 
 .EXAMPLE
-Rename-JS7IAMService -Service JOC -NewService 'JOC2'
+Rename-JS7IAMService -Service 'JOC' -NewService 'JOC2'
 
-Renames the account.
+Renames the identity service.
 
 .LINK
 about_JS7

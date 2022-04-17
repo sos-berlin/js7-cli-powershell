@@ -2,10 +2,12 @@ function Remove-JS7IAMRole
 {
 <#
 .SYNOPSIS
-Removes roles from a JOC Cockpit Identity Service
+Permanently removes roles from a JOC Cockpit Identity Service
 
 .DESCRIPTION
-This cmdlet removes one or more roles from a JOC Cockpit Identity Service.
+This cmdlet permanently removes one or more roles from a JOC Cockpit Identity Service.
+
+Deletion of a role implies to delete any related permissions.
 
 The following REST Web Service API resources are used:
 
@@ -15,7 +17,9 @@ The following REST Web Service API resources are used:
 Specifies the unique name of the Identity Service.
 
 .PARAMETER Role
-Specifies one or more roles to be removed from the Identity Service.
+Specifies the name of the role to be removed from the Identity Service.
+
+More than one role can be specified by use of a comma.
 
 .PARAMETER AuditComment
 Specifies a free text that indicates the reason for the current intervention,
@@ -44,14 +48,14 @@ This cmdlet accepts pipelined input.
 This cmdlet returns no output.
 
 .EXAMPLE
-Remove-JS7IAMRole -Service JOC -Role 'application_manager'
+Remove-JS7IAMRole -Service 'JOC' -Role 'application_manager'
 
-Removes a role from the indicated JOC Cockpit Identity Service.
+Deletes a role from the indicated JOC Cockpit Identity Service.
 
 .EXAMPLE
-Get-JS7IAMRole -Service JOC -Role 'application_manager' | Remove-JS7IAMRole
+Get-JS7IAMRole -Service 'JOC' -Role 'application_manager' | Remove-JS7IAMRole
 
-Removes the indicated role from the JOC Cockpit Identity Service by pipelining.
+Deletes the indicated role from the JOC Cockpit Identity Service by pipelining.
 
 .LINK
 about_JS7

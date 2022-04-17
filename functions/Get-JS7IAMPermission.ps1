@@ -28,7 +28,7 @@ This cmdlet accepts pipelined input.
 This cmdlet returns an array of permissions.
 
 .EXAMPLE
-$permissions = Get-JS7IAMPermission -Service JOC -Role 'application_manager'
+$permissions = Get-JS7IAMPermission -Service 'JOC' -Role 'application_manager'
 
 Returns the permissions of the given role in the indicated Identity Service.
 

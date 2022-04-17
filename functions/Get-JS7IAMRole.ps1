@@ -24,12 +24,12 @@ This cmdlet accepts pipelined input.
 This cmdlet returns one or more roles.
 
 .EXAMPLE
-$roles = Get-JS7IAMRole -Service JOC
+$roles = Get-JS7IAMRole -Service 'JOC'
 
 Returns the roles of the indicated Identity Service.
 
 .EXAMPLE
-$role = Get-JS7IAMRole -Service JOC -Role 'application_manager'
+$role = Get-JS7IAMRole -Service 'JOC' -Role 'application_manager'
 
 Returns the given role of the indicated Identity Service.
 

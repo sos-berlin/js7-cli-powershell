@@ -6,6 +6,8 @@ Hides a Standalone Agent in JOC Cockpit
 
 .DESCRIPTION
 This cmdlet hides a Standalone Agent. A hidden Standalone Agent cannot be assigned a job in a workflow.
+In addition a hidden Standalone Agent is not considerd with the Agent Component Status and
+Agent Health Status widgets in the Dashboard view.
 
 The following REST Web Service API resources are used:
 
@@ -43,7 +45,7 @@ This cmdlet accepts pipelined input.
 This cmdlet returns no output.
 
 .EXAMPLE
-Hide-JS7Agent -AgentId agent_001
+Hide-JS7Agent -AgentId 'agent_001'
 
 Hides the indicated Standalone Agent.
 

@@ -2,7 +2,7 @@ function Set-JS7IAMPermission
 {
 <#
 .SYNOPSIS
-Stores a permission to a role in the JOC Cockpit Identity Service
+Stores a permission to a role in the a Cockpit Identity Service
 
 .DESCRIPTION
 This cmdlet stores a permission to a role in a JOC Cockpit Identity Service.
@@ -15,10 +15,10 @@ The following REST Web Service API resources are used:
 Specifies the unique name of the Identity Service.
 
 .PARAMETER Role
-Specifies the unique name of a role that is added to the Identity Service.
+Specifies the unique name of the role that permissions should be assigned.
 
 .PARAMETER Permission
-Specifies one or more permissions for the role. Permissions are specified form identifiers like this:
+Specifies one or more permissions for the role. Permissions are specified by identifiers like this:
 
 * sos:products:controller:view
 * sos:products:controller:agents:view
@@ -30,7 +30,7 @@ If more than one permission is used then they can be specified as an array or se
 * -Permissions "sos:products:controller:view","sos:products:controller:agents:view"
 
 .PARAMETER ControllerId
-Specifies the unique identifier of the Controller that controller-related permissions are assigned.
+Specifies the unique identifier of the Controller that related permissions are assigned.
 
 .PARAMETER AuditComment
 Specifies a free text that indicates the reason for the current intervention,
@@ -59,9 +59,9 @@ This cmdlet accepts pipelined input.
 This cmdlet returns no output.
 
 .EXAMPLE
-Set-JS7IAMPermission -Service JOC -Role 'application_manager' -Permission @( 'sos:products:controller:view', 'sos:products:controller:agents:view' )
+Set-JS7IAMPermission -Service 'JOC' -Role 'application_manager' -Permission @( 'sos:products:controller:view', 'sos:products:controller:agents:view' )
 
-Stores the indicated permission.
+Stores the indicated permissions with the role.
 
 .LINK
 about_JS7

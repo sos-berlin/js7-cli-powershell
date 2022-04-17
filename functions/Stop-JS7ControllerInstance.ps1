@@ -103,7 +103,7 @@ i.e. with -Action 'terminate'.
 Stop-JS7ControllerInstance -Action 'abort' -Restart
 
 Aborts a standalone JS7 Controller instance or the active member of a cluster.
-A fail-over to the passive cluser instance takes place.
+A fail-over to the passive cluster instance takes place.
 After shutdown the JS7 Controller instance is restarted.
 
 .LINK
