@@ -14,7 +14,7 @@ is mapped to a JOC Cockpit /TestCases inventory folder.
 
 This cmdlet corresponds to using the following Git command:
 
-* git clone <uri>
+* git clone <url>
 
 The following REST Web Service API resources are used:
 
@@ -29,8 +29,8 @@ This corresponds to the LOCAL category. If this switch is not used then the
 ROLLOUT category is assumed for a repository that holds scheduling objects
 intended for rollout to later environments such as test, prod.
 
-.PARAMETER Uri
-Specifies the URI of the remote Git repository, for example: git@github.com:sos-berlin/JS7Demo.git
+.PARAMETER Url
+Specifies the URL of the remote Git repository, for example: git@github.com:sos-berlin/JS7Demo.git
 
 .PARAMETER AuditComment
 Specifies a free text that indicates the reason for the current intervention, e.g. "business requirement", "maintenance window" etc.
@@ -57,7 +57,7 @@ This cmdlet accepts pipelined input.
 This cmdlet returns no output.
 
 .EXAMPLE
-Invoke-JS7GitRepositoryClone -Folder /TestCases -Uri git@github.com:sos-berlin/JS7Demo.git
+Invoke-JS7GitRepositoryClone -Folder /TestCases -Url git@github.com:sos-berlin/JS7Demo.git
 
 Clones the remote Git repository to a local repository that is mapped to the /TestCases folder in the JOC Cockpit inventory.
 
@@ -73,7 +73,7 @@ param
     [Parameter(Mandatory=$False,ValueFromPipeline=$False,ValueFromPipelinebyPropertyName=$True)]
     [switch] $Local,
     [Parameter(Mandatory=$True,ValueFromPipeline=$False,ValueFromPipelinebyPropertyName=$True)]
-    [Uri] $Uri,
+    [Uri] $Url,
     [Parameter(Mandatory=$False,ValueFromPipeline=$False,ValueFromPipelinebyPropertyName=$True)]
     [int] $Timeout = 60,
     [Parameter(Mandatory=$False,ValueFromPipeline=$False,ValueFromPipelinebyPropertyName=$True)]
@@ -111,7 +111,7 @@ param
             Add-Member -Membertype NoteProperty -Name 'category' -value 'ROLLOUT' -InputObject $body
         }
 
-        Add-Member -Membertype NoteProperty -Name 'remoteUri' -value $Uri -InputObject $body
+        Add-Member -Membertype NoteProperty -Name 'remoteUri' -value $Url -InputObject $body
 
         if ( $AuditComment -or $AuditTimeSpent -or $AuditTicketLink )
         {
