@@ -156,7 +156,7 @@ param
             Add-Member -Membertype NoteProperty -Name 'controllerId' -value $script:jsWebService.ControllerId -InputObject $body
         }
 
-        Add-Member -Membertype NoteProperty -Name 'agentId' -value $AgentId -InputObject $agentObj
+        Add-Member -Membertype NoteProperty -Name 'agentId' -value $AgentId -InputObject $body
         Add-Member -Membertype NoteProperty -Name 'subagents' -value $subagents -InputObject $body
 
         if ( $AuditComment -or $AuditTimeSpent -or $AuditTicketLink )

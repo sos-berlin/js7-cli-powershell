@@ -38,6 +38,21 @@ If more than one Subagent is specified with the -SubagentId parameter then accor
 
 By default the same priority is applied to all Subagents which results in an active-active cluster.
 
+.PARAMETER Type
+Optionally specifies the cluster type:
+
+* ACTIVE: Subagents in the cluster are used in round-robin scheduling mode
+* PASSIVE: Subagents in the cluster use fixed-priority scheduling mode
+
+This parameter cannot be used if the -Priority parameter is in place: specifying the cluster -Type causes the cmdlet to determine priorities of Subagents in the Cluster.
+Alternatively the -Priority parameter allows to specify the priority per Subagent in the cluster.
+
+.PARAMETER Add
+Optionally specifies that the Subagents specified with the -SubagentId parameter are added to an existing Subagent Cluster.
+
+.PARAMETER Remove
+Optionally specifies that the Subagents specified with the -SubagentId parameter are removed from an existing Subagent Cluster.
+
 .PARAMETER AuditComment
 Specifies a free text that indicates the reason for the current intervention, e.g. "business requirement", "maintenance window" etc.
 
@@ -72,6 +87,16 @@ Set-JS7SubagentCluster -AgentId 'agent_001' -SubagentClusterId 'subagent_cluster
 
 Stores a Subagent Cluster with two Subagents as an active-passive cluster.
 
+.EXAMPLE
+Set-JS7SubagentCluster -AgentId 'agent_001' -SubagentClusterId 'subagent_cluster_001' -SubagentId 'subagent_003' -Add
+
+Adds the indicated Subagent to the existing Subagent Cluster.
+
+.EXAMPLE
+Set-JS7SubagentCluster -AgentId 'agent_001' -SubagentClusterId 'subagent_cluster_001' -SubagentId 'subagent_003' -Remove
+
+Removes the indicated Subagent from the existing Subagent Cluster.
+
 .LINK
 about_JS7
 
@@ -88,7 +113,14 @@ param
     [Parameter(Mandatory=$True,ValueFromPipeline=$False,ValueFromPipelinebyPropertyName=$True)]
     [string[]] $SubagentId,
     [Parameter(Mandatory=$False,ValueFromPipeline=$False,ValueFromPipelinebyPropertyName=$True)]
-    [int[]] $Priority = @(1),
+    [int[]] $Priority,
+    [Parameter(Mandatory=$False,ValueFromPipeline=$False,ValueFromPipelinebyPropertyName=$True)]
+    [ValidateSet('ACTIVE','PASSIVE')]
+    [string] $Type,
+    [Parameter(Mandatory=$False,ValueFromPipeline=$False,ValueFromPipelinebyPropertyName=$True)]
+    [switch] $Add,
+    [Parameter(Mandatory=$False,ValueFromPipeline=$False,ValueFromPipelinebyPropertyName=$True)]
+    [switch] $Remove,
     [Parameter(Mandatory=$False,ValueFromPipeline=$False,ValueFromPipelinebyPropertyName=$True)]
     [string] $AuditComment,
     [Parameter(Mandatory=$False,ValueFromPipeline=$False,ValueFromPipelinebyPropertyName=$True)]
@@ -101,6 +133,21 @@ param
 		Approve-JS7Command $MyInvocation.MyCommand
         $stopWatch = Start-JS7StopWatch
 
+        if ( $Type -and $Priority )
+        {
+            throw "$($MyInvocation.MyCommand.Name): Only one of the parameters -Type and -Priority can be used"
+        }
+
+        if ( $Priority -and ( $Add -or $Remove ) )
+        {
+            throw "$($MyInvocation.MyCommand.Name): Only one of the parameters -Priority and -Add or -Remove can be used"
+        }
+
+        if ( $Add -and $Remove )
+        {
+            throw "$($MyInvocation.MyCommand.Name): Only one of the parameters -Add and -Remove can be used"
+        }
+
         if ( !$AuditComment -and ( $AuditTimeSpent -or $AuditTicketLink ) )
         {
             throw "$($MyInvocation.MyCommand.Name): Audit Log comment required, use parameter -AuditComment if one of the parameters -AuditTimeSpent or -AuditTicketLink is used"
@@ -111,20 +158,96 @@ param
 
     Process
     {
-        for( $i=0; $i -lt $SubagentId.count; $i++ )
+        if ( !$Type -and !$Priority )
         {
-            $subagentObj = New-Object PSObject
-            Add-Member -Membertype NoteProperty -Name 'subagentId' -value $SubagentId[$i] -InputObject $subagentObj
+            $Type = 'ACTIVE'
+        }
 
-            if ( $Priority.count -gt $i )
+        if ( $Add -or $Remove )
+        {
+            $body = New-Object PSObject
+            Add-Member -Membertype NoteProperty -Name 'agentIds' -value @( $AgentId ) -InputObject $body
+            Add-Member -Membertype NoteProperty -Name 'subagentClusterIds' -value @( $SubagentClusterId ) -InputObject $body
+
+            [string] $requestBody = $body | ConvertTo-Json -Depth 100
+            $response = Invoke-JS7WebRequest -Path '/agents/cluster' -Body $requestBody
+
+            if ( $response.StatusCode -eq 200 )
             {
-                $subagentPriority = $Priority[$i]
-            } else {
-                $subagentPriority = 1
-            }
+                $requestResult = ( $response.Content | ConvertFrom-Json )
 
-            Add-Member -Membertype NoteProperty -Name 'priority' -value $subagentPriority -InputObject $subagentObj
-            $subagents += $subagentObj
+                if ( !$requestResult )
+                {
+                    throw ( $response | Format-List -Force | Out-String )
+                }
+
+                $subagents = $requestResult.subagentClusters.subagentIds
+
+                if ( $Add )
+                {
+                    for( $i=0; $i -lt $SubagentId.count; $i++ )
+                    {
+                        $subagentObj = New-Object PSObject
+                        Add-Member -Membertype NoteProperty -Name 'subagentId' -value $SubagentId[$i] -InputObject $subagentObj
+
+                        if ( $Type -eq 'ACTIVE' )
+                        {
+                            Add-Member -Membertype NoteProperty -Name 'priority' -value $subagents[$subagents.count-1].priority -InputObject $subagentObj
+                        } else {
+                            Add-Member -Membertype NoteProperty -Name 'priority' -value ($subagents[$subagents.count-1].priority -1) -InputObject $subagentObj
+                        }
+
+                        $subagents += $subagentObj
+                    }
+                } elseif ( $Remove ) {
+                    $newSubagents = @()
+
+                    for( $i=0; $i -lt $subagents.count; $i++ )
+                    {
+                        $found = $False
+
+                        for( $j=0; $j -lt $SubagentId.count; $j++ )
+                        {
+                            if ( $SubagentId[$j] -eq $subagents[$i].subagentId )
+                            {
+                                $found = $True
+                            }
+                        }
+
+                        if ( !$found )
+                        {
+                            $newSubagents += $subagents[$i]
+                        }
+                    }
+
+                    $subagents = $newSubagents
+                }
+            } else {
+                throw ( $response | Format-List -Force | Out-String )
+            }
+        } else {
+            for( $i=0; $i -lt $SubagentId.count; $i++ )
+            {
+                $subagentObj = New-Object PSObject
+                Add-Member -Membertype NoteProperty -Name 'subagentId' -value $SubagentId[$i] -InputObject $subagentObj
+
+                if ( $Priority )
+                {
+                    if ( $Priority.count -gt $i )
+                    {
+                        $subagentPriority = $Priority[$i]
+                    } else {
+                        $subagentPriority = 1
+                    }
+                } elseif ( $Type -eq 'ACTIVE' ) {
+                    $subagentPriority = 1
+                } elseif ( $Type -eq 'PASSIVE' ) {
+                    $subagentPriority = ( $SubagentId.count-$i )
+                }
+
+                Add-Member -Membertype NoteProperty -Name 'priority' -value $subagentPriority -InputObject $subagentObj
+                $subagents += $subagentObj
+            }
         }
 
         $body = New-Object PSObject
