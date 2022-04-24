@@ -29,6 +29,9 @@ If more than one permission is used then they can be specified as an array or se
 * -Permissions @( "sos:products:controller:view", "sos:products:controller:agents:view" )
 * -Permissions "sos:products:controller:view","sos:products:controller:agents:view"
 
+.PARAMETER Excluded
+Specifies if the permissions should be excluded. By default specified permissions are included.
+
 .PARAMETER ControllerId
 Specifies the unique identifier of the Controller that related permissions are assigned.
 
@@ -63,6 +66,11 @@ Set-JS7IAMPermission -Service 'JOC' -Role 'application_manager' -Permission @( '
 
 Stores the indicated permissions with the role.
 
+.EXAMPLE
+Set-JS7IAMPermission -Service 'JOC' -Role 'application_manager' -Permission @( 'sos:products:controller:view', 'sos:products:controller:agents:view' ) -ControllerId 'testsuite'
+
+Stores the indicated permissions with the role for access to the indicated Controller.
+
 .LINK
 about_JS7
 
@@ -78,8 +86,10 @@ param
     [string] $Role,
     [Parameter(Mandatory=$True,ValueFromPipeline=$False,ValueFromPipelinebyPropertyName=$True)]
     [string[]] $Permission,
-    [Parameter(Mandatory=$True,ValueFromPipeline=$False,ValueFromPipelinebyPropertyName=$True)]
-    [string] $ControllerId,
+    [Parameter(Mandatory=$False,ValueFromPipeline=$False,ValueFromPipelinebyPropertyName=$True)]
+    [switch] $Excluded,
+    [Parameter(Mandatory=$False,ValueFromPipeline=$False,ValueFromPipelinebyPropertyName=$True)]
+    [string] $ControllerId = 'default',
     [Parameter(Mandatory=$False,ValueFromPipeline=$False,ValueFromPipelinebyPropertyName=$True)]
     [string] $AuditComment,
     [Parameter(Mandatory=$False,ValueFromPipeline=$False,ValueFromPipelinebyPropertyName=$True)]
@@ -106,13 +116,21 @@ param
         {
             $permissionObj = New-Object PSObject
             Add-Member -Membertype NoteProperty -Name 'permissionPath' -value $item -InputObject $permissionObj
+
+            if ( $Excluded )
+            {
+                Add-Member -Membertype NoteProperty -Name 'excluded' -value ($Excluded -eq $True) -InputObject $permissionObj
+            }
+
             $permissions += $permissionObj
         }
 
         Add-Member -Membertype NoteProperty -Name 'permissions' -value $permissions -InputObject $body
 
-        if ( $ControllerId )
+        if ( $ControllerId -eq 'default' )
         {
+            Add-Member -Membertype NoteProperty -Name 'controllerId' -value '' -InputObject $body
+        } elseif ( $ControllerId ) {
             Add-Member -Membertype NoteProperty -Name 'controllerId' -value $ControllerId -InputObject $body
         }
 
