@@ -78,8 +78,8 @@ param
     [string[]] $Folder,
     [Parameter(Mandatory=$False,ValueFromPipeline=$False,ValueFromPipelinebyPropertyName=$True)]
     [switch] $Recursive,
-    [Parameter(Mandatory=$True,ValueFromPipeline=$False,ValueFromPipelinebyPropertyName=$True)]
-    [string] $ControllerId,
+    [Parameter(Mandatory=$False,ValueFromPipeline=$False,ValueFromPipelinebyPropertyName=$True)]
+    [string] $ControllerId = 'default',
     [Parameter(Mandatory=$False,ValueFromPipeline=$False,ValueFromPipelinebyPropertyName=$True)]
     [string] $AuditComment,
     [Parameter(Mandatory=$False,ValueFromPipeline=$False,ValueFromPipelinebyPropertyName=$True)]
@@ -110,7 +110,13 @@ param
         }
 
         Add-Member -Membertype NoteProperty -Name 'folders' -value $folderItems -InputObject $body
-        Add-Member -Membertype NoteProperty -Name 'controllerId' -value $ControllerId -InputObject $body
+
+        if ( $ControllerId -eq 'default' )
+        {
+            Add-Member -Membertype NoteProperty -Name 'controllerId' -value '' -InputObject $body
+        } elseif ( $ControllerId ) {
+            Add-Member -Membertype NoteProperty -Name 'controllerId' -value $ControllerId -InputObject $body
+        }
 
         if ( $AuditComment -or $AuditTimeSpent -or $AuditTicketLink )
         {
