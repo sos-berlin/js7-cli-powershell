@@ -26,6 +26,9 @@ More than one folder can be specified by use of a comma.
 Specifies that any sub-folders of the folder specified with the -Folder parameter
 should be accessible to the role.
 
+.PARAMETER ControllerId
+Specifies the unique identifier of the Controller that related permissions are assigned.
+
 .PARAMETER AuditComment
 Specifies a free text that indicates the reason for the current intervention,
 e.g. "business requirement", "maintenance window" etc.
