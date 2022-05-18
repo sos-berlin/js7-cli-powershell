@@ -29,7 +29,7 @@ The subject of the e-mail.
 
 .PARAMETER Body
 The body of the e-mail. By default the body is plain text.
-When using HTML e-mail consider to use the -BodyAsHtml switch.
+When using HTML e-mail consider using the -BodyAsHtml switch.
 
 .PARAMETER Cc
 The carbon copy recipients of e-mail.
@@ -42,13 +42,13 @@ Accepts an array of file names including the full path that should be attached t
 
 .PARAMETER Credential
 The credential including user name and password of the account that authenticates with the SMTP mail server.
-This parameter hqs to be specified for SMTP mail servers that require authentication.
+This parameter has to be specified for SMTP mail servers that require authentication.
 
 A credential object can be created like this:
 $mailCredential = New-Object System.Net.NetworkCredential( "info@sos-berlin.com", "secret" )
 
 .PARAMETER Timeout
-The timout in milliseconds that JS7 will wait for the connection to the mail server to be established.
+The timeout in milliseconds that JS7 will wait for the connection to the mail server to be established.
 
 Default: 15000
 

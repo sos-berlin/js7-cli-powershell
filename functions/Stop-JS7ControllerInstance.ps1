@@ -5,7 +5,7 @@ function Stop-JS7ControllerInstance
 Stops a JS7 Controller instance
 
 .DESCRIPTION
-The stop of a Controller instance is performed and optionally the instance fails over
+The stopping of a Controller instance is performed and optionally the instance fails over
 to the passive cluster member in a JS7 Controller cluster.
 
 The following REST Web Service API resources are used:
@@ -18,7 +18,7 @@ The following REST Web Service API resources are used:
 .PARAMETER Url
 Optionally the Url of the Controller instance to be stopped can be specified.
 Without this parameter the active Controller will be stopped.
-Consider that stopping a passive Controller in a JS7 cluster cannot perform
+Note that stopping a passive Controller in a JS7 cluster cannot perform
 a fail-over as the current cluster member instance is passive.
 
 .PARAMETER Action
@@ -43,7 +43,7 @@ Controller instance will shut down and restart.
 This switch provides the same capabilities as the Restart-JS7Controller cmdlet.
 
 .PARAMETER NoFailover
-This switch prevents a fail-over to happen when stopping the active Controller
+This switch prevents a fail-over from happening when stopping the active Controller
 in a cluster. Instead, the restarted Controller will remain the active cluster instance.
 
 .PARAMETER Service
@@ -56,31 +56,31 @@ No timeout and no cluster operations are applied.
 .PARAMETER AuditComment
 Specifies a free text that indicates the reason for the current intervention, e.g. "business requirement", "maintenance window" etc.
 
-The Audit Comment is visible from the Audit Log view of JOC Cockpit.
-This parameter is not mandatory, however, JOC Cockpit can be configured to enforce Audit Log comments for any interventions.
+The Audit Comment is visible from the Audit Log view of the JOC Cockpit.
+This parameter is not mandatory. However, the JOC Cockpit can be configured to require Audit Log comments for all interventions.
 
 .PARAMETER AuditTimeSpent
 Specifies the duration in minutes that the current intervention required.
 
-This information is visible with the Audit Log view. It can be useful when integrated
-with a ticket system that logs the time spent on interventions with JobScheduler.
+This information is shown in the Audit Log view. It can be useful when integrated
+with a ticket system that logs the time spent on interventions with JS7.
 
 .PARAMETER AuditTicketLink
-Specifies a URL to a ticket system that keeps track of any interventions performed for JobScheduler.
+Specifies a URL to a ticket system that keeps track of any interventions performed for JS7.
 
-This information is visible with the Audit Log view of JOC Cockpit.
-It can be useful when integrated with a ticket system that logs interventions with JobScheduler.
+This information is shown in the Audit Log view of JOC Cockpit.
+It can be useful when integrated with a ticket system that logs interventions with JS7.
 
 .EXAMPLE
 Stop-JS7ControllerInstance
 
-Stops a standalone JobScheduler Controller instance or active Cluster instance with normal termination.
+Stops a standalone JS7 Controller instance or active Cluster instance with normal termination.
 In a JS7 cluster a fail-over takes place unless the -NoFailover switch is used.
 
 .EXAMPLE
 Stop-JS7ControllerInstance -Action 'abort'
 
-Aborts a standalone JobScheduler Controller instance or active Cluster instance.
+Aborts a standalone JS7 Controller instance or active Cluster instance.
 In a JS7 cluster a fail-over takes place unless the -NoFailover switch is used.
 
 .EXAMPLE

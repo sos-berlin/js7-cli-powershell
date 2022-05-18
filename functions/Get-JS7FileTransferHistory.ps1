@@ -70,7 +70,7 @@ This parameter accepts any number of target file names separated by a comma.
 Specifies the date starting from which file transfer history items should be returned.
 Consider that a UTC date has to be provided.
 
-Default: Begin of the current day as a UTC date
+Default: Beginning of the current day as a UTC date
 
 .PARAMETER DateTo
 Specifies the date until which file transfer history items should be returned.
@@ -90,7 +90,7 @@ Specifies a relative date starting from which file transfer history items should
 * -1y, -2y: one year ago, two years ago
 
 Optionally a time offset can be specified, e.g. -1d+02:00, as otherwise midnight UTC is assumed.
-Alternatively a timezone offset can be added, e.g. by using -1d+TZ, that is calculated by the cmdlet
+Alternatively a timezone offset can be added, e.g. by using -1d+TZ. This is calculated by the cmdlet
 for the timezone that is specified with the -Timezone parameter.
 
 This parameter takes precedence over the -DateFrom parameter.
@@ -107,7 +107,7 @@ Specifies a relative date until which file transfer history items should be retu
 * -1y, -2y: one year ago, two years ago
 
 Optionally a time offset can be specified, e.g. -1d+02:00, as otherwise midnight UTC is assumed.
-Alternatively a timezone offset can be added, e.g. by using -1d+TZ, that is calculated by the cmdlet
+Alternatively a timezone offset can be added, e.g. by using -1d+TZ. This is calculated by the cmdlet
 for the timezone that is specified with the -Timezone parameter.
 
 This parameter takes precedence over the -DateFrom parameter.

@@ -29,7 +29,7 @@ Optionally specifies the folder for which included inventory objects should be r
 This parameter is used alternatively to the -Path parameter that specifies to return any deployable inventory object from a folder.
 
 .PARAMETER Recursive
-Specifies that any sub-folders should be looked up. By default no sub-folders will be considered.
+Specifies that all sub-folders should be looked up. By default no sub-folders will be considered.
 
 .PARAMETER Valid
 Limits the scope to valid schedudling objects only.

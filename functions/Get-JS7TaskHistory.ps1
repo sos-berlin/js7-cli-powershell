@@ -46,7 +46,7 @@ Specifies the name of a job that is looked up by use of * and ? wildcard charact
 Specifies the date starting from which history items should be returned.
 Consider that a UTC date has to be provided.
 
-Default: Begin of the current day as a UTC date
+Default: Beginning of the current day as a UTC date
 
 .PARAMETER DateTo
 Specifies the date until which history items should be returned.
@@ -66,7 +66,7 @@ Specifies a relative date starting from which history items should be returned, 
 * -1y, -2y: one year ago, two years ago
 
 Optionally a time offset can be specified, e.g. -1d+02:00, as otherwise midnight UTC is assumed.
-Alternatively a timezone offset can be added, e.g. by using -1d+TZ, that is calculated by the cmdlet
+Alternatively a timezone offset can be added, e.g. by using -1d+TZ. This is calculated by the cmdlet
 for the timezone that is specified with the -Timezone parameter.
 
 This parameter takes precedence over the -DateFrom parameter.
@@ -83,7 +83,7 @@ Specifies a relative date until which history items should be returned, e.g.
 * -1y, -2y: one year ago, two years ago
 
 Optionally a time offset can be specified, e.g. -1d+02:00, as otherwise midnight UTC is assumed.
-Alternatively a timezone offset can be added, e.g. by using -1d+TZ, that is calculated by the cmdlet
+Alternatively a timezone offset can be added, e.g. by using -1d+TZ. This is calculated by the cmdlet
 for the timezone that is specified with the -Timezone parameter.
 
 This parameter takes precedence over the -DateFrom parameter.
@@ -94,27 +94,27 @@ A timezone can e.g. be specified like this:
 
   Get-JSTaskHistory -Timezone (Get-Timezone -Id 'GMT Standard Time')
 
-All dates in JobScheduler are UTC and can be converted e.g. to the local time zone like this:
+All dates in JS7 are UTC and can be converted e.g. to the local time zone like this:
 
   Get-JSTaskHistory -Timezone (Get-Timezone)
 
 Default: Dates are returned in UTC.
 
 .PARAMETER TaskId
-Specifies to report the execution history for the given task ID only.
+Specifies that the execution history should only be reported for the given task ID.
 
 .PARAMETER Limit
 Specifies the max. number of history items for task executions to be returned.
 The default value is 10000, for an unlimited number of items the value -1 can be specified.
 
 .PARAMETER NormalCriticality
-Specifies to return the task history for jobs only that are assigned a "normal" criticality.
+Specifies that the task history should only be returned for jobs that are assigned a "normal" criticality.
 
 .PARAMETER MinorCriticality
-Specifies to return the task history for jobs only that are assigned a "minor" criticality.
+Specifies that the task history should only be returned for jobs that are assigned a "minor" criticality.
 
 .PARAMETER MajorCriticality
-Specifies to return the task history for jobs only that are assigned a "major" criticality.
+Specifies that the task history should only be returned for jobs that are assigned a "major" criticality.
 
 .PARAMETER Successful
 Returns history information for successfully completed tasks.
@@ -136,17 +136,17 @@ Returns today's task execution history for any jobs.
 .EXAMPLE
 $items = Get-JS7TaskHistory -JobName "*sos*"
 
-Returns today's task execution history for any jobs with a job name that includes "sos".
+Returns today's task execution history for all jobs with a job name that includes "sos".
 
 .EXAMPLE
 $items = Get-JS7TaskHistory -Timezone (Get-Timezone)
 
-Returns today's task execution history for any jobs with dates being converted to the local timezone.
+Returns today's task execution history for all jobs with dates being converted to the local timezone.
 
 .EXAMPLE
 $items = Get-JS7TaskHistory -Timezone (Get-Timezone -Id 'GMT Standard Time')
 
-Returns today's task execution history for any jobs with dates being converted to the GMT timezone.
+Returns today's task execution history for all jobs with dates being converted to the GMT timezone.
 
 .EXAMPLE
 $items = Get-JS7TaskHistory -Job /sos/dailyplan/CreateDailyPlan
@@ -161,7 +161,7 @@ Returns today's task execution history for jobs in the given workflow.
 .EXAMPLE
 $items = Get-JS7TaskHistory -ExcludeJob @{ 'workflowPath'='/some_path/some_workflow'; 'job'='some_job' }
 
-Returns today's task execution history for any jobs excluding the specified workflow paths and job names.
+Returns today's task execution history for all jobs excluding the specified workflow paths and job names.
 
 .EXAMPLE
 $items = Get-JS7TaskHistory -Successful -DateFrom "2020-08-11 14:00:00Z"
@@ -171,7 +171,7 @@ Returns the task execution history for successfully completed jobs that started 
 .EXAMPLE
 $items = Get-JS7TaskHistory -Failed -DateFrom (Get-Date -Hour 0 -Minute 0 -Second 0).AddDays(-7).ToUniversalTime()
 
-Returns the task execution history for any failed jobs for the last seven days.
+Returns the task execution history for all failed jobs for the last seven days.
 
 .EXAMPLE
 $items = Get-JS7TaskHistory -RelativeDateFrom -7d
@@ -188,7 +188,7 @@ The history is reported starting from 1 hour after midnight UTC.
 .EXAMPLE
 $items = Get-JS7TaskHistory -RelativeDateFrom -7d+TZ
 
-Returns the task execution history for any jobs for the last seven days.
+Returns the task execution history for all jobs for the last seven days.
 The history is reported starting from midnight in the same timezone that is used with the -Timezone parameter.
 
 .EXAMPLE
@@ -199,7 +199,7 @@ Returns the task execution history for the last week.
 .EXAMPLE
 $items = Get-JS7TaskHistory -Folder /sos -Recursive -Successful -Failed
 
-Returns today's task execution history for any completed tasks from the "/sos" folder
+Returns today's task execution history for all completed tasks from the "/sos" folder
 and any sub-folders recursively.
 
 .LINK

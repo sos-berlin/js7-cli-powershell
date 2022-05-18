@@ -20,7 +20,7 @@ The following REST Web Service API resources are used:
 Specifies the repository folder for which items should be returned.
 
 .PARAMETER Recursive
-Specifies that any sub-folders should be looked up if the -Folder parameter is used.
+Specifies that all sub-folders should be looked up if the -Folder parameter is used.
 By default no sub-folders will be looked up.
 
 .PARAMETER Local

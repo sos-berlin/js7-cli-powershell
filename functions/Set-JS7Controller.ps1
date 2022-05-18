@@ -22,22 +22,22 @@ Specifies an array of Controller instances that will be added:
 Controller instance objects can be created from the New-JS7ControllerInstance cmdlet.
 
 .PARAMETER AgentId
-A JS7 Controller cluster requires a one Agent to be assigned the role of a cluster watcher.
-Such an Agent will be considered if the JS7 Controller cluster decides about a fail-over situation with
-no network connection being available between primary and secondary JS7 Controller instances.
+A JS7 Controller cluster requires an Agent to be assigned the role of a cluster watcher.
+Such an Agent will be considered if the JS7 Controller cluster decides about a fail-over situation when
+a network connection between primary and secondary JS7 Controller instances is not available.
 
 Therefore this setting is not considered when adding a Standalone Controller.
 
-The parameter specifies a unique identifier for an Agent. This identifier cannot be modified during the lifetime of an Agent.
+This parameter specifies a unique identifier for an Agent. This identifier cannot be modified during the lifetime of the Agent.
 In order to modify the Agent identifier the Agent has to be terminated and
 journals have to be cleaned up.
 
 .PARAMETER AgentName
 The name of an Agent is used e.g. in job assignments of a workflow. During deployment the Agent Name
-is replaced by the respective Agent ID for the Controller to which the workflow is deployed.
+is replaced by the relevant Agent ID for the Controller to which the workflow is deployed.
 
-Should deployments of the same workflows be performed to a number of Controllers then for each Controller
-the same Agent Name has to be configured (pointing to a different Agent ID from Agents' alias names).
+If deployments of the same workflows are performed to a number of Controllers then
+the same Agent Name has to be configured for each Controller (pointing to a different Agent ID from Agents' alias names).
 
 .PARAMETER AgentUrl
 Specifies the URL for which the Agent is available. A URL includes the protocol (http, https), hostname and port
@@ -45,25 +45,25 @@ for which an Agent is operated.
 
 .PARAMETER ControllerId
 Specifies the Controller ID that should be used if an existing Controller is re-registered.
-When adding Controllers the ControllerID should be empty, when updating Controllers the Controller ID has to be specified.
+When adding Controllers, the ControllerID should be empty: when updating Controllers, the Controller ID has to be specified.
 
 .PARAMETER AuditComment
 Specifies a free text that indicates the reason for the current intervention, e.g. "business requirement", "maintenance window" etc.
 
-The Audit Comment is visible from the Audit Log view of JOC Cockpit.
-This parameter is not mandatory, however, JOC Cockpit can be configured to enforce Audit Log comments for any interventions.
+The Audit Comment is visible from the Audit Log view of the JOC Cockpit.
+This parameter is not mandatory, however, the JOC Cockpit can be configured to require Audit Log comments for all interventions.
 
 .PARAMETER AuditTimeSpent
 Specifies the duration in minutes that the current intervention required.
 
-This information is visible with the Audit Log view. It can be useful when integrated
-with a ticket system that logs the time spent on interventions with JobScheduler.
+This information is shown in the Audit Log view. It can be useful when integrated
+with a ticket system that logs the time spent on interventions with JS7.
 
 .PARAMETER AuditTicketLink
-Specifies a URL to a ticket system that keeps track of any interventions performed for JobScheduler.
+Specifies a URL to a ticket system that keeps track of any interventions performed for JS7.
 
-This information is visible with the Audit Log view of JOC Cockpit.
-It can be useful when integrated with a ticket system that logs interventions with JobScheduler.
+This information is shown in the Audit Log view of JOC Cockpit.
+It can be useful when integrated with a ticket system that logs interventions with JS7.
 
 .OUTPUTS
 This cmdlet does not return any output.
@@ -71,12 +71,12 @@ This cmdlet does not return any output.
 .EXAMPLE
 Set-JS7Controller -Controller ( New-JS7ControllerInstance -Url https://controller-standalone.sos:4443 -Title 'STANDALONE CONTROLLER' )
 
-Adds a Standalone Controller to JOC Cockpit that is identified by its Url.
+Adds a Standalone Controller to JOC Cockpit which is identified by its Url.
 
 .EXAMPLE
 Set-JS7Controller -Controller ( New-JS7ControllerInstance -Url https://controller-standalone.sos:4443 -Title 'SOLO CONTROLLER' ) -ControllerId jobscheduler
 
-Updates an existing Standalone Controller that is identified by its Url to a different URL or title.
+Updates an existing Standalone Controller which is identified by its Url to a different URL or title.
 
 .EXAMPLE
 $primary = New-JS7ControllerInstance -Url https://controller-primary.sos:4443 -Title 'PRIMARY CONTROLLER'

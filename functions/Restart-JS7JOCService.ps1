@@ -9,8 +9,8 @@ A number of JOC Cockpit services such as the cluster service, history service an
 with a currently active JOC Cockpit instance. Forcing a restart is an altenative to switching over to a standby
 JOC Cockpit instance as e.g. offered with the Switch-JS7JOCInstance cmdlet.
 
-Consider that restart of a JOC Cockpit service can be performed when being connected to the
-currently active JOC Cockpit instance only.
+Note that restart of a JOC Cockpit service can only be performed when connected to the
+currently active JOC Cockpit instance.
 
 The following REST Web Service API resources are used:
 
@@ -28,20 +28,20 @@ Specifies the the service to be restarted which is one of:
 .PARAMETER AuditComment
 Specifies a free text that indicates the reason for the current intervention, e.g. "business requirement", "maintenance window" etc.
 
-The Audit Comment is visible from the Audit Log view of JOC Cockpit.
-This parameter is not mandatory, however, JOC Cockpit can be configured to enforce Audit Log comments for any interventions.
+The Audit Comment is visible from the Audit Log view of the JOC Cockpit.
+This parameter is not mandatory. However, the JOC Cockpit can be configured to require Audit Log comments for all interventions.
 
 .PARAMETER AuditTimeSpent
 Specifies the duration in minutes that the current intervention required.
 
-This information is visible with the Audit Log view. It can be useful when integrated
-with a ticket system that logs the time spent on interventions with JobScheduler.
+This information is shown in the Audit Log view. It can be useful when integrated
+with a ticket system that logs the time spent on interventions with JS7.
 
 .PARAMETER AuditTicketLink
-Specifies a URL to a ticket system that keeps track of any interventions performed for JobScheduler.
+Specifies a URL to a ticket system that keeps track of any interventions performed for JS7.
 
-This information is visible with the Audit Log view of JOC Cockpit.
-It can be useful when integrated with a ticket system that logs interventions with JobScheduler.
+This information is shown in the Audit Log view of JOC Cockpit.
+It can be useful when integrated with a ticket system that logs interventions with JS7.
 
 .EXAMPLE
 Restart-JS7JOCService -Service 'HISTORY'

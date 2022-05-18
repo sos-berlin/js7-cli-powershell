@@ -12,7 +12,7 @@ The history information returned includes source file name, target file name, ha
 A file transfer can includes any number of files. For information about individual files
 the Get-JS7FileTransferFile cmdlet can be used.
 
-This cmdlet can be used for pipelining to return information about individual files like this:
+This cmdlet can be used to pipeline the return of information about individual files like this:
 
 $files = Get-JS7FileTransferHistory -RelativeDateFrom -1w -Successful | Get-JS7FileTransferHistoryFile
 
@@ -28,7 +28,7 @@ Optionally specifies the identifier of a transfer operation as returned by the G
 
 $files = Get-JS7FileTransferHistory -RelativeDateFrom -1w -Successful | Get-JS7FileTransferHistoryFile
 
-The Get-JS7FileTransferHistory is used to select file transfes by date and execution result.
+The Get-JS7FileTransferHistory is used to select file transfers by date and execution result.
 The result includes the transfer identifier and is pipelined to the Get-JS7FileTransferHistoryFile cmdlet to
 return file items included with the specified file transfers.
 

@@ -36,7 +36,7 @@ Specifies a relative date starting from which history items should be returned, 
 * -1y, -2y: one year ago, two years ago
 
 Optionally a time offset can be specified, e.g. -1d+02:00, as otherwise midnight UTC is assumed.
-Alternatively a timezone offset can be added, e.g. by using -1d+TZ, that is calculated by the cmdlet
+Alternatively a timezone offset can be added, e.g. by using -1d+TZ. This is calculated by the cmdlet
 for the timezone that is specified with the -Timezone parameter.
 
 This parameter takes precedence over the -DateFrom parameter.
@@ -53,7 +53,7 @@ Specifies a relative date until which history items should be returned, e.g.
 * -1y, -2y: one year ago, two years ago
 
 Optionally a time offset can be specified, e.g. -1d+02:00, as otherwise midnight UTC is assumed.
-Alternatively a timezone offset can be added, e.g. by using -1d+TZ, that is calculated by the cmdlet
+Alternatively a timezone offset can be added, e.g. by using -1d+TZ. This is calculated by the cmdlet
 for the timezone that is specified with the -Timezone parameter.
 
 This parameter takes precedence over the -DateFrom parameter.

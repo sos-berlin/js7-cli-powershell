@@ -28,7 +28,7 @@ Optionally specifies the folder for which calendars should be returned.
 One of the parameters -Folder, -CalendarPath or -RegularExpression has to be specified if no pipelined calendar objects are provided.
 
 .PARAMETER Recursive
-Specifies that any sub-folders should be looked up if the -Folder parameter is used.
+Specifies that all sub-folders should be looked up if the -Folder parameter is used.
 By default no sub-folders will be searched for calendars.
 
 .PARAMETER RegularExpression

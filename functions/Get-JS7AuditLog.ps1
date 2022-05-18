@@ -24,7 +24,7 @@ By default no sub-folders will be looked up for workflow paths.
 
 .PARAMETER Type
 Specifies the object types for which audit log entries should be returned. Multiple values can be specified by
-use of comma, for example -Type WORKFLOW,SCHEDULE
+use of commas, for example -Type WORKFLOW,SCHEDULE
 
 * WORKFLOW
 * JOBRESOURCE
@@ -46,7 +46,7 @@ The object name can include * and ? wildcard characters with
 ? : match any single character
 
 .PARAMETER Category
-Specfies a category that further limits results of audit log entries.
+Specifies a category that further limits results of audit log entries.
 
 * INVENTORY
 * CONTROLLER
@@ -60,7 +60,7 @@ Specfies a category that further limits results of audit log entries.
 Specifies the date starting from which audit log entries should be returned.
 Consider that a UTC date has to be provided.
 
-Default: Begin of the current day as a UTC date
+Default: Beginning of the current day as a UTC date
 
 .PARAMETER DateTo
 Specifies the date until which audit log entries should be returned.
@@ -80,7 +80,7 @@ Specifies a relative date starting from which audit log entries should be return
 * -1y, -2y: one year ago, two years ago
 
 Optionally a time offset can be specified, e.g. -1d+02:00, as otherwise midnight UTC is assumed.
-Alternatively a timezone offset can be added, e.g. by using -1d+TZ, that is calculated by the cmdlet
+Alternatively a timezone offset can be added, e.g. by using -1d+TZ. This is calculated by the cmdlet
 for the timezone that is specified with the -Timezone parameter.
 
 This parameter takes precedence over the -DateFrom parameter.
@@ -97,13 +97,13 @@ Specifies a relative date until which audit log entries should be returned, e.g.
 * -1y, -2y: one year ago, two years ago
 
 Optionally a time offset can be specified, e.g. -1d+02:00, as otherwise midnight UTC is assumed.
-Alternatively a timezone offset can be added, e.g. by using -1d+TZ, that is calculated by the cmdlet
+Alternatively a timezone offset can be added, e.g. by using -1d+TZ. This will be calculated by the cmdlet
 for the timezone that is specified with the -Timezone parameter.
 
 This parameter takes precedence over the -DateFrom parameter.
 
 .PARAMETER Timezone
-Specifies the timezone to which dates should be converted from the history information.
+Specifies the timezone for which dates should be converted to from the history information.
 A timezone can e.g. be specified like this:
 
   Get-JS7AuditLog -Timezone (Get-Timezone -Id 'GMT Standard Time')
@@ -118,7 +118,7 @@ Default: Dates are returned in UTC.
 Limits results to entries that have been caused by the specified account.
 
 .PARAMETER TicketLink
-Limits results to entries that inlcude the specified ticket link.
+Limits results to entries that include the specified ticket link.
 
 .PARAMETER Limit
 Specifies the max. number of audit log entries to be returned.
@@ -126,7 +126,7 @@ The default value is 10000, for an unlimited number of items the value -1 can be
 
 .PARAMETER Detailed
 Specifies that the original request should be returned that caused the change related to the respective audit log entry.
-Consider that the -Detailed parameter can return large amounts of data and will slow down processing.
+Note that the -Detailed parameter can return large amounts of data and will slow down processing.
 
 .OUTPUTS
 This cmdlet returns an array of audit log entries.

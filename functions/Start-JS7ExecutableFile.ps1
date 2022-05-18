@@ -36,7 +36,7 @@ Specifies the arguments for starting the executable file.
 .PARAMETER TargetName
 Specifies the target name for credentials that have been added prior to execution of the file.
 
-Target names for credentials can be added e.g. by use of the "cmdkey" command with the account that JobScheduler is operated for:
+Target names for credentials can be added e.g. by use of the "cmdkey" command with the account that the JS7 Agent is operated for:
 
     C:\> cmdkey /add:run_as_ap /user:ap /pass:ap
 

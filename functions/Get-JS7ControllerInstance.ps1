@@ -14,7 +14,7 @@ The following REST Web Service API resources are used:
 
 .PARAMETER Id
 Specifies the ID of a JS7 Controller that was specified during installation of the product.
-If no ID is specified then the first JS7 Controller registered with JOC Cockpit will be used.
+If an ID is not specified then the first JS7 Controller registered with JOC Cockpit will be used.
 
 .PARAMETER Active
 This switch specifies that only the active instance of a JS7 Controller cluster should be returned.

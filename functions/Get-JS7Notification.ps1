@@ -21,7 +21,7 @@ Optionally specifies the unique identifier of the Controller for which notificat
 Specifies the date starting from which notifications should be returned.
 Consider that a UTC date has to be provided.
 
-Default: Begin of the current day as a UTC date
+Default: Beginning of the current day as a UTC date
 
 .PARAMETER RelativeDateFrom
 Specifies a relative date starting from which notifications should be returned, for example
@@ -35,7 +35,7 @@ Specifies a relative date starting from which notifications should be returned, 
 * -1y, -2y: one year ago, two years ago
 
 Optionally a time offset can be specified, e.g. -1d+02:00, as otherwise midnight UTC is assumed.
-Alternatively a timezone offset can be added, e.g. by using -1d+TZ, that is calculated by the cmdlet
+Alternatively a timezone offset can be added, e.g. by using -1d+TZ. This is calculated by the cmdlet
 for the timezone that is specified with the -Timezone parameter.
 
 This parameter takes precedence over the -DateFrom parameter.
@@ -52,7 +52,7 @@ Specifies a relative date until which notifications should be returned, for exam
 * -1y, -2y: one year ago, two years ago
 
 Optionally a time offset can be specified, e.g. -1d+02:00, as otherwise midnight UTC is assumed.
-Alternatively a timezone offset can be added, e.g. by using -1d+TZ, that is calculated by the cmdlet
+Alternatively a timezone offset can be added, e.g. by using -1d+TZ. This is calculated by the cmdlet
 for the timezone that is specified with the -Timezone parameter.
 
 This parameter takes precedence over the -DateFrom parameter.

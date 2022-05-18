@@ -187,7 +187,7 @@ param
             {
                 $output = "
 ________________________________________________________________________
-JobScheduler Agent URL: $($agentStatus.url)
+........ JS7 Agent URL: $($agentStatus.url)
 ................... ID: $($agentStatus.agentId)
 ................. name: $($agentStatus.agentName)
 ................ state: $($agentStatus.state._text)

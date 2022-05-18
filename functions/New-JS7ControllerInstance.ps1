@@ -5,18 +5,18 @@ function New-JS7ControllerInstance
 Creates a new JS7 Controller instance PowerShell object for use with other cmdlets
 
 .DESCRIPTION
-The cmdlets is used to create a PowerShell object for a new Controller instance
-that is added with the Set-JS7Controller cmdlet.
+The cmdlet is used to create a PowerShell object for a new Controller instance
+which is added with the Set-JS7Controller cmdlet.
 
 .PARAMETER Url
 Specifies the Url of the Controller instance that should be added. The Url is specified
-for use by JOC Cockpit.
+for use by the JOC Cockpit.
 
 .PARAMETER ClusterUrl
 Specifies the URL by which this Controller can be found from some other cluster member.
 
 Typically this is the same as the -Url parameter. However, depending on network zones
-and use of proxies the Controller ID might be accesssible from a different Url in the cluster.
+and the use of proxies the Controller ID might be accessible from a different Url in the cluster.
 
 If this parameter is not specified then the value of the -Url parameter is used for the cluster Url.
 

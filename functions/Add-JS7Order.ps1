@@ -16,7 +16,7 @@ Specifies the path and name of a workflow for which an order should be added.
 
 .PARAMETER OrderName
 Specifies the name of an order. The JOC Cockpit web service will consider the order name
-when creating unique Order IDs from the pattern #<YYYY-MM-DD>#<qualifier><timestamp>-<order-name>
+when creating unique Order IDs with the pattern #<YYYY-MM-DD>#<qualifier><timestamp>-<order-name>
 such as #2020-11-22#T072521128-Some_Order_Name.
 
 * YYYY-MM-DD: Date for which the order is scheduled
@@ -65,11 +65,11 @@ Find the list of time zone names from https://en.wikipedia.org/wiki/List_of_tz_d
 
 # .PARAMETER StartPosition
 # Specifies that the order should enter the workflow at the workflow node that
-# is assigend the specified position.
+# is assigned the specified position.
 #
 # .PARAMETER EndPosition
 # Specifies that the order should leave the workflow at the workflow node that
-# is assigend the specified position.
+# is assigned the specified position.
 #
 .PARAMETER BatchSize
 As this cmdlet accepts pipelined input a larger number of orders can be added at the same time.
@@ -88,21 +88,21 @@ This parameter is implicitly used when pipelining input to the cmdlet as e.g. wi
 Specifies a free text that indicates the reason for the current intervention,
 e.g. "business requirement", "maintenance window" etc.
 
-The Audit Comment is visible from the Audit Log view of JOC Cockpit.
+The Audit Comment is visible from the Audit Log view of the JOC Cockpit.
 This argument is not mandatory, however, JOC Cockpit can be configured
 to enforce Audit Log comments for any interventions.
 
 .PARAMETER AuditTimeSpent
 Specifies the duration in minutes that the current intervention required.
 
-This information is visible with the Audit Log view. It can be useful when integrated
+This information is shown in the Audit Log view. It can be useful when integrated
 with a ticket system that logs the time spent on interventions with JS7.
 
 .PARAMETER AuditTicketLink
-Specifies a URL to a ticket system that keeps track of any interventions performed for JobScheduler.
+Specifies a URL to a ticket system that keeps track of any interventions performed for JS7.
 
-This information is visible with the Audit Log view of JOC Cockpit.
-It can be useful when integrated with a ticket system that logs interventions with JobScheduler.
+This information is shown in the Audit Log view of JOC Cockpit.
+It can be useful when integrated with a ticket system that logs interventions with JS7.
 
 .INPUTS
 This cmdlet accepts pipelined order objects that are e.g. returned from the Get-JS7Order cmdlet.

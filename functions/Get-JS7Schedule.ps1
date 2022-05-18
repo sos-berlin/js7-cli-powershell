@@ -27,7 +27,7 @@ Optionally specifies the path and name of a workflow for which schedules should 
 Optionally specifies the folder for which schedules should be returned.
 
 .PARAMETER Recursive
-Specifies that any sub-folders should be looked up if the -Folder parameter is used.
+Specifies that all sub-folders should be looked up if the -Folder parameter is used.
 By default no sub-folders will be searched for schedules.
 
 .OUTPUTS

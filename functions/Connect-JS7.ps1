@@ -100,7 +100,7 @@ If JOC Cockpit is configured to accept single-factor authentication then the cer
 the password for login. If JOC Cockpit requires two-factor authentication then a certificate is required
 in addition to specifying a password for login.
 
-Consider that this parameter expects a certificate with the data type [System.Security.Cryptography.X509Certificates.X509Certificate2].
+Note that this parameter expects a certificate with the data type [System.Security.Cryptography.X509Certificates.X509Certificate2].
 This parameter can be used for Windows only. For other operating systems use the -KeyStorePath parameter.
 
 Use of this parameter requires that the certificate object includes the private key and the certificate chain, i.e. the certificate
@@ -117,15 +117,15 @@ in addition to specifying a password for login.
 This parameter can be used for Windows only. For other operating sysems use the -KeyStorePath parameter.
 
 Use of this parameter requires a certificate store to be in place that holds the private key and certificate chain, i.e. the same certificate
-and any Intermediate or Root CA Certificates required for validation of the certificate. Consider this parameter a reference
+and any Intermediate or Root CA Certificates required for validation of the certificate. Note that this parameter a reference
 to a certificate entry in your Windows certificate store that includes the private key and certificate chain.
 
 This parameter cannot be used with the -Certificate parameter or -KeyStorePath parameter.
 
 .PARAMETER KeyStorePath
-This parameter can be used for client authentication if JOC Cockpit is configured for mutual authentication with HTTPS (SSL).
-If JOC Cockpit is configured to accept single-factor authentication then the certificate from the keystore specified with this parameter replaces
-the password for login. If JOC Cockpit requires two-factor authentication then a certificate is required
+This parameter can be used for client authentication if the JOC Cockpit is configured for mutual authentication with HTTPS (SSL).
+If the JOC Cockpit is configured to accept single-factor authentication then the certificate from the keystore specified with this parameter replaces
+the password for login. If the JOC Cockpit requires two-factor authentication then a certificate is required
 in addition to specifying a password for login.
 
 This parameter expects the path to a keystore file, preferably a PKCS12 keystore, that holds the private key and certificate chain, i.e. the certificate
@@ -149,7 +149,7 @@ The first argument 'keystore' is arbitrary, the second argument 'jobscheduler' s
 Specifies the location of a file that holds the root certificate that was used when signing the JOC Cockpit
 SSL certificate.
 
-* For Windows environments the Root CA Certificate by default is looked up in the Windows Certificate Store, however,
+* For Windows environments the Root CA Certificate by default is looked up in the Windows Certificate Store. However,
   this parameter can be used to apply a Root CA Certificate from a location in the file system.
 * For Linux environments a path is specified to the Root CA Certificate file, e.g. *.pem, *.crt file, or to a truststore, e.g. *.jks, *.p12 file.
 
@@ -180,14 +180,14 @@ Connects to the JS7 Web Service at the indicated address and asks the user inter
 Connect-JS7 -Url https://js7-joc-primary:4443 -AskForCredentials -RootCertificatePath /home/sos/root-ca.crt
 
 Connects to the JS7 Web Service with a secure HTTPS connection at the indicated address and asks the user interactively for credentials.
-In order to verfy the JOC Cockpit server certificate the corresponding Root CA Certificate is specified that was used when signing the server certificate.
+In order to verify the JOC Cockpit server certificate the corresponding Root CA Certificate is specified that was used when signing the server certificate.
 
 .EXAMPLE
 $credentials = ( New-Object -typename System.Management.Automation.PSCredential -ArgumentList 'root', ( 'root' | ConvertTo-SecureString -AsPlainText -Force) )
 Connect-JS7 -Url http://localhost:4446 -Credentials $credentials -Id jobscheduler
 
 A variable $credentials is created that holds the credentials for the default root account of JOC Cockpit.
-When calling the cmdlet the URL is specified, the Controller ID that was used during installationn and the credentials object.
+When calling the cmdlet the URL is specified, the Controller ID that was used during installation and the credentials object.
 
 .EXAMPLE
 cmdkey /generic:JS7 Web Service /user:root /pass:root
@@ -205,10 +205,10 @@ $keyStoreCredentials = ( New-Object -typename System.Management.Automation.PSCre
 Connect-JS7 -Url https://js7-joc-primary:4443 -Id jobscheduler -RootCertificatePath /home/sos/https-truststore.p12 -RootCertificateCredentials $trustStoreCredentials -KeyStorePath /home/sos/https-keystore.p12 -KeyStorePassword $keyStoreCredentials
 
 This example assumes a secure HTTPS connection to JOC Cockpit with mutual authentication:
-* The -RootCertificatePath is specified that holds the Root CA Certificate that was used when signing the JOC Cockpit SSL server certificate.
-* The -KeyStorePath is specified that hold the private key and certificate for mutual authentication with JOC Cockpit.
-* A variable $trustStoreCredentials is created that holds the password for access to the the truststore with the Root CA Certificate.
-* A variable $keyStoreCredentials is created that holds the credentials for access to they keystore for mutual authentication.
+* The -RootCertificatePath is specified that holds the Root CA Certificate which was used when signing the JOC Cockpit SSL server certificate.
+* The -KeyStorePath is specified that holds the private key and certificate for mutual authentication with JOC Cockpit.
+* A $trustStoreCredentials variable is created that holds the password for access to the the truststore with the Root CA Certificate.
+* A $keyStoreCredentials variable is created that holds the credentials for access to they keystore for mutual authentication.
 
 .OUTPUTS
 The cmdlet returns an object with access information including the access token for the JS7 Web Service.

@@ -5,7 +5,7 @@ function Get-JS7Workflow
 Returns workflows from the JOC Cockpit inventory
 
 .DESCRIPTION
-Workflows are returned from JOC Cockpit - independent of their deployment status with specific Controller instances.
+Workflows are returned from JOC Cockpit - independently of their deployment status with specific Controller instances.
 Workflows can be selected either by the folder of the workflow location including sub-folders or by an individual workflow path.
 
 Resulting workflows can be forwarded to other cmdlets for pipelined bulk operations.
@@ -20,7 +20,7 @@ Optionally specifies the path and name of a workflow that should be returned.
 One of the parameters -Folder, -WorkflowPath or -RegularExpression has to be specified.
 
 .PARAMETER WorkflowVersionId
-Deployed workflows can be assigned a version identifier. This parameters allows to select
+Deployed workflows can be assigned a version identifier. This parameters allows selection of
 workflows that are assigned the specified version.
 
 .PARAMETER Folder

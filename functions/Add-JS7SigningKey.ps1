@@ -2,7 +2,7 @@ function Add-JS7SigningKey
 {
 <#
 .SYNOPSIS
-Adds a key pair for signing of deployable objects such as workflows to the current account
+Adds a key pair for signing deployable objects such as workflows to the current account
 
 .DESCRIPTION
 Adds a key pair of private key and public key/certificate that can be used to sign deployable objects
@@ -43,20 +43,20 @@ The certificate string is expected to include any newline characters required fo
 .PARAMETER AuditComment
 Specifies a free text that indicates the reason for the current intervention, e.g. "business requirement", "maintenance window" etc.
 
-The Audit Comment is visible from the Audit Log view of JOC Cockpit.
-This parameter is not mandatory, however, JOC Cockpit can be configured to enforce Audit Log comments for any interventions.
+The Audit Comment is visible from the Audit Log view of the JOC Cockpit.
+This parameter is not mandatory. However, the JOC Cockpit can be configured to require Audit Log comments for all interventions.
 
 .PARAMETER AuditTimeSpent
 Specifies the duration in minutes that the current intervention required.
 
-This information is visible with the Audit Log view. It can be useful when integrated
-with a ticket system that logs the time spent on interventions with JobScheduler.
+This information is shown in the Audit Log view. It can be useful when integrated
+with a ticket system that logs the time spent on interventions with JS7.
 
 .PARAMETER AuditTicketLink
-Specifies a URL to a ticket system that keeps track of any interventions performed for JobScheduler.
+Specifies a URL to a ticket system that keeps track of any interventions performed for JS7.
 
-This information is visible with the Audit Log view of JOC Cockpit.
-It can be useful when integrated with a ticket system that logs interventions with JobScheduler.
+This information is shown in the Audit Log view of JOC Cockpit.
+It can be useful when integrated with a ticket system that logs interventions with JS7.
 
 .OUTPUTS
 This cmdlet returns an object with public key/certificate and optionally private key items.
@@ -65,7 +65,7 @@ This cmdlet returns an object with public key/certificate and optionally private
 Add-JS7SigningKey -KeyAlgorithm RSA -PrivateKey "----BEGIN PGP PRIVATE KEY BLOCK-----\n..." -Certificate "-----BEGIN CERTIFICATE-----\n..."
 
 For RSA and ECDSA key types the certificate and the private key
-are added if JOC Cockpit is operated for security level LOW or MEDIUM.
+are added if the JOC Cockpit is operated at the LOW or MEDIUM security level.
 
 .EXAMPLE
 Add-JS7SigningKey -KeyAlgorithm RSA -PrivateKey (Get-Content c:/sos/certs/2.0/sos.private-ec-key.pem -Raw) -Certificate (Get-Content c:/sos/certs/2.0/sos.certificate-ec-key.pem -Raw)
@@ -75,7 +75,7 @@ The private key and public key are used from raw file input to preserve any newl
 .EXAMPLE
 Add-JS7SigningKey -KeyAlgorithm ECDSA -Certificate "-----BEGIN CERTIFICATE-----\n..."
 
-For RSA and ECDSA key types the certificate is added if JOC Cockpit is operated for security level HIGH.
+For RSA and ECDSA key types the certificate is added if the JOC Cockpit is operated at the HIGH security level.
 
 .EXAMPLE
 Add-JS7SigningKey -KeyAlgorithm PGP -PrivateKey "-----BEGIN PGP PRIVATE KEY BLOCK-----\n..." -PublicKey "-----BEGIN PGP PUBLIC KEY BLOCK-----\n..."

@@ -27,7 +27,7 @@ Optionally specifies the path and name of a workflow for which orders should be 
 One of the parameters -Folder, -WorkflowPath or -OrderId has to be specified if no pipelined order objects are provided.
 
 .PARAMETER WorkflowVersionId
-Deployed workflows can be assigned a version identifier. This parameters allows to select
+Deployed workflows can be assigned a version identifier. This parameter allows selection of
 workflows that are assigned the specified version.
 
 .PARAMETER Folder
@@ -36,7 +36,7 @@ Optionally specifies the folder with workflows for which orders should be return
 One of the parameters -Folder, -WorkflowPath or -OrderId has to be specified if no pipelined order objects are provided.
 
 .PARAMETER Recursive
-Specifies that any sub-folders should be looked up if the -Folder parameter is used.
+Specifies that all sub-folders should be looked up if the -Folder parameter is used.
 By default no sub-folders will be searched for orders.
 
 .PARAMETER DateTo
@@ -105,7 +105,7 @@ e.g. when being affected by the Suspend-JS7Order cmdlet or by the respective man
 
 .PARAMETER Prompting
 Specifies that orders in a prompting state should be returned. Such orders are put on hold by a
-prompt instruction in a workflow and require confirmation to futher proceed execution of the workflow.
+prompt instruction in a workflow and require confirmation before proceeding with execution of the workflow.
 For details see the Confirm-JS7Order cmdlet.
 
 .PARAMETER Waiting
@@ -113,7 +113,7 @@ Specifies that orders in a setback state should be returned. Such orders make us
 specified by a retry operation in the workflow for which they are repeated in case that a job fails.
 
 .PARAMETER Failed
-Specifies that orders in a failed state should be returned. Orders are considered being failed
+Specifies that orders in a failed state should be returned. Orders are considered to have failed
 if a job in the workflow fails.
 
 .PARAMETER Blocked

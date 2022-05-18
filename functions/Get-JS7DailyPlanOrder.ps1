@@ -27,7 +27,7 @@ When used with the -Folder parameter then any sub-folders of the specified folde
 Optionally specifies the date starting from which daily plan orders should be returned.
 Consider that a UTC date has to be provided.
 
-Default: Begin of the current day as a UTC date
+Default: Beginning of the current day as a UTC date
 
 .PARAMETER DateTo
 Optionally specifies the date until which daily plan orders should be returned.
@@ -73,7 +73,7 @@ A timezone can e.g. be specified like this:
 
   Get-JSDailyPlanOrder -Timezone (Get-Timezone -Id 'GMT Standard Time')
 
-All dates in JobScheduler are UTC and can be converted e.g. to the local time zone like this:
+All dates in JS7 are UTC and can be converted e.g. to the local time zone like this:
 
   Get-JSDailyPlanOrder -Timezone (Get-Timezone)
 

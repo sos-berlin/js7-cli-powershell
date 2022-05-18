@@ -20,7 +20,7 @@ Specifies the path and name of a calendar that should be returned.
 Optionally specifies the date starting from which calendar dates should be returned.
 Consider that a UTC date has to be provided.
 
-Default: Begin of the current day as a UTC date
+Default: Beginning of the current day as a UTC date
 
 .PARAMETER DateTo
 Optionally specifies the date until which calendar dates should be returned.

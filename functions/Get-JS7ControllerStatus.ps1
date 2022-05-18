@@ -2,10 +2,10 @@ function Get-JS7ControllerStatus
 {
 <#
 .SYNOPSIS
-Returns status information, optionally summary and history information for a JS7 Controller
+Returns status information, optional summary and history information for a JS7 Controller
 
 .DESCRIPTION
-Status information, optionally summary and history information are returned for a JS7 Controller.
+Status information, optional summary and history information are returned for a JS7 Controller.
 
 * Status information includes e.g. the start date and JS7 release
 * Summary information includes e.g. the number of running orders
@@ -19,13 +19,13 @@ The following REST Web Service API resources are used:
 
 .PARAMETER DateFrom
 Specifies the date starting from which history items should be returned.
-Consider that a UTC date has to be provided.
+Note that a UTC date has to be provided.
 
-Default: Begin of the current day as a UTC date
+Default: Beginning of the current day as a UTC date
 
 .PARAMETER DateTo
 Specifies the date until which history items should be returned.
-Consider that a UTC date has to be provided.
+Note that a UTC date has to be provided.
 
 Default: End of the current day as a UTC date
 
@@ -41,7 +41,7 @@ Specifies a relative date starting from which history items should be returned, 
 * -1y, -2y: one year ago, two years ago
 
 Optionally a time offset can be specified, e.g. -1d+02:00, as otherwise midnight UTC is assumed.
-Alternatively a timezone offset can be added, e.g. by using -1d+TZ, that is calculated by the cmdlet
+Alternatively a timezone offset can be added, e.g. by using -1d+TZ. This is calculated by the cmdlet
 for the timezone that is specified with the -Timezone parameter.
 
 This parameter takes precedence over the -DateFrom parameter.
@@ -58,8 +58,8 @@ Specifies a relative date until which history items should be returned, e.g.
 * -1y, -2y: one year ago, two years ago
 
 Optionally a time offset can be specified, e.g. -1d+02:00, as otherwise midnight UTC is assumed.
-Alternatively a timezone offset can be added, e.g. by using -1d+TZ, that is calculated by the cmdlet
-for the timezone that is specified with the -Timezone parameter.
+Alternatively a timezone offset can be added, e.g. by using -1d+TZ. This is calculated by the cmdlet
+for the timezone which is specified with the -Timezone parameter.
 
 This parameter takes precedence over the -DateFrom parameter.
 
@@ -70,7 +70,7 @@ Specifies that summary information about orders and tasks should be returned.
 Specifies that history information about orders and tasks should be returned.
 
 .PARAMETER Display
-Specifies that formatted output will be displayed, otherwise a status object will be returned that contain the respective information.
+Specifies that formatted output will be displayed, otherwise a status object will be returned that contains the relevant information.
 
 .EXAMPLE
 Get-JS7ControllerStatus

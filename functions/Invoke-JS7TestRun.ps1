@@ -30,9 +30,9 @@ If no ID is specified then the first JS7 Controller registered with JOC Cockpit 
 
 .PARAMETER TestRun
 Specifies an identifier for the given test run. This identifier is used to create
-folders for objects in the JOC Cockpit inventory and it is used to qualify oder IDs.
-Choosing a unique identifier simplifies to identify orders created for a given test run
-with JOC Cockpit.
+folders for objects in the JOC Cockpit inventory and it is used to qualify order IDs.
+Choosing a unique identifier simplifies identifying orders created for a given test run
+with the JOC Cockpit.
 
 .PARAMETER Count
 Indicates the number of loops that should be performed for test runs.
@@ -43,9 +43,9 @@ Indicates the number of orders that are added for each test case in a test run l
 .PARAMETER AtDate
 Optionally specifies a date for which the test run should be executed.
 
-If -AtDate is specified then the test run steps to monitor, to check and to cleanup are not performed.
+If -AtDate is specified then the test run monitoring, checking and cleaning up steps are not performed.
 Instead the cmdlet can later on be used with the -Check or -Cleanup parameters to verify test results
-and to cleanup test resoures.
+and to cleanup test resources.
 
 .PARAMETER BaseFolder
 Specifies the root folder in the JOC Cockpit inventory to which test case resources such as workflows are added.
@@ -69,34 +69,34 @@ The wait interval is applied when monitoring test runs. It specifies the number 
 that the cmdlet will wait before repeating the check for running orders.
 
 .PARAMETER Prepare
-A test run lifecycle includes the steps to prepare test case resources, to run test cases, to monitor test case execution,
-to check test results and to cleanup test resources.
+A test run lifecycle includes the steps of preparing test case resources, running test cases, monitoring test case execution,
+checking test results and cleaning up test resources.
 
-With this parameter the step to prepare test resources only is executed.
+With this parameter only the step of preparing test resources is executed.
 
 .PARAMETER Run
-A test run lifecycle includes the steps to prepare test case resources, to run test cases, to monitor test case execution,
-to check test results and to cleanup test resources.
+A test run lifecycle includes the steps of preparing test case resources, running test cases, monitoring test case execution,
+checking test results and cleaning up test resources.
 
-With this parameter the step to run test cases only is executed.
+With this parameter only the step of running test cases is executed.
 
 .PARAMETER Monitor
-A test run lifecycle includes the steps to prepare test case resources, to run test cases, to monitor test case execution,
-to check test results and to cleanup test resources.
+A test run lifecycle includes the steps of preparing test case resources, running test cases, monitoring test case execution,
+checking test results and cleaning up test resources.
 
-With this parameter the step to monitor test case execution only is executed.
+With this parameter only the step of monitoring test case execution is executed.
 
 .PARAMETER Check
-A test run lifecycle includes the steps to prepare test case resources, to run test cases, to monitor test case execution,
-to check test results and to cleanup test resources.
+A test run lifecycle includes the steps of preparing test case resources, running test cases, monitoring test case execution,
+checking test results and cleaning up test resources.
 
-With this parameter the step to check test case results only is executed.
+With this parameter only the step of checking test case results is executed.
 
 .PARAMETER Cleanup
-A test run lifecycle includes the steps to prepare test case resources, to run test cases, to monitor test case execution,
-to check test results and to cleanup test resources.
+A test run lifecycle includes the steps of preparing test case resources, running test cases, monitoring test case execution,
+checking test results and cleaning up test resources.
 
-With this parameter the step to cleanup test case resources only is executed.
+With this parameter only the step of cleaning up test case resources is executed.
 
 .PARAMETER Progress
 Specifies that a progress bar is displayed that provides information about the proceeding of test cases.

@@ -5,8 +5,8 @@ function Get-JS7JOCSettings
 Returns JS7 settings
 
 .DESCRIPTION
-A number of JS7 settings are available for example with the JOC Cockpit Settings page and with Identity Services.
-This cmdlet returns the such settings, for example:
+A number of JS7 settings are available - for example from the JOC Cockpit Settings page and from Identity Services.
+This cmdlet returns such settings, for example:
 
 * Global Settings
 * Identity Service Settings

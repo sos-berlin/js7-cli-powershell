@@ -5,8 +5,8 @@ function Restart-JS7ControllerInstance
 Restarts a JS7 Controller Instance and optionally performs cluster fail-over
 
 .DESCRIPTION
-A JS7 Controller instance is restarted. In a JS7 cluster by default a fail-over
-to the standby cluster member is performed.
+A JS7 Controller instance is restarted. In a JS7 cluster a fail-over
+to the standby cluster member is performed by default.
 
 The following REST Web Service API resources are used:
 
@@ -16,7 +16,7 @@ The following REST Web Service API resources are used:
 .PARAMETER Url
 Optionally the Url of the Controller to be restarted can be specified.
 Without this parameter the active Controller instance will be restarted.
-Consider that restarting a standby Controller instance in a JS7 cluster does not perform
+Note that restarting a standby Controller instance in a JS7 cluster does not perform
 a fail-over operation.
 
 .PARAMETER Action
@@ -35,31 +35,31 @@ Restarting a Controller instance includes the following actions:
 ** JS7 Controller terminates normally.
 
 .PARAMETER NoFailover
-This switch prevents a fail-over to happen when restarting the active Controller instance
+This switch prevents a fail-over from happenning when restarting the active Controller instance
 in a cluster. Instead, the restarted Controller instance will remain the active cluster member.
 
 .PARAMETER Service
 Retarts the JS7 Windows service.
 
-Without this parameter being specified JS7 will be started in
-its respective operating mode, i.e. service mode or dialog mode.
+When this parameter is not specified JS7 will be started in
+the appropriate operating mode, i.e. service mode or dialog mode.
 
 .PARAMETER AuditComment
 Specifies a free text that indicates the reason for the current intervention, e.g. "business requirement", "maintenance window" etc.
 
-The Audit Comment is visible from the Audit Log view of JOC Cockpit.
-This parameter is not mandatory, however, JOC Cockpit can be configured to enforce Audit Log comments for any interventions.
+The Audit Comment is visible from the Audit Log view of the JOC Cockpit.
+This parameter is not mandatory. However, the JOC Cockpit can be configured to require Audit Log comments for all interventions.
 
 .PARAMETER AuditTimeSpent
 Specifies the duration in minutes that the current intervention required.
 
-This information is visible with the Audit Log view. It can be useful when integrated
+This information is shown in the Audit Log view. It can be useful when integrated
 with a ticket system that logs the time spent on interventions with JS7.
 
 .PARAMETER AuditTicketLink
 Specifies a URL to a ticket system that keeps track of any interventions performed for JS7.
 
-This information is visible with the Audit Log view of JOC Cockpit.
+This information is shown in the Audit Log view of JOC Cockpit.
 It can be useful when integrated with a ticket system that logs interventions with JS7.
 
 .EXAMPLE
@@ -72,7 +72,7 @@ the switch-over.
 .EXAMPLE
 Restart-JS7ControllerInstance -Url (Get-JS7ControllerStatus).Active.Url
 
-Retarts the JS7 Controller active cluster member or standalone instance.
+Restarts the JS7 Controller active cluster member or standalone instance.
 
 .EXAMPLE
 Restart-JS7ControllerInstance -Url (Get-JS7ControllerStatus).Passive.Url -NoFailover
@@ -83,7 +83,7 @@ as a standby cluster member cannot switch-over to an active cluster member.
 .EXAMPLE
 Restart-JS7ControllerInstance -Service
 
-Retarts the JS7 Controller Windows service.
+Restarts the JS7 Controller Windows service.
 
 .LINK
 about_JS7
