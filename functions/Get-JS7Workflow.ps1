@@ -20,8 +20,8 @@ Optionally specifies the path and name of a workflow that should be returned.
 One of the parameters -Folder, -WorkflowPath or -RegularExpression has to be specified.
 
 .PARAMETER WorkflowVersionId
-Deployed workflows can be assigned a version identifier. This parameters allows selection of
-workflows that are assigned the specified version.
+Deployed workflows are assigned a version identifier. This parameter allows selection of
+a workflow that is assigned the specified version identifier.
 
 .PARAMETER Folder
 Optionally specifies the folder for which workflows should be returned.
@@ -66,6 +66,7 @@ about_JS7
 [cmdletbinding()]
 param
 (
+    [Alias('Path')]
     [Parameter(Mandatory=$False,ValueFromPipeline=$False,ValueFromPipelinebyPropertyName=$True)]
     [string] $WorkflowPath,
     [Parameter(Mandatory=$False,ValueFromPipeline=$False,ValueFromPipelinebyPropertyName=$True)]
@@ -172,7 +173,7 @@ param
 
         if ( $response.StatusCode -eq 200 )
         {
-            $returnWorkflows += ( $response.Content | ConvertFrom-JSON ).workflows
+            $returnWorkflows += ( $response.Content | ConvertFrom-Json ).workflows
         } else {
             throw ( $response | Format-List -Force | Out-String )
         }

@@ -17,8 +17,11 @@ Specifies the unique name of the Identity Service.
 .PARAMETER Account
 Optionally limits the result to the specified user account.
 
+.PARAMETER Enabled
+Optionally returns enabled accounts only. By default enabled and disabled accounts are returned.
+
 .PARAMETER Disabled
-Optionally returns disabled accounts only. By default enabled accounts only are returned.
+Optionally returns disabled accounts only. By default enabled and disabled accounts only are returned.
 
 .INPUTS
 This cmdlet accepts pipelined input.
@@ -50,6 +53,8 @@ param
     [Parameter(Mandatory=$False,ValueFromPipeline=$False,ValueFromPipelinebyPropertyName=$True)]
     [string] $Account,
     [Parameter(Mandatory=$False,ValueFromPipeline=$False,ValueFromPipelinebyPropertyName=$True)]
+    [switch] $Enabled,
+    [Parameter(Mandatory=$False,ValueFromPipeline=$False,ValueFromPipelinebyPropertyName=$True)]
     [switch] $Disabled
 )
 	Begin
@@ -62,6 +67,7 @@ param
     {
         $body = New-Object PSObject
         Add-Member -Membertype NoteProperty -Name 'identityServiceName' -value $Service -InputObject $body
+        Add-Member -Membertype NoteProperty -Name 'enabled' -value ($Enabled -eq $True) -InputObject $body
         Add-Member -Membertype NoteProperty -Name 'disabled' -value ($Disabled -eq $True) -InputObject $body
 
         if ( $Account )

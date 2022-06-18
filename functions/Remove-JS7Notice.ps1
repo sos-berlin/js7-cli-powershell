@@ -1,24 +1,24 @@
-function Remove-JS7Folder
+function Remove-JS7Notice
 {
 <#
 .SYNOPSIS
-Removes a folder from the JOC Cockpit inventory
+Removes a Notice from a Notice Board in the JOC Cockpit
 
 .DESCRIPTION
-This cmdlet marks for deletion a folder and its contents, i.e. deployable and releasable objects
-in the JOC Cockpit inventory.
-
-The objects from the folder are not immediately erased, instead this change has to be committed:
-
-* For deployable objects use of the cmdlet the Publish-JS7DeployableItem cmdlet with the -Delete switch is required.
-* For releasable objects use of the cmdlet the Publish-JS7ReleasableItem cmdlet with the -Delete switch is required.
+This cmdlet removes a Notice from a Notice Board in the JOC Cockpit.
 
 The following REST Web Service API resources are used:
 
-* /inventory/remove/folder
+* /notice/delete
 
-.PARAMETER Folder
-Specifies the folder and optionally sub-folders to be removed.
+.PARAMETER NoticeBoardPath
+Specifies the path to the Notice Board that include the folder, sub-folders and the name of the Notice Board.
+
+.PARAMETER NoticeId
+Specifies the identifier of the Notice to be deleted.
+
+.PARAMETER ControllerId
+Optionally specifies the identification of the Controller from which to remove Notices.
 
 .PARAMETER AuditComment
 Specifies a free text that indicates the reason for the current intervention, e.g. "business requirement", "maintenance window" etc.
@@ -45,9 +45,9 @@ This cmdlet does not accept pipelined input.
 This cmdlet returns no output.
 
 .EXAMPLE
-Remove-JS7Folder -Folder /some/folder
+Get-JS7Notice -Folder /ProductDemo/Sequencing | Remove-JS7Notice
 
-Removes the specified folder from the JOC Cockpit inventory.
+Removes notices from the Notice Boards specified by a folder.
 
 .LINK
 about_JS7
@@ -58,7 +58,11 @@ param
 (
     [Alias('Path')]
     [Parameter(Mandatory=$True,ValueFromPipeline=$False,ValueFromPipelinebyPropertyName=$True)]
-    [string] $Folder,
+    [string] $NoticeBoardPath,
+    [Parameter(Mandatory=$True,ValueFromPipeline=$False,ValueFromPipelinebyPropertyName=$True)]
+    [string] $NoticeId,
+    [Parameter(Mandatory=$False,ValueFromPipeline=$False,ValueFromPipelinebyPropertyName=$True)]
+    [string] $ControllerId,
     [Parameter(Mandatory=$False,ValueFromPipeline=$False,ValueFromPipelinebyPropertyName=$True)]
     [string] $AuditComment,
     [Parameter(Mandatory=$False,ValueFromPipeline=$False,ValueFromPipelinebyPropertyName=$True)]
@@ -79,13 +83,18 @@ param
 
     Process
     {
-        if ( $Folder.endsWith('/') )
+        $body = New-Object PSObject
+
+        if ( $ControllerId )
         {
-            $Folder = $Folder.Substring( 0, $Folder.Length-1 )
+            Add-Member -Membertype NoteProperty -Name 'controllerId' -value $ControllerId -InputObject $boldy
+        } else {
+            Add-Member -Membertype NoteProperty -Name 'controllerId' -value $script:jsWebService.ControllerId -InputObject $body
         }
 
-        $body = New-Object PSObject
-        Add-Member -Membertype NoteProperty -Name 'path' -value $Folder -InputObject $body
+        Add-Member -Membertype NoteProperty -Name 'noticeBoardPath' -value $NoticeBoardPath -InputObject $body
+        Add-Member -Membertype NoteProperty -Name 'noticeId' -value $NoticeId -InputObject $body
+
 
         if ( $AuditComment -or $AuditTimeSpent -or $AuditTicketLink )
         {
@@ -105,10 +114,10 @@ param
             Add-Member -Membertype NoteProperty -Name 'auditLog' -value $objAuditLog -InputObject $body
         }
 
-        if ( $PSCmdlet.ShouldProcess( $Path, '/inventory/remove/folder' ) )
+        if ( $PSCmdlet.ShouldProcess( $NoticeBoardPath, '/notice/delete' ) )
         {
             [string] $requestBody = $body | ConvertTo-Json -Depth 100
-            $response = Invoke-JS7WebRequest -Path '/inventory/remove/folder' -Body $requestBody
+            $response = Invoke-JS7WebRequest -Path '/notice/delete' -Body $requestBody
 
             if ( $response.StatusCode -eq 200 )
             {
@@ -122,7 +131,7 @@ param
                 throw ( $response | Format-List -Force | Out-String )
             }
 
-            Write-Verbose ".. $($MyInvocation.MyCommand.Name): folder removed: $Path"
+            Write-Verbose ".. $($MyInvocation.MyCommand.Name): notice removed: $NoticeId"
         }
     }
 

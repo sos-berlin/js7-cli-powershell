@@ -63,14 +63,17 @@ that makes use of this cmdlet.
 
 Find the list of time zone names from https://en.wikipedia.org/wiki/List_of_tz_database_time_zones
 
-# .PARAMETER StartPosition
-# Specifies that the order should enter the workflow at the workflow node that
-# is assigned the specified position.
-#
-# .PARAMETER EndPosition
-# Specifies that the order should leave the workflow at the workflow node that
-# is assigned the specified position.
-#
+.PARAMETER StartPosition
+Specifies that the order should enter the workflow at the workflow node that
+is assigned the specified position.
+
+.PARAMETER EndPositions
+Specifies that the order should leave the workflow at the workflow nodes that
+are assigned the specified positions.
+
+.PARAMETER ControllerId
+Optionally specifies the identification of the Controller to which the order is added.
+
 .PARAMETER BatchSize
 As this cmdlet accepts pipelined input a larger number of orders can be added at the same time.
 This is particularly true if the Invoke-JS7TestRun cmdlet is used.
@@ -143,6 +146,7 @@ about_JS7
 [cmdletbinding()]
 param
 (
+    [Alias('Path')]
     [Parameter(Mandatory=$True,ValueFromPipeline=$False,ValueFromPipelinebyPropertyName=$True)]
     [string] $WorkflowPath,
     [Parameter(Mandatory=$False,ValueFromPipeline=$False,ValueFromPipelinebyPropertyName=$True)]
@@ -155,10 +159,12 @@ param
     [DateTime] $AtDate,
     [Parameter(Mandatory=$False,ValueFromPipeline=$False,ValueFromPipelinebyPropertyName=$True)]
     [string] $Timezone,
-#   [Parameter(Mandatory=$False,ValueFromPipeline=$False,ValueFromPipelinebyPropertyName=$True)]
-#   [string] $StartPosition,
-#   [Parameter(Mandatory=$False,ValueFromPipeline=$False,ValueFromPipelinebyPropertyName=$True)]
-#   [string] $EndPosition,
+    [Parameter(Mandatory=$False,ValueFromPipeline=$False,ValueFromPipelinebyPropertyName=$True)]
+    [int] $StartPosition,
+    [Parameter(Mandatory=$False,ValueFromPipeline=$False,ValueFromPipelinebyPropertyName=$True)]
+    [int[]] $EndPositions,
+    [Parameter(Mandatory=$False,ValueFromPipeline=$False,ValueFromPipelinebyPropertyName=$True)]
+    [string] $ControllerId,
     [Parameter(Mandatory=$False,ValueFromPipeline=$False,ValueFromPipelinebyPropertyName=$True)]
     [int] $BatchSize = 100,
     [Parameter(Mandatory=$False,ValueFromPipeline=$True,ValueFromPipelinebyPropertyName=$True)]
@@ -227,17 +233,17 @@ param
         {
             Add-Member -Membertype NoteProperty -Name 'timeZone' -value $Timezone -InputObject $objOrder
         }
-<#
+
         if ( $StartPosition )
         {
-            Add-Member -Membertype NoteProperty -Name 'startPosition' -value $StartPosition -InputObject $objOrder
+            Add-Member -Membertype NoteProperty -Name 'startPosition' -value @($StartPosition) -InputObject $objOrder
         }
 
-        if ( $EndPosition )
+        if ( $EndPositions )
         {
-            Add-Member -Membertype NoteProperty -Name 'endPosition' -value $EndPosition -InputObject $objOrder
+            Add-Member -Membertype NoteProperty -Name 'endPositions' -value $EndPositions -InputObject $objOrder
         }
-#>
+
         if ( $Variables )
         {
             Add-Member -Membertype NoteProperty -Name 'arguments' -value $Variables -InputObject $objOrder
@@ -248,7 +254,14 @@ param
         if ( $objOrders.count -ge $BatchSize )
         {
             $body = New-Object PSObject
-            Add-Member -Membertype NoteProperty -Name 'controllerId' -value $script:jsWebService.ControllerId -InputObject $body
+
+            if ( $ControllerId )
+            {
+                Add-Member -Membertype NoteProperty -Name 'controllerId' -value $ControllerId -InputObject $body
+            } else {
+                Add-Member -Membertype NoteProperty -Name 'controllerId' -value $script:jsWebService.ControllerId -InputObject $body
+            }
+
             Add-Member -Membertype NoteProperty -Name 'orders' -value $objOrders -InputObject $body
 
             if ( $AuditComment -or $AuditTimeSpent -or $AuditTicketLink )

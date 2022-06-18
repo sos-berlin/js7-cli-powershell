@@ -203,7 +203,9 @@ param
     [Parameter(Mandatory=$False,ValueFromPipeline=$False,ValueFromPipelinebyPropertyName=$True)]
     [string] $WorkflowPath,
     [Parameter(Mandatory=$False,ValueFromPipeline=$False,ValueFromPipelinebyPropertyName=$True)]
-    [string] $Folder = '/',
+    [string] $WorkflowName,
+    [Parameter(Mandatory=$False,ValueFromPipeline=$False,ValueFromPipelinebyPropertyName=$True)]
+    [string] $Folder,
     [Parameter(Mandatory=$False,ValueFromPipeline=$False,ValueFromPipelinebyPropertyName=$True)]
     [switch] $Recursive,
     [Parameter(Mandatory=$False,ValueFromPipeline=$False,ValueFromPipelinebyPropertyName=$True)]
@@ -371,6 +373,11 @@ param
         if ( $excludeOrders )
         {
             Add-Member -Membertype NoteProperty -Name 'excludeOrders' -value $excludeOrders -InputObject $body
+        }
+
+        if ( $WorkflowName )
+        {
+            Add-Member -Membertype NoteProperty -Name 'workflowName' -value $WorkflowName -InputObject $body
         }
 
         if ( $RegularExpression )
