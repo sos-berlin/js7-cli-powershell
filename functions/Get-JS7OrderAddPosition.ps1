@@ -1,4 +1,4 @@
-function Get-JS7WorkflowAddOrderPositions
+function Get-JS7OrderAddPosition
 {
 <#
 .SYNOPSIS
@@ -6,29 +6,29 @@ Returns workflow positions that can be used when adding an order to a workflow
 
 .DESCRIPTION
 When adding an order to a workflow then a number of positions in the workflow can be used
-as the starting position or as end positions. The cmdlet returns such positions for a given workflow.
+as the starting position or as end positions. The cmdlet returns allowed positions for a given workflow.
 
 The following REST Web Service API resources are used:
 
-* /workflows
+* /orders/add/positions
 
 .PARAMETER WorkflowPath
-Optionally specifies the path and name of a workflow for which positions should be returned.
+Optionally specifies the path and name of a workflow for which positions will be returned.
 
 .PARAMETER WorkflowVersionId
 Deployed workflows are assigned a version identifier. This parameter allows selection of
 workflows that are assigned the specified version.
 
 .PARAMETER ControllerId
-Optionally specifies the identification of the Controller from which to workflow positions will be returned.
+Optionally specifies the identification of the Controller from which workflow positions will be returned.
 
 .OUTPUTS
 This cmdlet returns an array of workflow position objects.
 
 .EXAMPLE
-$positions = Get-JS7Workflow -WorkflowPath /ProductDemo/WorkflowSuspension/pdwWorkflowSuspension | Get-JS7WorkflowAddOrderPositions
+$positions = Get-JS7OrderAddPosition -WorkflowPath /ProductDemo/ParallelExecution/pdwFork
 
-Returns the available positions of the given workflow that can be used as the start position or as end positions when adding orders.
+Returns the available positions of the given workflow that can be used as the start position and as end positions when adding orders.
 
 .LINK
 about_JS7
@@ -41,7 +41,7 @@ param
     [Parameter(Mandatory=$True,ValueFromPipeline=$False,ValueFromPipelinebyPropertyName=$True)]
     [string] $WorkflowPath,
     [Alias('VersionId')]
-    [Parameter(Mandatory=$True,ValueFromPipeline=$False,ValueFromPipelinebyPropertyName=$True)]
+    [Parameter(Mandatory=$False,ValueFromPipeline=$False,ValueFromPipelinebyPropertyName=$True)]
     [string] $WorkflowVersionId,
     [Parameter(Mandatory=$False,ValueFromPipeline=$False,ValueFromPipelinebyPropertyName=$True)]
     [string] $ControllerId
@@ -67,7 +67,11 @@ param
 
             $objWorkflow = New-Object PSObject
             Add-Member -Membertype NoteProperty -Name 'path' -value $WorkflowPath -InputObject $objWorkflow
-            Add-Member -Membertype NoteProperty -Name 'versionId' -value $WorkflowVersionId -InputObject $objWorkflow
+
+            if ( $WorkflowVersionId )
+            {
+                Add-Member -Membertype NoteProperty -Name 'versionId' -value $WorkflowVersionId -InputObject $objWorkflow
+            }
 
         Add-Member -Membertype NoteProperty -Name 'workflowId' -value $objWorkflow -InputObject $body
 

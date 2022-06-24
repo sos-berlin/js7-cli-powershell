@@ -64,12 +64,26 @@ that makes use of this cmdlet.
 Find the list of time zone names from https://en.wikipedia.org/wiki/List_of_tz_database_time_zones
 
 .PARAMETER StartPosition
-Specifies that the order should enter the workflow at the workflow node that
-is assigned the specified position.
+Specifies the position in the workflow that the order will be started for.
+
+The first level instructions in a workflow are allowed start positions.
+The position is specified by the numeric index of the instruction in the workflow:
+
+* 0: first instruction
+* 1: second instruction
+* ...
+
+The Get-JS7OrderAddPosition cmdlet returns available positions for adding orders.
 
 .PARAMETER EndPositions
-Specifies that the order should leave the workflow at the workflow nodes that
+Specifies that the order should leave the workflow before the workflow nodes that
 are assigned the specified positions.
+
+* 1: second instruction
+* 2: third instruction
+* ...
+
+The Get-JS7OrderAddPosition cmdlet returns available positions for adding orders.
 
 .PARAMETER ControllerId
 Optionally specifies the identification of the Controller to which the order is added.
@@ -131,13 +145,35 @@ Adds the indicated order for a start time 30 minutes (1800 seconds) from now.
 .EXAMPLE
 $orderId = Add-JS7Order -OrderName Test -WorkflowPath /sos/reporting/Reporting -At "2038-01-01 00:00:00" -Timezone "Europe/Berlin"
 
-Adds the indicated order for a later date that is specified for the "Europe/Berlin" time zone.
+Adds andorder for a later date that is specified for the "Europe/Berlin" time zone.
 
 .EXAMPLE
 $orderId = Add-JS7Order -WorkflowPath /sos/reporting/Reporting -At "now+3600" -Variables @{'var1' = 'value1'; 'var2' = 3.14; 'var3' = $true}
 
 Adds an order to the indicated workflow. The order will start one hour later and will use the
 variables as specified by the -Variables parameter.
+
+.EXAMPLE
+$orderId = Add-JS7Order -WorkflowPath /ProductDemo/ParallelExecution/pdwFork -StartPosition 1
+
+Adds an order to the second position (index: 1) of the indicated workflow.
+
+.EXAMPLE
+$positions = Get-JS7OrderAddPosition -WorkflowPath /ProductDemo/ParallelExecution/pdwFork
+$orderId = Add-JS7Order -WorkflowPath /ProductDemo/ParallelExecution/pdwFork -StartPosition $positions[2].position
+
+Adds an order to the third position (index: 2) of the indicated workflow.
+
+.EXAMPLE
+$orderId = Add-JS7Order -WorkflowPath /ProductDemo/ParallelExecution/pdwFork -EndPositions 1,2
+
+Adds an order for two possible end positions with the second (index: 1) and third (index: 2) position of the indicated workflow.
+
+.EXAMPLE
+$positions = Get-JS7OrderAddPosition -WorkflowPath /ProductDemo/ParallelExecution/pdwFork
+$orderId = $orderId = Add-JS7Order -WorkflowPath /ProductDemo/ParallelExecution/pdwFork -EndPositions @( $positions[2].position, $positions[3].position )
+
+Adds an order for two possible end positions with the third (index: 2) and fourth (index: 3) position of the indicated workflow.
 
 .LINK
 about_JS7
@@ -160,9 +196,9 @@ param
     [Parameter(Mandatory=$False,ValueFromPipeline=$False,ValueFromPipelinebyPropertyName=$True)]
     [string] $Timezone,
     [Parameter(Mandatory=$False,ValueFromPipeline=$False,ValueFromPipelinebyPropertyName=$True)]
-    [int] $StartPosition,
+    [object[]] $StartPosition,
     [Parameter(Mandatory=$False,ValueFromPipeline=$False,ValueFromPipelinebyPropertyName=$True)]
-    [int[]] $EndPositions,
+    [object[][]] $EndPositions,
     [Parameter(Mandatory=$False,ValueFromPipeline=$False,ValueFromPipelinebyPropertyName=$True)]
     [string] $ControllerId,
     [Parameter(Mandatory=$False,ValueFromPipeline=$False,ValueFromPipelinebyPropertyName=$True)]
@@ -234,12 +270,12 @@ param
             Add-Member -Membertype NoteProperty -Name 'timeZone' -value $Timezone -InputObject $objOrder
         }
 
-        if ( $StartPosition )
+        if ( $StartPosition.count )
         {
-            Add-Member -Membertype NoteProperty -Name 'startPosition' -value @($StartPosition) -InputObject $objOrder
+            Add-Member -Membertype NoteProperty -Name 'startPosition' -value $StartPosition -InputObject $objOrder
         }
 
-        if ( $EndPositions )
+        if ( $EndPositions.count )
         {
             Add-Member -Membertype NoteProperty -Name 'endPositions' -value $EndPositions -InputObject $objOrder
         }

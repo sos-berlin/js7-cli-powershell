@@ -2,10 +2,10 @@ function Get-JS7SubagentCluster
 {
 <#
 .SYNOPSIS
-Returns a Subagent Cluster from the JOC Cockpit inventory
+Returns a number of Subagent Clusters from the JOC Cockpit inventory
 
 .DESCRIPTION
-This cmdlet returns a Subagent Cluster from the JOC Cockpit inventory.
+This cmdlet returns a number of Subagent Clusters from the JOC Cockpit inventory.
 
 The following REST Web Service API resources are used:
 
@@ -15,13 +15,21 @@ The following REST Web Service API resources are used:
 Specifies the unique identifier of the Cluster Agent.
 
 .PARAMETER SubagentClusterId
-Specifies a unique identifier for the Subagent Cluster. This identifier cannot be modified during the lifetime of a Subagent Cluster.
+Optionally specifies a unique identifier for the Subagent Cluster.
+
+.PARAMETER ControllerId
+Optionally specifies the identification of the Controller to which the order is added.
 
 .INPUTS
 This cmdlet accepts pipelined input.
 
 .OUTPUTS
 This cmdlet returns no output.
+
+.EXAMPLE
+Get-JS7SubagentCluster -AgentId 'agent_001'
+
+Returns the Subagent Clusters configured for the indicated Agent Cluster.
 
 .EXAMPLE
 Get-JS7SubagentCluster -AgentId 'agent_001' -SubagentClusterId 'subagent_cluster_001'
@@ -35,10 +43,12 @@ about_JS7
 [cmdletbinding()]
 param
 (
-    [Parameter(Mandatory=$True,ValueFromPipeline=$False,ValueFromPipelinebyPropertyName=$True)]
+    [Parameter(Mandatory=$False,ValueFromPipeline=$False,ValueFromPipelinebyPropertyName=$True)]
     [string[]] $AgentId,
-    [Parameter(Mandatory=$True,ValueFromPipeline=$False,ValueFromPipelinebyPropertyName=$True)]
-    [string[]] $SubagentClusterId
+    [Parameter(Mandatory=$False,ValueFromPipeline=$False,ValueFromPipelinebyPropertyName=$True)]
+    [string[]] $SubagentClusterId,
+    [Parameter(Mandatory=$False,ValueFromPipeline=$False,ValueFromPipelinebyPropertyName=$True)]
+    [string] $ControllerId
 )
 	Begin
 	{
@@ -51,15 +61,37 @@ param
 
     Process
     {
-        $agentIds += $AgentId
-        $SubagentClusterIds += $SubagentClusterId
+        if ( $AgentId )
+        {
+            $agentIds += $AgentId
+        }
+
+        if ( $SubagentClusterId )
+        {
+            $SubagentClusterIds += $SubagentClusterId
+        }
     }
 
     End
     {
         $body = New-Object PSObject
-        Add-Member -Membertype NoteProperty -Name 'agentIds' -value $agentIds -InputObject $body
-        Add-Member -Membertype NoteProperty -Name 'subagentClusterIds' -value $subagentClusterIds -InputObject $body
+
+        if ( $ControllerId )
+        {
+            Add-Member -Membertype NoteProperty -Name 'controllerId' -value $ControllerId -InputObject $body
+        } else {
+            Add-Member -Membertype NoteProperty -Name 'controllerId' -value $script:jsWebService.ControllerId -InputObject $body
+        }
+
+        if ( $agentIds.count )
+        {
+            Add-Member -Membertype NoteProperty -Name 'agentIds' -value $agentIds -InputObject $body
+        }
+
+        if ( $subagentClusterIds.count )
+        {
+            Add-Member -Membertype NoteProperty -Name 'subagentClusterIds' -value $subagentClusterIds -InputObject $body
+        }
 
         [string] $requestBody = $body | ConvertTo-Json -Depth 100
         $response = Invoke-JS7WebRequest -Path '/agents/cluster' -Body $requestBody

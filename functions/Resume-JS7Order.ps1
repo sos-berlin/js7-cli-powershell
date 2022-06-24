@@ -101,10 +101,16 @@ Resume-JS7Order -State 'SUSPENDED','FAILED' -Folder /some_path -Recursive
 Resumes suspended and failed orders that are configured with the indicated folder and any sub-folders.
 
 .EXAMPLE
-Get-JS7Order -WorkflowPath /test/samples/workflow1 | Resume-JS7Order
+Get-JS7Order -WorkflowPath /test/samples/workflow1 -Suspended | Resume-JS7Order
 
-Resumes orders for the specified workflow.
+Resumes suspended orders for the specified workflow.
 
+.EXAMPLE
+$orders = Get-JS7Order -WorkflowPath /ProductDemo/ParallelExecution/pdwFork -Suspended
+$positions = $orders | Get-JS7OrderResumePosition
+$orders | Resume-JS7Order -Position $positions[2].position
+
+Retrieves suspended orders and possible positions to resume. The third (index: 2) position is used to resume the order.
 .LINK
 about_JS7
 
