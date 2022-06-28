@@ -4,7 +4,7 @@
 RootModule = 'JS7.psm1'
 
 # Version number of this module.
-ModuleVersion = '2.0.13.0'
+ModuleVersion = '2.0.14.0'
 
 # ID used to uniquely identify this module
 GUID = '904a35e3-39b4-40bf-ab5f-e8c4ad5ae38d'
