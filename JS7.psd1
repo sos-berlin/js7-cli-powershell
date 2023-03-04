@@ -4,7 +4,7 @@
 RootModule = 'JS7.psm1'
 
 # Version number of this module.
-ModuleVersion = '2.0.14.0'
+ModuleVersion = '2.0.15.0'
 
 # ID used to uniquely identify this module
 GUID = '904a35e3-39b4-40bf-ab5f-e8c4ad5ae38d'
@@ -76,6 +76,7 @@ FunctionsToExport = @(
     'Get-JS7Notice',
     'Get-JS7NoticeBoard',
     'Get-JS7Notification',
+    'Get-JS7NotificationConfiguration',
     'Get-JS7Order',
     'Get-JS7OrderAddPosition',
     'Get-JS7OrderHistory',
@@ -162,6 +163,7 @@ FunctionsToExport = @(
     'Set-JS7IAMService',
     'Set-JS7InventoryItem',
     'Set-JS7JOCSettings',
+    'Set-JS7NotificationConfiguration',
     'Set-JS7RepositoryItem',
     'Set-JS7Subagent',
     'Set-JS7SubagentCluster',

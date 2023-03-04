@@ -137,6 +137,7 @@ param
                 $requestResult.configuration.configurationItem | ConvertFrom-Json -Depth 100
             }
         }
+
         Write-Verbose ".. $($MyInvocation.MyCommand.Name): settings returned"
     }
 

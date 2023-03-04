@@ -174,17 +174,23 @@ param
             $stringContent.Headers.ContentDisposition = $stringHeader
             $multipartContent.Add( $stringContent )
 
-            $stringHeader = [System.Net.Http.Headers.ContentDispositionHeaderValue]::new("form-data")
-            $stringHeader.Name = "prefix"
-            $stringContent = [System.Net.Http.StringContent]::new( $Prefix )
-            $stringContent.Headers.ContentDisposition = $stringHeader
-            $multipartContent.Add( $stringContent )
+            if ( $Prefix )
+            {
+                $stringHeader = [System.Net.Http.Headers.ContentDispositionHeaderValue]::new("form-data")
+                $stringHeader.Name = "prefix"
+                $stringContent = [System.Net.Http.StringContent]::new( $Prefix )
+                $stringContent.Headers.ContentDisposition = $stringHeader
+                $multipartContent.Add( $stringContent )
+            }
 
-            $stringHeader = [System.Net.Http.Headers.ContentDispositionHeaderValue]::new("form-data")
-            $stringHeader.Name = "suffix"
-            $stringContent = [System.Net.Http.StringContent]::new( $Suffix )
-            $stringContent.Headers.ContentDisposition = $stringHeader
-            $multipartContent.Add( $stringContent )
+            if ( $Suffix )
+            {
+                $stringHeader = [System.Net.Http.Headers.ContentDispositionHeaderValue]::new("form-data")
+                $stringHeader.Name = "suffix"
+                $stringContent = [System.Net.Http.StringContent]::new( $Suffix )
+                $stringContent.Headers.ContentDisposition = $stringHeader
+                $multipartContent.Add( $stringContent )
+            }
 
             if ( $AuditComment -or $AuditTimeSpent -or $AuditTicketLink )
             {
