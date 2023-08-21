@@ -155,24 +155,28 @@ param
 
         if ( $schedulePaths.count -or $workflowPaths.count -or $folders.count )
         {
-            $selector = New-Object PSObject
+            #$selector = New-Object PSObject
 
             if ( $schedulePaths.count )
             {
-                Add-Member -Membertype NoteProperty -Name 'schedulePaths' -value $schedulePaths -InputObject $selector
+                Add-Member -Membertype NoteProperty -Name 'schedulePaths' -value $schedulePaths -InputObject $body
             }
 
             if ( $workflowPaths.count )
             {
-                Add-Member -Membertype NoteProperty -Name 'workflowPaths' -value $workflowPaths -InputObject $selector
-            }
+                Add-Member -Membertype NoteProperty -Name 'workflowPaths' -value $workflowPaths -InputObject $body
 
-            if ( $folders.count )
+                $objFolder = New-Object PSObject
+                    Add-Member -Membertype NoteProperty -Name 'folder' -value (Split-Path -Path $WorkflowPath -Parent).Replace('\\', '/').Replace('\', '/') -InputObject $objFolder
+                    Add-Member -Membertype NoteProperty -Name 'recursive' -value $False -InputObject $objFolder
+                Add-Member -Membertype NoteProperty -Name 'folders' -value @($objFolder) -InputObject $body
+
+            } elseif ( $folders.count )
             {
-                Add-Member -Membertype NoteProperty -Name 'folders' -value $folders -InputObject $selector
+                Add-Member -Membertype NoteProperty -Name 'folders' -value $folders -InputObject $body
             }
 
-            Add-Member -Membertype NoteProperty -Name 'selector' -value $selector -InputObject $body
+            # Add-Member -Membertype NoteProperty -Name 'selector' -value $selector -InputObject $body
         }
 
         [string] $requestBody = $body | ConvertTo-Json -Depth 100

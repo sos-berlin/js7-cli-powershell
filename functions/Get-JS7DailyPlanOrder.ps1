@@ -182,7 +182,6 @@ param
         $scheduleFolders = @()
         $controllerIds = @()
         $states = @()
-        $returnDailyPlanItems = @()
     }
 
     Process
@@ -327,77 +326,67 @@ param
 
         Write-Verbose ".. $($MyInvocation.MyCommand.Name): retrieving daily plan for date range $dailyPlanDateFrom - $dailyPlanDateTo"
 
-        for( $day=$dailyPlanDateFrom; $day -le $dailyPlanDateTo; $day=$day.AddDays(1) )
+        $body = New-Object PSObject
+        Add-Member -Membertype NoteProperty -Name 'controllerId' -value $script:jsWebService.ControllerId -InputObject $body
+
+        Add-Member -Membertype NoteProperty -Name 'dailyPlanDateFrom' -value (Get-Date $dailyPlanDateFrom -Format 'yyyy-MM-dd') -InputObject $body
+        Add-Member -Membertype NoteProperty -Name 'dailyPlanDateTo' -value (Get-Date $dailyPlanDateTo -Format 'yyyy-MM-dd')  -InputObject $body
+
+        if ( $orderIds )
         {
-            $body = New-Object PSObject
-            Add-Member -Membertype NoteProperty -Name 'controllerId' -value $script:jsWebService.ControllerId -InputObject $body
+            Add-Member -Membertype NoteProperty -Name 'orderIds' -value $orderIds -InputObject $body
+        }
 
-            $filter = New-Object PSObject
-            Add-Member -Membertype NoteProperty -Name 'dailyPlanDate' -value (Get-Date $day -Format 'yyyy-MM-dd') -InputObject $filter
+        if ( $workflowPaths )
+        {
+            Add-Member -Membertype NoteProperty -Name 'workflowPaths' -value $workflowPaths -InputObject $body
+        }
 
-            if ( $orderIds )
-            {
-                Add-Member -Membertype NoteProperty -Name 'orderIds' -value $orderIds -InputObject $filter
-            }
+        if ( $workflowFolders )
+        {
+            Add-Member -Membertype NoteProperty -Name 'workflowFolders' -value $workflowFolders -InputObject $body
+        }
 
-            if ( $workflowPaths )
-            {
-                Add-Member -Membertype NoteProperty -Name 'workflowPaths' -value $workflowPaths -InputObject $filter
-            }
+        if ( $schedulePaths )
+        {
+            Add-Member -Membertype NoteProperty -Name 'schedulePaths' -value $schedulePaths -InputObject $body
+        }
 
-            if ( $workflowFolders )
-            {
-                Add-Member -Membertype NoteProperty -Name 'workflowFolders' -value $workflowFolders -InputObject $filter
-            }
+        if ( $scheduleFolders )
+        {
+            Add-Member -Membertype NoteProperty -Name 'scheduleFolders' -value $scheduleFolders -InputObject $body
+        }
 
-            if ( $schedulePaths )
-            {
-                Add-Member -Membertype NoteProperty -Name 'schedulePaths' -value $schedulePaths -InputObject $filter
-            }
+        if ( $controllerIds )
+        {
+            Add-Member -Membertype NoteProperty -Name 'controllerIds' -value $controllerIds -InputObject $body
+        }
 
-            if ( $scheduleFolders )
-            {
-                Add-Member -Membertype NoteProperty -Name 'scheduleFolders' -value $scheduleFolders -InputObject $filter
-            }
+        if ( $states )
+        {
+            Add-Member -Membertype NoteProperty -Name 'states' -value $states -InputObject $body
+        }
 
-            if ( $controllerIds )
-            {
-                Add-Member -Membertype NoteProperty -Name 'controllerIds' -value $controllerIds -InputObject $filter
-            }
+        if ( $Late )
+        {
+            Add-Member -Membertype NoteProperty -Name 'late' -value ( $Late -eq $True ) -InputObject $body
+        }
 
-            if ( $states )
-            {
-                Add-Member -Membertype NoteProperty -Name 'states' -value $states -InputObject $filter
-            }
+        [string] $requestBody = $body | ConvertTo-Json -Depth 100
+        $response = Invoke-JS7WebRequest -Path '/daily_plan/orders' -Body $requestBody
 
-            if ( $Late )
-            {
-                Add-Member -Membertype NoteProperty -Name 'late' -value ( $Late -eq $True ) -InputObject $filter
-            }
-
-            if ( $filter )
-            {
-               Add-Member -Membertype NoteProperty -Name 'filter' -value $filter -InputObject $body
-            }
-
-            [string] $requestBody = $body | ConvertTo-Json -Depth 100
-            $response = Invoke-JS7WebRequest -Path '/daily_plan/orders' -Body $requestBody
-
-            if ( $response.StatusCode -eq 200 )
-            {
-                $dailyPlanItems = ( $response.Content | ConvertFrom-JSON ).plannedOrderItems
-            } else {
-                throw ( $response | Format-List -Force | Out-String )
-            }
-
-            $returnDailyPlanItems += $dailyPlanItems
+        if ( $response.StatusCode -eq 200 )
+        {
+            $dailyPlanItems = ( $response.Content | ConvertFrom-JSON ).plannedOrderItems
+        } else {
+            throw ( $response | Format-List -Force | Out-String )
         }
 
         if ( $Timezone.Id -eq 'UTC' )
         {
-            $returnDailyPlanItems | Sort-Object plannedStartTime
+            $dailyPlanItems | Sort-Object plannedStartTime
         } else {
-            $returnDailyPlanItems | Sort-Object plannedStartTime | Select-Object -Property `
+            $dailyPlanItems | Sort-Object plannedStartTime | Select-Object -Property `
                                            controllerId, `
                                            workflowPath, `
                                            historyId, `
@@ -415,9 +404,9 @@ param
                                            @{name='surveyDate'; expression={ ( [System.TimeZoneInfo]::ConvertTimeFromUtc( [datetime]::SpecifyKind( [datetime] "$($_.surveyDate)".SubString(0, 19), 'UTC'), $($Timezone) ) ).ToString("yyyy-MM-dd HH:mm:ss") + $timezoneOffset }}
         }
 
-        if ( $returnDailyPlanItems.count )
+        if ( $dailyPlanItems.count )
         {
-            Write-Verbose ".. $($MyInvocation.MyCommand.Name): $($returnDailyPlanItems.count) Daily Plan orders found"
+            Write-Verbose ".. $($MyInvocation.MyCommand.Name): $($dailyPlanItems.count) Daily Plan orders found"
         } else {
             Write-Verbose ".. $($MyInvocation.MyCommand.Name): no Daily Plan orders found"
         }

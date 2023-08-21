@@ -80,7 +80,7 @@ param
 
         if ( $response.StatusCode -eq 200 )
         {
-            $inventoryItem = ( $response.Content | ConvertFrom-Json ).configuration
+            $inventoryItem = ( $response | ConvertFrom-Json ).configuration
         } else {
             throw ( $response | Format-List -Force | Out-String )
         }
