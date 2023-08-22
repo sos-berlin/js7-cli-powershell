@@ -146,7 +146,7 @@ param
 
     Process
     {
-        While ( $Folder.endsWith('/') )
+        While ( $Folder.endsWith('/') -and $Folder -ne '/' )
         {
             $Folder = $Folder.Substring( 0, $Folder.Length -1 )
         }
@@ -260,7 +260,7 @@ param
 
             foreach( $releasableObject in $releasableObjects )
             {
-                if ( $releasableObject.objectType -eq 'FOLDER' )
+                if ( !$releasableObject.objectType -or $releasableObject.objectType -eq 'FOLDER' )
                 {
                     # we cannot release folders
                     continue
