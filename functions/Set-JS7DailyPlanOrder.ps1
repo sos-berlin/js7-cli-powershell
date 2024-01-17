@@ -2,111 +2,135 @@ function Set-JS7DailyPlanOrder
 {
 <#
 .SYNOPSIS
-Returns the daily plan orders scheduled for a number of JS7 Controllers
+Updates daily plan orders
 
 .DESCRIPTION
-The daily plan orders for workflows of a number of JS7 Controllers are returned.
+The daily plan orders are updated for absolute or relative start times
 
 The following REST Web Service API resources are used:
 
-* /daily_plan/orders
+* /daily_plan/orders/modify
 
-.PARAMETER WorkflowPath
-Optionally specifies the path and name of a workflow for which daily plan orders should be returned.
+.PARAMETER OrderId
+Specifies the Order ID of an existing daily plan order that should be updated.
 
-.PARAMETER SchedulePath
-Optionally specifies the path and name of a schedule for which daily plan orders should be returned.
+.PARAMETER ControllerId
+Specifies the identification of the Controller to which orders will be submitted.
 
-.PARAMETER Folder
-Optionally specifies the folder with workflows for which daily plan orders should be returned.
+.PARAMETER ScheduledFor
+Optionally specifies the date and time that the order should start.
 
-.PARAMETER Recursive
-When used with the -Folder parameter then any sub-folders of the specified folder will be looked up.
+One of the arguments -ScheduledFor or -RelativeScheduledFor has to be used.
 
-.PARAMETER DateFrom
-Optionally specifies the date starting from which daily plan orders should be returned.
-Consider that a UTC date has to be provided.
+.PARAMETER RelativeScheduledFor
+Specifies a relative date for which the daily plan order should be started, e.g.
 
-Default: Beginning of the current day as a UTC date
-
-.PARAMETER DateTo
-Optionally specifies the date until which daily plan orders should be returned.
-Consider that a UTC date has to be provided.
-
-Default: End of the current day as a UTC date
-
-.PARAMETER RelativeDateFrom
-Specifies a relative date starting from which daily plan orders should be returned, e.g.
-
-* -1d, -2d: one day ago, two days ago
 * +1d, +2d: one day later, two days later
-* -1w, -2w: one week ago, two weeks ago
 * +1w, +2w: one week later, two weeks later
-* -1M, -2M: one month ago, two months ago
 * +1M, +2M: one month later, two months later
-* -1y, -2y: one year ago, two years ago
 * +1y, +2y: one year later, two years later
 
-Optionally a time offset can be specified, e.g. -1d+02:00, as otherwise midnight UTC is assumed.
+Optionally a time offset can be specified, e.g. +1d+02:00, as otherwise midnight UTC is assumed.
 
-This parameter takes precedence over the -DateFrom parameter.
+This argument is used alternatively to the -ScheduledFor argument.
 
-.PARAMETER RelativeDateTo
-Specifies a relative date until which daily plan orders should be returned, e.g.
+.PARAMETER ScheduledDate
+Optionally specifies a time for which the order will be started on the given day.
+The order will use the date specified by the -ScheduledFor or -RelativeScheduledFor arguments, and it will use the time specified by this argument.
 
-* -1d, -2d: one day ago, two days ago
-* +1d, +2d: one day later, two days later
-* -1w, -2w: one week ago, two weeks ago
-* +1w, +2w: one week later, two weeks later
-* -1M, -2M: one month ago, two months ago
-* +1M, +2M: one month later, two months later
-* -1y, -2y: one year ago, two years ago
-* +1y, +2y: one year later, two years later
+The time is specified from a string in the hh:mm:ss format like this:
 
-Optionally a time offset can be specified, e.g. -1d+02:00, as otherwise midnight UTC is assumed.
+* 23:12:59
 
-This parameter takes precedence over the -DateTo parameter.
+Only one of the arguments -ScheduledTime and -RelativeScheduledTime can be used.
 
-.PARAMETER Timezone
-Specifies the timezone to which dates should be converted in the daily plan information.
-A timezone can e.g. be specified like this:
+.PARAMETER RelativeScheduledTime
+Optionally specifies an offset to the existing time for which the order will be started on the given day.
+The order will use the existing date to which the offset specified by this argument will be added or from which it will be substracted.
 
-  Get-JSDailyPlanOrder -Timezone (Get-Timezone -Id 'GMT Standard Time')
+The time offset is specified from a string in the hh:mm:ss format like this:
 
-All dates in JS7 are UTC and can be converted e.g. to the local time zone like this:
+* Adding 2 hours and 45 minutes to the start time: +02:45:00
+* Subtracting 9 hours and 30 minutes from the start time: -09:30:00
 
-  Get-JSDailyPlanOrder -Timezone (Get-Timezone)
+.PARAMETER Cycle
+Specifies the cycle if a cyclic order is updated.
 
-Default: Dates are returned in UTC.
+In addition to the order's start time specified by the -ScheduledFor argument such orders hold a cycle definition.
 
-.PARAMETER Late
-Specifies that daily plan orders are returned that are late or that started later than expected.
+The value for the -Cycle argument can be created like this:
 
-.PARAMETER Planned
-Specifies that daily plan orders are returned that have not been submitted.
+$cycle = New-Object PSCustomObject
+Add-Member -Membertype NoteProperty -Name 'begin' -value '15:30:00' -InputObject $cycle
+Add-Member -Membertype NoteProperty -Name 'end' -value '18:45:00' -InputObject $cycle
+Add-Member -Membertype NoteProperty -Name 'repeat' -value '00:30:00' -InputObject $cycle
 
-.PARAMETER Submitted
-Specifies that daily plan orders are returned that are submitted to a Controller for scheduled execution.
+.PARAMETER Variables
+Optionally specifies a hashtable of Variables
 
-.PARAMETER Finished
-Specifies that daily plan orders are returned that did complete.
+A hashtable object holds pairs of names and values. It can be created like this:
+$variables = @{ 'var_1'='some string'; 'var_2' = 23; 'var_3' = true}
+
+.PARAMETER RemoveVariables
+Optionally specifies a list of variables that should be removed from the order.
+
+.PARAMETER startPosition
+Optionally specifies the label of the first instruction in the workflow that the order should execute.
+
+.PARAMETER EndPositions
+Optionally specifies the list of labels corresponding to instructions in the workflow that the order should terminate with.
+
+.PARAMETER BlockPosition
+Optionally specifies the label of a block instruction in the workflow that the order should be started for.
+The order will terminate with the end of the block instruction.
+
+If the -StartPosition argument is used then the order will start from the indicated position in the block instruction.
+If end positions are specified then the order will terminate with one of the end positions inside the block instruction.
+
+.PARAMETER ForceJobSubmission
+Specifies that admission times of jobs in the workflow will not be considered.
+
+.PARAMETER AuditComment
+Specifies a free text that indicates the reason for the current intervention, e.g. "business requirement", "maintenance window" etc.
+
+The Audit Comment is visible from the Audit Log view of the JOC Cockpit.
+This parameter is not mandatory. However, the JOC Cockpit can be configured to require Audit Log comments for all interventions.
+
+.PARAMETER AuditTimeSpent
+Specifies the duration in minutes that the current intervention required.
+
+This information is shown in the Audit Log view. It can be useful when integrated
+with a ticket system that logs the time spent on interventions with JS7.
+
+.PARAMETER AuditTicketLink
+Specifies a URL to a ticket system that keeps track of any interventions performed for JS7.
+
+This information is shown in the Audit Log view of JOC Cockpit.
+It can be useful when integrated with a ticket system that logs interventions with JS7.
 
 .OUTPUTS
 This cmdlet returns an array of daily plan orders.
 
 .EXAMPLE
-$orders = ( Get-JS7DailyPlanOrder -Timezone (Get-Timezone) | Set-DailyPlanOrders -RelativeScheduledTime "+03:00:00"
+$orders = Get-JS7DailyPlanOrder
+Set-JS7DailyPlanOrder -OrderId $order[0].orderId -ScheduledFor $order[0].plannedStartTime -RelativeScheduledTime '+03:00:00'
 
-Returns today's daily plan orders for any workflows with start times being moved forward 3 hours.
+Moves the start time of a non-cyclic order of the current daily plan date 3 hours forward.
+
+.EXAMPLE
+$orders = Get-JS7DailyPlanOrder
+Set-JS7DailyPlanOrder -OrderId $order[0].orderId -ScheduledFor $order[0].plannedStartTime -RelativeScheduledTime '-03:00:00' -Cycle $order[0].period
+
+Moves the start time of a cyclic order of the current daily plan date 3 hours back.
 
 .LINK
 about_JS7
 
 #>
-[cmdletbinding()]
+[cmdletbinding(SupportsShouldProcess)]
 param
 (
-    [Parameter(Mandatory=$False,ValueFromPipelinebyPropertyName=$True)]
+    [Parameter(Mandatory=$True,ValueFromPipelinebyPropertyName=$True)]
     [string] $OrderId,
     [Parameter(Mandatory=$False,ValueFromPipelinebyPropertyName=$True)]
     [string] $ControllerId,
@@ -115,11 +139,9 @@ param
     [Parameter(Mandatory=$False,ValueFromPipelinebyPropertyName=$True)]
     [DateTime] $RelativeScheduledFor,
     [Parameter(Mandatory=$False,ValueFromPipelinebyPropertyName=$True)]
-    [String] $ScheduledTime,
+    [DateTime] $ScheduledDate,
     [Parameter(Mandatory=$False,ValueFromPipelinebyPropertyName=$True)]
     [String] $RelativeScheduledTime,
-    [Parameter(Mandatory=$False,ValueFromPipelinebyPropertyName=$True)]
-    [TimeZoneInfo] $Timezone = (Get-Timezone -Id 'UTC'),
     [Parameter(Mandatory=$False,ValueFromPipelinebyPropertyName=$True)]
     [PSCustomObject] $Cycle,
     [Parameter(Mandatory=$False,ValueFromPipelinebyPropertyName=$True)]
@@ -146,14 +168,14 @@ param
         Approve-JS7Command $MyInvocation.MyCommand
         $stopWatch = Start-JS7StopWatch
 
+        if ( !$ScheduledFor -and !$RelativeScheduledFor )
+        {
+            throw 'only one of the arguments -ScheduledFor and -RelativeScheduledFor has to be used'
+        }
+
         if ( $ScheduledFor -and $RelativeScheduledFor )
         {
             throw 'only one of the arguments -ScheduledFor and -RelativeScheduledFor can be used'
-        }
-
-        if ( $ScheduledTime -and $RelativeScheduledTime )
-        {time
-            throw 'only one of the arguments -ScheduledTime and -RelativeScheduledTime can be used'
         }
 
         $orderIds = @()
@@ -171,18 +193,6 @@ param
 
     End
     {
-<#
-        # PowerShell/.NET does not create date output in the target timezone but with the local timezone only, let's work around this:
-        $timezoneOffsetPrefix = if ( $Timezone.BaseUtcOffset.toString().startsWith( '-' ) ) { '-' } else { '+' }
-        $timezoneOffsetHours = [Math]::Abs($Timezone.BaseUtcOffset.hours)
-
-        if ( $Timezone.SupportsDaylightSavingTime -and $Timezone.IsDaylightSavingTime( (Get-Date) ) )
-        {
-            $timezoneOffsetHours += 1
-        }
-
-        [string] $timezoneOffset = "$($timezoneOffsetPrefix)$($timezoneOffsetHours.ToString().PadLeft( 2, '0' )):$($Timezone.BaseUtcOffset.Minutes.ToString().PadLeft( 2, '0' ))"
-#>
         if ( $RelativeScheduledFor )
         {
             $dateDirection = $RelativeScheduledFor[0]
@@ -200,6 +210,11 @@ param
             $dailyPlanScheduledFor = Get-Date (Get-Date $ScheduledFor)
         }
 
+        if ( $ScheduledDate )
+        {
+            $dailyPlanScheduledFor = Get-Date $dailyPlanScheduledFor -Year (Get-Date $ScheduledDate).Year -Month (Get-Date $ScheduledDate).Month -Day (Get-Date $ScheduledDate).Day
+        }
+
         if ( $RelativeScheduledTime )
         {
             $dateDirection = $RelativeScheduledTime[0]
@@ -207,14 +222,21 @@ param
             $dailyPlanScheduledFor = $dailyPlanScheduledFor.AddMinutes( "$($dateDirection)$($RelativeScheduledTime.Substring( 4, 2 ))" )
             $dailyPlanScheduledFor = $dailyPlanScheduledFor.AddSeconds( "$($dateDirection)$($RelativeScheduledTime.Substring( 7, 2 ))" )
         } else {
-            $dailyPlanScheduledFor = Get-Date (Get-Date $DailyPlanScheduledFor)
+            $dailyPlanScheduledFor = Get-Date $dailyPlanScheduledFor
         }
 
         Write-Verbose ".. $($MyInvocation.MyCommand.Name): updating daily plan for date $dailyPlanScheduledFor"
 
         $body = New-Object PSObject
-        Add-Member -Membertype NoteProperty -Name 'controllerId' -value $script:jsWebService.ControllerId -InputObject $body
-        Add-Member -Membertype NoteProperty -Name 'scheduledFor' -value (Get-Date $dailyPlanScheduledFor -Format 'yyyy-MM-dd HH:mm:ss') -InputObject $body
+
+        if ( $ControllerId )
+        {
+            Add-Member -Membertype NoteProperty -Name 'controllerId' -value $ControllerId -InputObject $boldy
+        } else {
+            Add-Member -Membertype NoteProperty -Name 'controllerId' -value $script:jsWebService.ControllerId -InputObject $body
+        }
+
+        Add-Member -Membertype NoteProperty -Name 'scheduledFor' -value ( Get-Date (Get-Date $dailyPlanScheduledFor).ToUniversalTime() -Format 'yyyy-MM-dd HH:mm:ss' ) -InputObject $body
 
         if ( $orderIds )
         {
@@ -227,35 +249,35 @@ param
             if ( $Cycle.begin )
             {
                 if ( $RelativeScheduledTime )
-                {                                
+                {
                     $ts = ([TimeSpan]::Parse($Cycle.begin.Substring(11, 8)))
-                    
+
                     if ( $RelativeScheduledTime[0] -eq '-' )
                     {
                         $ts -= ([TimeSpan]::Parse($RelativeScheduledTime.Substring(1)))
                     } else {
                         $ts += ([TimeSpan]::Parse($RelativeScheduledTime.Substring(1)))
                     }
-    
+
                     Add-Member -Membertype NoteProperty -Name 'begin' -value $ts.toString("hh\:mm\:ss") -InputObject $scheduledCycle
                 } else {
                     Add-Member -Membertype NoteProperty -Name 'begin' -value $Cycle.begin.Substring(11, 8) -InputObject $scheduledCycle
                 }
             }
-            
+
             if ( $Cycle.end )
             {
                 if ( $RelativeScheduledTime )
-                {                                
+                {
                     $ts = ([TimeSpan]::Parse($Cycle.end.Substring(11, 8)))
-                    
+
                     if ( $RelativeScheduledTime[0] -eq '-' )
                     {
                         $ts -= ([TimeSpan]::Parse($RelativeScheduledTime.Substring(1)))
                     } else {
                         $ts += ([TimeSpan]::Parse($RelativeScheduledTime.Substring(1)))
                     }
-    
+
                     Add-Member -Membertype NoteProperty -Name 'end' -value $ts.toString("hh\:mm\:ss") -InputObject $scheduledCycle
                 } else {
                     Add-Member -Membertype NoteProperty -Name 'end' -value $Cycle.end.Substring(11, 8) -InputObject $scheduledCycle

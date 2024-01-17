@@ -65,7 +65,7 @@ It can be useful when integrated with a ticket system that logs interventions wi
 This cmdlet does not return any output.
 
 .EXAMPLE
-[xml] $xmlConf=(Get-JS7NotificationConfiguration).configuration                 
+[xml] $xmlConf=(Get-JS7NotificationConfiguration).configuration
 [PSCustomObject] $jsonConf=((Get-JS7NotificationConfiguration).configurationJson | ConvertFrom-Json -Depth 100)
 Set-JS7NotificationConfiguration -XmlConfiguration $xmlConf -JsonConfiguration $jsonConf
 
@@ -114,7 +114,7 @@ param
     {
         $body = New-Object PSObject
         Add-Member -Membertype NoteProperty -Name 'configuration' -value $XmlConfiguration.OuterXml -InputObject $body
-        
+
         if ( $JsonConfiguration )
         {
             Add-Member -Membertype NoteProperty -Name 'configurationJson' -value ( $JsonConfiguration | ConvertTo-Json -Depth 100 ) -InputObject $body
