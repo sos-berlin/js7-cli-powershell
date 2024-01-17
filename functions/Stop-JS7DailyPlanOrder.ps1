@@ -203,7 +203,7 @@ param
                 Add-Member -Membertype NoteProperty -Name 'orderIds' -value $orderIds -InputObject $body
             }
 
-            Add-Member -Membertype NoteProperty -Name 'dailyPlanDate' -value (Get-Date $day -Format 'yyyy-MM-dd') -InputObject $body
+            Add-Member -Membertype NoteProperty -Name 'dailyPlanDateFrom' -value (Get-Date $day -Format 'yyyy-MM-dd') -InputObject $body
 
             if ( $AuditComment -or $AuditTimeSpent -or $AuditTicketLink )
             {
@@ -223,10 +223,10 @@ param
                 Add-Member -Membertype NoteProperty -Name 'auditLog' -value $objAuditLog -InputObject $body
             }
 
-            if ( $PSCmdlet.ShouldProcess( $Path, '/orders/daily_plan/cancel' ) )
+            if ( $PSCmdlet.ShouldProcess( $Path, '/daily_plan/orders/cancel' ) )
             {
                 [string] $requestBody = $body | ConvertTo-Json -Depth 100
-                $response = Invoke-JS7WebRequest -Path '/orders/daily_plan/cancel' -Body $requestBody
+                $response = Invoke-JS7WebRequest -Path '/daily_plan/orders/cancel' -Body $requestBody
 
                 if ( $response.StatusCode -eq 200 )
                 {
