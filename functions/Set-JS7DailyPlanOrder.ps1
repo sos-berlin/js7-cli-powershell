@@ -137,9 +137,11 @@ param
     [Parameter(Mandatory=$False,ValueFromPipelinebyPropertyName=$True)]
     [DateTime] $ScheduledFor,
     [Parameter(Mandatory=$False,ValueFromPipelinebyPropertyName=$True)]
-    [DateTime] $RelativeScheduledFor,
+    [String] $RelativeScheduledFor,
     [Parameter(Mandatory=$False,ValueFromPipelinebyPropertyName=$True)]
     [DateTime] $ScheduledDate,
+    [Parameter(Mandatory=$False,ValueFromPipelinebyPropertyName=$True)]
+    [String] $RelativeScheduledDate,
     [Parameter(Mandatory=$False,ValueFromPipelinebyPropertyName=$True)]
     [String] $RelativeScheduledTime,
     [Parameter(Mandatory=$False,ValueFromPipelinebyPropertyName=$True)]
@@ -168,9 +170,9 @@ param
         Approve-JS7Command $MyInvocation.MyCommand
         $stopWatch = Start-JS7StopWatch
 
-        if ( !$ScheduledFor -and !$RelativeScheduledFor )
+        if ( !$ScheduledFor -and !$RelativeScheduledFor -and !$RelativeScheduledDate)
         {
-            throw 'only one of the arguments -ScheduledFor and -RelativeScheduledFor has to be used'
+            throw 'one of the arguments -ScheduledFor, -RelativeScheduledFor and -RelativeScheduledDate has to be used'
         }
 
         if ( $ScheduledFor -and $RelativeScheduledFor )
@@ -213,6 +215,21 @@ param
         if ( $ScheduledDate )
         {
             $dailyPlanScheduledFor = Get-Date $dailyPlanScheduledFor -Year (Get-Date $ScheduledDate).Year -Month (Get-Date $ScheduledDate).Month -Day (Get-Date $ScheduledDate).Day
+        }
+
+        if ( $RelativeScheduledDate )
+        {
+            $dateDirection = $RelativeScheduledDate[0]
+            $dateRange = $RelativeScheduledDate.Substring( 1, $RelativeScheduledDate.Length-2 )
+            $dateUnit = $RelativeScheduledDate[$RelativeScheduledDate.Length-1]
+
+            switch( $dateUnit )
+            {
+                'd' { $dailyPlanScheduledFor = $dailyPlanScheduledFor.AddDays( "$($dateDirection)$($dateRange)" ) }
+                'w' { $dailyPlanScheduledFor = $dailyPlanScheduledFor.AddDays( "$($dateDirection)$([int]$dateRange*7)" ) }
+                'm' { $dailyPlanScheduledFor = $dailyPlanScheduledFor.AddMonths( "$($dateDirection)$($dateRange)" ) }
+                'y' { $dailyPlanScheduledFor = $dailyPlanScheduledFor.AddYears( "$($dateDirection)$($dateRange)" ) }
+            }
         }
 
         if ( $RelativeScheduledTime )
