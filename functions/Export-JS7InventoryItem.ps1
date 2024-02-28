@@ -366,11 +366,11 @@ param
                     throw ( $response | Format-List -Force | Out-String )
                 }
 
+                $releasableObjects = $releasableItems.releasables
+
                 if ( $releasableItems.folders )
                 {
-                    $releasableObjects = $releasableItems.folders.releasables
-                } else {
-                    $releasableObjects = $releasableItems.releasables
+                    $releasableObjects += $releasableItems.folders.releasables
                 }
 
                 foreach( $releasableObject in $releasableObjects )
@@ -481,11 +481,11 @@ param
                     throw ( $response | Format-List -Force | Out-String )
                 }
 
+                $deployableObjects = $deployableItems.deployables
+
                 if ( $deployableItems.folders )
                 {
-                    $deployableObjects = $deployableItems.folders.deployables
-                } else {
-                    $deployableObjects = $deployableItems.deployables
+                    $deployableObjects += $deployableItems.folders.deployables
                 }
 
                 foreach( $deployableObject in $deployableObjects )
@@ -548,7 +548,7 @@ param
             $releasableReleasedConfigurations = @()
 
             $exportObjects.Keys | ForEach-Object { $object = $exportObjects.Item($_)
-                if ( $object.area -eq 'deployable' -and $object.deployed )
+                if ( $object.area -eq 'deployable' -and $object.path -and $object.commitId -and $object.deployed )
                 {
                     $deployedConfiguration = New-Object PSObject
                     Add-Member -Membertype NoteProperty -Name 'path' -value $object.path -InputObject $deployedConfiguration
@@ -559,7 +559,7 @@ param
                     Add-Member -Membertype NoteProperty -Name 'configuration' -value $deployedConfiguration -InputObject $deployedConfigurationItem
 
                     $deployableDeployedConfigurations += $deployedConfigurationItem
-                } elseif ( $object.area -eq 'deployable' -and !$object.deployed ) {
+                } elseif ( $object.area -eq 'deployable' -and $object.path -and !$object.deployed ) {
                     $draftConfiguration = New-Object PSObject
                     Add-Member -Membertype NoteProperty -Name 'path' -value $object.path -InputObject $draftConfiguration
                     Add-Member -Membertype NoteProperty -Name 'objectType' -value $object.type -InputObject $draftConfiguration
@@ -573,7 +573,7 @@ param
                     Add-Member -Membertype NoteProperty -Name 'configuration' -value $draftConfiguration -InputObject $draftConfigurationItem
 
                     $deployableDraftConfigurations += $draftConfigurationItem
-                } elseif ( $object.area -eq 'releasable' -and $object.released ) {
+                } elseif ( $object.area -eq 'releasable' -and $object.path -and $object.released ) {
                     $releasedConfiguration = New-Object PSObject
                     Add-Member -Membertype NoteProperty -Name 'path' -value $object.path -InputObject $releasedConfiguration
                     Add-Member -Membertype NoteProperty -Name 'objectType' -value $object.type -InputObject $releasedConfiguration
@@ -587,7 +587,7 @@ param
                     Add-Member -Membertype NoteProperty -Name 'configuration' -value $releasedConfiguration -InputObject $releasedConfigurationItem
 
                     $releasableReleasedConfigurations += $releasedConfigurationItem
-                } elseif ( $object.area -eq 'releasable' -and !$object.released ) {
+                } elseif ( $object.area -eq 'releasable' -and $object.path -and !$object.released ) {
                     $draftConfiguration = New-Object PSObject
                     Add-Member -Membertype NoteProperty -Name 'path' -value $object.path -InputObject $draftConfiguration
                     Add-Member -Membertype NoteProperty -Name 'objectType' -value $object.type -InputObject $draftConfiguration
