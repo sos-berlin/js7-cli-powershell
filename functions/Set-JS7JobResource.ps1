@@ -35,6 +35,21 @@ Specifies the name of the environment variable in the Job Resource that holds a 
 * Shell jobs access Job Resource variables from environment variables.
 * JVM jobs access Job Resource variables directly.
 
+.PARAMETER AsString
+The value specified for the -Value parameter is considered a string. This similarly applies to numeric values that will be quoted to preserve leading zeroas.
+
+If none of the -AsString, -AsNumber or -AsBoolean parameters is specified then the cmdlet will guess the matching data type from the value specified with the -Value parameter.
+
+.PARAMETER AsNumber
+The value specified for the -Value parameter is considered a number. This includes that leading zeros are removed.
+
+If none of the -AsString, -AsNumber or -AsBoolean parameters is specified then the cmdlet will guess the matching data type from the value specified with the -Value parameter.
+
+.PARAMETER AsBoolean
+The value specified for the -Value parameter is considered a Boolean. The string values 'true' and 'false' can be specified and the $True and $False built-in PowerShell constants can be used.
+
+If none of the -AsString, -AsNumber or -AsBoolean parameters is specified then the cmdlet will guess the matching data type from the value specified with the -Value parameter.
+
 .PARAMETER EncryptCertificate
 Specifies that the value of the Job Resource variable should be encrypted using a Certificate object.
 Consider that the job that will decrypt the value requires access to the Private Key matching the Certificate.
@@ -131,6 +146,12 @@ param
     [Parameter(Mandatory=$False,ValueFromPipeline=$True,ValueFromPipelinebyPropertyName=$True)]
     [string] $EnvVar,
     [Parameter(Mandatory=$False,ValueFromPipeline=$True,ValueFromPipelinebyPropertyName=$True)]
+    [switch] $AsString,
+    [Parameter(Mandatory=$False,ValueFromPipeline=$True,ValueFromPipelinebyPropertyName=$True)]
+    [switch] $AsNumber,
+    [Parameter(Mandatory=$False,ValueFromPipeline=$True,ValueFromPipelinebyPropertyName=$True)]
+    [switch] $AsBoolean,
+    [Parameter(Mandatory=$False,ValueFromPipeline=$True,ValueFromPipelinebyPropertyName=$True)]
     [System.Security.Cryptography.X509Certificates.X509Certificate2] $EncryptCertificate,
     [Parameter(Mandatory=$False,ValueFromPipeline=$True,ValueFromPipelinebyPropertyName=$True)]
     [string] $EncryptCertificatePath,
@@ -162,6 +183,31 @@ param
             throw "$($MyInvocation.MyCommand.Name): Only one of the parameters -Value or -File can be used."
         }
 
+        if ( $AsString -and $AsNumber )
+        {
+            throw "$($MyInvocation.MyCommand.Name): Only one of the parameters -AsString or -AsNumber can be used."
+        }
+
+        if ( $AsString -and $AsBoolean )
+        {
+            throw "$($MyInvocation.MyCommand.Name): Only one of the parameters -AsString or -AsBoolean can be used."
+        }
+
+        if ( $AsBoolean -and $AsNumber )
+        {
+            throw "$($MyInvocation.MyCommand.Name): Only one of the parameters -AsBoolean or -AsNumber can be used."
+        }
+
+        if ( $AsNumber -and !(isNumeric( $Value ) ) )
+        {
+            throw "$($MyInvocation.MyCommand.Name): When using the -AsNumber parameter then numeric values must be specified for -Value."
+        }
+
+        if ( $AsBoolean -and !($Value -eq "true" -or $Value -eq "false") )
+        {
+            throw "$($MyInvocation.MyCommand.Name): When using the -AsBoolean parameter then one of the values true/false must be specified for -Value."
+        }
+
         if ( $EncryptCertificate -and $EncryptCertificatePath )
         {
             throw "$($MyInvocation.MyCommand.Name): Only one of the parameters -EncryptCertificate or -EncryptCertificatePath can be used."
@@ -177,6 +223,20 @@ param
     {
         try
         {
+            # guess target data type
+            if ( !$AsString -and !$AsBoolean -and !$AsNumber )
+            {
+                if ( $Value -eq "true" -or $Value -eq "false" )
+                {
+                    $AsBoolean = $True
+                } elseif ( isNumeric( $Value ) )
+                {
+                    $AsNumber = $True
+                } else {
+                    $AsString = $True
+                }
+            }
+
             if ( $Path.endsWith('/') )
             {
                 throw "$($MyInvocation.MyCommand.Name): path has to include folder, sub-folder and object name"
@@ -320,11 +380,18 @@ param
                     $result=((($result -replace "`r`$", '') -replace "`n`$", '') -replace '\\', '\\')
                     Add-Member -Membertype NoteProperty -Name $Key -value "`"$($result)`"" -InputObject $configuration.arguments -Force
                 } else {
-                    if ( isNumeric( $Value ) )
+                    if ( $AsBoolean )
                     {
+                        Add-Member -Membertype NoteProperty -Name $Key -value ($Value -eq "true") -InputObject $configuration.arguments -Force
+                    } elseif ( $AsNumber ) {
                         Add-Member -Membertype NoteProperty -Name $Key -value $Value -InputObject $configuration.arguments -Force
                     } else {
-                        Add-Member -Membertype NoteProperty -Name $Key -value "`"$($Value)`"" -InputObject $configuration.arguments -Force
+                        if ( isNumeric( $Value ) )
+                        {
+                            Add-Member -Membertype NoteProperty -Name $Key -value "`'$($Value)`'" -InputObject $configuration.arguments -Force
+                        } else {
+                            Add-Member -Membertype NoteProperty -Name $Key -value "`"$($Value)`"" -InputObject $configuration.arguments -Force
+                        }
                     }
                 }
             } elseif ( $File ) {
