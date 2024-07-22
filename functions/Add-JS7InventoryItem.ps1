@@ -40,6 +40,7 @@ Specifies the object type which is one of:
 ** WORKINGDAYSCALENDAR
 ** NONWORKINGDAYSCALENDAR
 ** SCHEDULE
+** REPORT
 
 .PARAMETER Item
 Specifies the PowerShell object that represents the JSON item to be added. Consider creating a PowerShell object from JSON like this:
@@ -93,7 +94,7 @@ param
     [Parameter(Mandatory=$True,ValueFromPipeline=$False,ValueFromPipelinebyPropertyName=$True)]
     [string] $Path,
     [Parameter(Mandatory=$True,ValueFromPipeline=$False,ValueFromPipelinebyPropertyName=$True)]
-    [ValidateSet('WORKFLOW','FILEORDERSOURCE','JOBRESOURCE','NOTICEBOARD','LOCK','INCLUDESCRIPT','WORKINGDAYSCALENDAR','NONWORKINGDAYSCALENDAR','SCHEDULE',IgnoreCase = $False)]
+    [ValidateSet('WORKFLOW','FILEORDERSOURCE','JOBRESOURCE','NOTICEBOARD','LOCK','INCLUDESCRIPT','WORKINGDAYSCALENDAR','NONWORKINGDAYSCALENDAR','SCHEDULE','REPORT',IgnoreCase = $False)]
     [string] $Type,
     [Parameter(Mandatory=$True,ValueFromPipeline=$False,ValueFromPipelinebyPropertyName=$True)]
     [object] $Item,

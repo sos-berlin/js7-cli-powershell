@@ -1,20 +1,20 @@
-function Get-JS7ControllerVersion
+function Get-JS7JOCVersion
 {
 <#
 .SYNOPSIS
-Returns the JS7 Controller version
+Returns the JS7 JOC Cockpit version
 
 .DESCRIPTION
-The cmdlet returns the version of the JS7 Controller.
+The cmdlet returns the version of the JS7 JOC Cockpit.
 
 The following REST Web Service API resources are used:
 
 * /joc/versions
 
 .EXAMPLE
-Get-JS7ControllerVersion
+Get-JS7JOCVersion
 
-Returns the JS7 Controller version.
+Returns the JS7 JOC Cockpit version.
 
 .LINK
 about_JS7
@@ -31,7 +31,7 @@ param
 
     Process
     {
-        $script:jsWebService.ControllerVersion
+        $script:jsWebService.JOCVersion
     }
 
     End

@@ -28,6 +28,7 @@ Specifies the object type which is one of:
 ** WORKINGDAYSCALENDAR
 ** NONWORKINGDAYSCALENDAR
 ** SCHEDULE
+** REPORT
 
 .PARAMETER NewPath
 Specifies the new path of the object, e.g. the path and name of a workflow. Absolute and relative paths can be specified.
@@ -74,7 +75,7 @@ param
     [Parameter(Mandatory=$True,ValueFromPipeline=$False,ValueFromPipelinebyPropertyName=$True)]
     [string] $Path,
     [Parameter(Mandatory=$True,ValueFromPipeline=$False,ValueFromPipelinebyPropertyName=$True)]
-    [ValidateSet('WORKFLOW','FILEORDERSOURCE','JOBRESOURCE','NOTICEBOARD','LOCK','INCLUDESCRIPT','WORKINGDAYSCALENDAR','NONWORKINGDAYSCALENDAR','SCHEDULE',IgnoreCase = $False)]
+    [ValidateSet('WORKFLOW','FILEORDERSOURCE','JOBRESOURCE','NOTICEBOARD','LOCK','INCLUDESCRIPT','WORKINGDAYSCALENDAR','NONWORKINGDAYSCALENDAR','SCHEDULE','REPORT',IgnoreCase = $False)]
     [string] $Type,
     [Parameter(Mandatory=$True,ValueFromPipeline=$False,ValueFromPipelinebyPropertyName=$True)]
     [string] $NewPath,

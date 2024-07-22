@@ -31,6 +31,7 @@ Specifies the object type which is one of:
 ** WORKINGDAYSCALENDAR
 ** NONWORKINGDAYSCALENDAR
 ** SCHEDULE
+** REPORT
 
 .OUTPUTS
 This cmdlet returns a PowerShell object that represents the inventory object.
@@ -50,7 +51,7 @@ param
     [Parameter(Mandatory=$True,ValueFromPipeline=$True,ValueFromPipelinebyPropertyName=$True)]
     [string] $Path,
     [Parameter(Mandatory=$True,ValueFromPipeline=$False,ValueFromPipelinebyPropertyName=$True)]
-    [ValidateSet('FOLDER','WORKFLOW','FILEORDERSOURCE','JOBRESOURCE','NOTICEBOARD','LOCK','INCLUDESCRIPT','WORKINGDAYSCALENDAR','NONWORKINGDAYSCALENDAR','SCHEDULE',IgnoreCase = $False)]
+    [ValidateSet('FOLDER','WORKFLOW','FILEORDERSOURCE','JOBRESOURCE','NOTICEBOARD','LOCK','INCLUDESCRIPT','WORKINGDAYSCALENDAR','NONWORKINGDAYSCALENDAR','SCHEDULE','REPORT',IgnoreCase = $False)]
     [string] $Type
 )
     Begin

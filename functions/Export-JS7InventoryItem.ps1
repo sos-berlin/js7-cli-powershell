@@ -50,6 +50,7 @@ Optionally restricts the object type to export which is one of:
 ** WORKINGDAYSCALENDAR
 ** NONWORKINGDAYSCALENDAR
 ** SCHEDULE
+** REPORT
 
 The -Type parameter can be used to restrict either deployable or releasable object types to be exported.
 Without specifying this parameter objects of any type within the areas of releasable and deployable objects are exported
@@ -70,6 +71,7 @@ Specifies that only releasable objects should be exported that include the objec
 * WORKINGDAYSCALENDAR
 * NONWORKINGDAYSCALENDAR
 * SCHEDULE
+* REPORT
 
 If none of the parameters -Releasable or -Deployable is used then both releasable and deployable inventory items are exported.
 
@@ -203,7 +205,7 @@ param
     [Parameter(Mandatory=$False,ValueFromPipeline=$False,ValueFromPipelinebyPropertyName=$True)]
     [string] $Path,
     [Parameter(Mandatory=$False,ValueFromPipeline=$False,ValueFromPipelinebyPropertyName=$True)]
-    [ValidateSet('WORKFLOW','FILEORDERSOURCE','JOBRESOURCE','NOTICEBOARD','LOCK','INCLUDESCRIPT','WORKINGDAYSCALENDAR','NONWORKINGDAYSCALENDAR','SCHEDULE',IgnoreCase = $False)]
+    [ValidateSet('WORKFLOW','FILEORDERSOURCE','JOBRESOURCE','NOTICEBOARD','LOCK','INCLUDESCRIPT','WORKINGDAYSCALENDAR','NONWORKINGDAYSCALENDAR','SCHEDULE','REPORT',IgnoreCase = $False)]
     [string[]] $Type,
     [Parameter(Mandatory=$False,ValueFromPipeline=$False,ValueFromPipelinebyPropertyName=$True)]
     [string] $Folder,
@@ -259,6 +261,12 @@ param
         $formats = @{ 'ZIP' = 'zip'; 'TAR_GZ' = 'tar.gz' }
         $deployableTypes = @('WORKFLOW','FILEORDERSOURCE','JOBRESOURCE','NOTICEBOARD','LOCK')
         $releasableTypes = @('INCLUDESCRIPT','WORKINGDAYSCALENDAR','NONWORKINGDAYSCALENDAR','SCHEDULE')
+
+        if (IsJOCVersion -Major 2 -Minor 7 -Patch 1 )
+        {
+            $releasableTypes += 'REPORT'
+        }
+
         $exportObjects = @{}
         $deployablesObj = $null
         $releasablesObj = $null
@@ -696,7 +704,7 @@ param
 
                 if ( $FilePath -and (Test-Path -Path $FilePath -PathType Leaf) )
                 {
-                      Remove-Item -Path $FilePath -Force
+                    Remove-Item -Path $FilePath -Force
                 }
 
                 # not used with Invoke-WebRequest -OutFile
@@ -705,6 +713,24 @@ param
 
                 [string] $requestBody = $body | ConvertTo-Json -Depth 100
                 $response = Invoke-JS7WebRequest -Path '/inventory/export' -Body $requestBody -Headers $headers -OutFile $FilePath
+
+                if ( Test-Path -Path $FilePath -PathType Leaf )
+                {
+                    if ( isPowerShellVersion 6 )
+                    {
+                        $bytes = Get-Content $FilePath -AsByteStream -TotalCount 1
+                    } else {
+                        $bytes = Get-Content $FilePath -Encoding byte -TotalCount 1
+                    }
+
+                    # if first character is { (7B, 123) then this indicates a JSON response holding an error
+                    if ( $bytes -eq '123' )
+                    {
+                        throw "$($MyInvocation.MyCommand.Name): error occurred: $(Get-Content $FilePath -Encoding UTF8 -TotalCount 200)"
+                    }
+                } else {
+                    throw "$($MyInvocation.MyCommand.Name): error occurred:`n$($response | Format-List -Force | Out-String)"
+                }
 
                 Write-Verbose ".. $($MyInvocation.MyCommand.Name): $($exportObjects.count) items exported"
             } else {

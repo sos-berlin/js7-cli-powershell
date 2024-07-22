@@ -31,6 +31,7 @@ Specifies the object type which is one of:
 ** WORKINGDAYSCALENDAR
 ** NONWORKINGDAYSCALENDAR
 ** SCHEDULE
+** REPORT
 
 .PARAMETER Recursive
 When used with the -Folder parameter specifies that any sub-folders should be looked up.
@@ -56,7 +57,7 @@ param
     [Parameter(Mandatory=$False,ValueFromPipeline=$False,ValueFromPipelinebyPropertyName=$True)]
     [switch] $Recursive,
     [Parameter(Mandatory=$True,ValueFromPipeline=$False,ValueFromPipelinebyPropertyName=$True)]
-    [ValidateSet('FOLDER','WORKFLOW','FILEORDERSOURCE','INCLUDESCRIPT','JOBTEMPLATE','JOBRESOURCE','NOTICEBOARD','LOCK','WORKINGDAYSCALENDAR','NONWORKINGDAYSCALENDAR','SCHEDULE',IgnoreCase = $False)]
+    [ValidateSet('FOLDER','WORKFLOW','FILEORDERSOURCE','INCLUDESCRIPT','JOBTEMPLATE','JOBRESOURCE','NOTICEBOARD','LOCK','WORKINGDAYSCALENDAR','NONWORKINGDAYSCALENDAR','SCHEDULE','REPORT',IgnoreCase = $False)]
     [string] $Type,
     [Parameter(Mandatory=$False,ValueFromPipeline=$False,ValueFromPipelinebyPropertyName=$True)]
     [switch] $Valid
@@ -157,6 +158,12 @@ param
                 'SCHEDULE'
                 {
                     $inventoryItems = ( $response | ConvertFrom-Json ).schedules
+                    break;
+                }
+
+                'REPORT'
+                {
+                    $inventoryItems = ( $response | ConvertFrom-Json ).reports
                     break;
                 }
             }

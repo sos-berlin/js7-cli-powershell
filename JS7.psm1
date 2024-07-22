@@ -300,6 +300,8 @@ param
     {
         $jsWebService = New-Object PSObject
 
+        $jsWebService | Add-Member -Membertype NoteProperty -Name JOCVersion -Value ''
+        $jsWebService | Add-Member -Membertype NoteProperty -Name ControllerVersion -Value ''
         $jsWebService | Add-Member -Membertype NoteProperty -Name Url -Value ''
         $jsWebService | Add-Member -Membertype NoteProperty -Name ProxyUrl -Value ''
         $jsWebService | Add-Member -Membertype NoteProperty -Name Base -Value ''
@@ -322,7 +324,54 @@ param
     }
 }
 
-function isPowerShellVersion( [int] $Major=-1, [int] $Minor=-1, [int] $Patch=-1 )
+function Get-JS7JOCVersion()
+{
+    $jsWebService.JOCVersion
+}
+
+function IsJOCVersion( [int] $Major=-1, [int] $Minor=-1, [int] $Patch=-1 )
+{
+    $rc = $false
+    $versionParts = $jsWebService.JOCVersion.Split('.')
+    if ( $versionParts.count -eq 3 )
+    {
+        $versionParts[2] = $versionParts[2].Split('-')
+    }
+
+    if ( $Major -gt -1 )
+    {
+        if ( $versionParts[0] -eq $Major )
+        {
+            if ( $Minor -gt -1 )
+            {
+                if ( $versionParts[1] -eq $Minor )
+                {
+                    if ( $Patch -gt - 1 )
+                    {
+                        if ( $versionParts[2] -ge $Patch )
+                        {
+                            $rc = $true
+                        }
+                    } else {
+                        $rc = $true
+                    }
+                } elseif ( $versionParts[1] -gt $Minor ) {
+                    $rc = $true
+                } else {
+                    $rc = $true
+                }
+            } else {
+                $rc = $true
+            }
+        } elseif ( $versionParts[0] -gt $Major ) {
+            $rc = $true
+        }
+    }
+
+    $rc
+}
+
+function IsPowerShellVersion( [int] $Major=-1, [int] $Minor=-1, [int] $Patch=-1 )
 {
     $rc = $false
 
@@ -550,8 +599,8 @@ $script:jsWebService = New-JS7WebServiceObject
 # SIG # Begin signature block
 # MIIsmQYJKoZIhvcNAQcCoIIsijCCLIYCAQExDzANBglghkgBZQMEAgEFADB5Bgor
 # BgEEAYI3AgEEoGswaTA0BgorBgEEAYI3AgEeMCYCAwEAAAQQH8w7YFlLCE63JNLG
-# KX7zUQIBAAIBAAIBAAIBAAIBADAxMA0GCWCGSAFlAwQCAQUABCAnvxaHTZN2oLr6
-# LSftfGsdM+Xwy6ARmTom8to+zGQz6qCCJa4wggVvMIIEV6ADAgECAhBI/JO0YFWU
+# KX7zUQIBAAIBAAIBAAIBAAIBADAxMA0GCWCGSAFlAwQCAQUABCB6TxH02X+djrvc
+# Mgc+1QU/SIrnKbjsUAC/5g7HphK3D6CCJa4wggVvMIIEV6ADAgECAhBI/JO0YFWU
 # jTanyYqJ1pQWMA0GCSqGSIb3DQEBDAUAMHsxCzAJBgNVBAYTAkdCMRswGQYDVQQI
 # DBJHcmVhdGVyIE1hbmNoZXN0ZXIxEDAOBgNVBAcMB1NhbGZvcmQxGjAYBgNVBAoM
 # EUNvbW9kbyBDQSBMaW1pdGVkMSEwHwYDVQQDDBhBQUEgQ2VydGlmaWNhdGUgU2Vy
@@ -757,33 +806,33 @@ $script:jsWebService = New-JS7WebServiceObject
 # IFB1YmxpYyBDb2RlIFNpZ25pbmcgQ0EgRVYgUjM2AhBLD42C8LN2spe26tpOptTs
 # MA0GCWCGSAFlAwQCAQUAoIGEMBgGCisGAQQBgjcCAQwxCjAIoAKAAKECgAAwGQYJ
 # KoZIhvcNAQkDMQwGCisGAQQBgjcCAQQwHAYKKwYBBAGCNwIBCzEOMAwGCisGAQQB
-# gjcCARUwLwYJKoZIhvcNAQkEMSIEIDWlcZdOKLRsuYCCkMlPrMYJCF/UZKiWuVI7
-# WwUtW8GmMA0GCSqGSIb3DQEBAQUABIICAEFqvqHmBDWDFsEXaP5EQt6P3mwgrDTx
-# jxYLcRXXcqrZ1jfkkVFoElVf0Met072KbrAg5IQNoJbZshZSkIi9Szl91AJBYfij
-# RLPhlI7PIVTiS3iVNvh+Bv/KatFa9L0kXsb7ZjIGlJQaNnKdgSt5A5ScNoKzS3VL
-# KRjNuzzXYkHvZoJ3kpEoKPg/CZkn8tr7A0ilRpxD7hWey69qlWhoadOxGkh0vjRs
-# VRZcVHQZKBieX8ZGCh5rCk2hISEJTZK2XqzaV8Y5eOq+6xDV7c9pDDPr8IkRbls2
-# oJaG0CuJ4V8TyWTjSVGjARMpS/FUnCyJ7OGr8hZowPG4pXkV8+msehAMEhN59F34
-# 0hbCSiYqE+pgarL6O3XPFOSE/eE//9QF0rWddvR48LQx1R+A7Do0Lb6ty7YBz2DG
-# IdsIfCXseCn9WbtxClgHeEyVTN7IquIsxoZZNFFg6MUojV19ZRTndGQqJ0DbNeW7
-# SDNfiaVVxcY3MbFDZcux0MfYsWpj7s1WPkTn3TRUMATv60MhrE1h+StIZDE3K6R7
-# QRdEe/TmCfaFQmfLhCR9PJ4o1truKD+E+6C7sGzFcITN2e3U1jsdfASV+JRTp0Br
-# K+Aa31KGbjOh3fszB6xN+g1FH0aBW6h5Djgh4bKkNGnk8kb5tuWS+Ma8+JvoTTDu
-# OxykBIvLJfAeoYIDIDCCAxwGCSqGSIb3DQEJBjGCAw0wggMJAgEBMHcwYzELMAkG
+# gjcCARUwLwYJKoZIhvcNAQkEMSIEIDIS93Xhi1fZ+6G8jiVQXOVLOBUZv0L1h1os
+# 58ONopnMMA0GCSqGSIb3DQEBAQUABIICAAk2T9st2EP5BPqtFVbX/z+UOelZFBux
+# vWM4HSCk8QNvehXRng7MCq1QpW1ZQ+qD8eEa9rf0T/UQ+JzUFT3sOUAr/yJmaOy/
+# iLln1gJAhu0VSfKCJJzRmbuavsS+JLkkxcTxhvrobVScjik269zJmZCbbOFGT37d
+# /vy1DRGb+G3WUAM9ydUp/yZW+xGzHMvppFrToFpccCEcqSWEEAWSyYO1MXd0iZ9K
+# 0Dvnpl6AGFMhkEGWL/HPDHykYBJsynv+aT3/x5pIcDNJVS75r/J77NNxP6n9JoLl
+# mHnGx0vAj39ZnL+g3Cq4tb+FMFUwoxa362cCFEpJ66cp9DQkGgfFGyqcT5LcdCqx
+# drxuCP/nBrCACYe3CGay9J43TEUn2RbIq+FDfqIO8AqFofn+i0EovTqZ+HdUfwoC
+# Fhjg6dGF3irTBTE5sL+r2E4P2S9BB4GQ2zCjDttZMOi2q00f0F4F+D1cKaBmJVEf
+# uf2rOc9XCWifruGECQHLAKF9ObvmYGZU+0OhPEPhGhNNg95dg86TznV+yYU+vQiG
+# stSJ8tdgXKxhx5GY+uSv9gXeYxa8uMkMTqaCZkwQzjnVLOu0NfrXQspybw/ClEBk
+# g1Ove68891un15cBAKt3S5HqBh22V0es0uTS7ee9lbT7PziPL5N4Fi0FMN+XwOyg
+# 8NTPVsS4lzInoYIDIDCCAxwGCSqGSIb3DQEJBjGCAw0wggMJAgEBMHcwYzELMAkG
 # A1UEBhMCVVMxFzAVBgNVBAoTDkRpZ2lDZXJ0LCBJbmMuMTswOQYDVQQDEzJEaWdp
 # Q2VydCBUcnVzdGVkIEc0IFJTQTQwOTYgU0hBMjU2IFRpbWVTdGFtcGluZyBDQQIQ
 # BUSv85SdCDmmv9s/X+VhFjANBglghkgBZQMEAgEFAKBpMBgGCSqGSIb3DQEJAzEL
-# BgkqhkiG9w0BBwEwHAYJKoZIhvcNAQkFMQ8XDTI0MDYxNzE5NDI1OFowLwYJKoZI
-# hvcNAQkEMSIEIBx5JBGDw9e9nwLs5CHXKkHRcUq3yw3z+sutQ2SaLH3fMA0GCSqG
-# SIb3DQEBAQUABIICAF8HJVdvTbapr0eZ3xkQgM2L77XX2SS1fhUN23VeRevz+HsO
-# BhHJgVpKaUMZrOKJ6YTfin/j/TqbMkvgWILR4glSHfCVTYJ6w+O5QvwbymdfbTtZ
-# 5pufoYmlRB9NdhAGxXAyTrO6LlttgraIcRFPCks5Vye2Ps0W7DRD2VHoot8YXONf
-# upnZJuQXHii8HAw3+dKxRoHOAIPESpojXhwMCdHopGABOOTZvRQcCaOFfFRVHCvD
-# Lzm0F+zjFzdOuFzuKd0PBbt1fVPjHQgLL1AA+e9Sckas40/BqMLyL1IabdoYTS35
-# GxoBb0Zsqpl0wvFuOVyeu7Ia/DD9cdwhJ2/Ni7N/TsvuSNvwFa35uw/tLzEDndTH
-# ydqdP3QmH8EjZbHya5h1Qs4iEbqa/ap05Gt7Lh+a3mF/LbhDn5jbHkaBFTwyoN6Q
-# fCKzDAoG9+dP7R9a6N/ABJzHTo1Ob6OmDOXdWOeAQAMlZ8ogzWAnpxpoYRDXmVVQ
-# s0cfdbXcE1fTqlbXP7IPXk47t19Xg9Dj0FCQVf/nO1npmN4ajiR7bQZz3lLY3UAj
-# TZsvKR1h4X+l3QH+6YA303tHXqzfoUAFiTaddQvQv/hJf2LeJ1G6JuRz4xexnHlX
-# bg8sJRCgYmpD88qvUZyqpV9CbZhFc88NPZgto2MbeuJW1oIteTlmjAd/TD/J
+# BgkqhkiG9w0BBwEwHAYJKoZIhvcNAQkFMQ8XDTI0MDcyMjIyMjgwMVowLwYJKoZI
+# hvcNAQkEMSIEIHYYkBWQhFY7118mJvBMvzZQ+vhGiTvnFiLKl3IOsvYlMA0GCSqG
+# SIb3DQEBAQUABIICAFgcX3HjB0tp7TaRJ0b5cDohqp+/sSj+hzJHFBAgNu+Z/Sj8
+# 27En9bfSq1CQViQTXJSsvOqZk23S/XucYjwvofNS9QWgHmxU0Ck+fwPXGoNRykA5
+# lfiKp5DKfmIpuylwyUYoAfVahj0QmlVbGQJnAVLqPEI5UGmekl4Aq7SRrdzHNTGM
+# 0wqIy4vC4gY6on9Jq8ShVqI0x21GNH2pT4s7EEeyjK7jQfJ8LaYahoplpRJ0TdKl
+# gJ3a/9IJK1pkPo9GI7LI5VkYtPrWi/YR/Ug22p3UI1I2usDp5FDXBVBV87G5Ac/G
+# /DPAzwPbLF58M1r0/u2ep38P3yv7MixiOGMjiI17eFMxHJPd5Z4h5DdsTtgKv8j5
+# Ictv0kxKz23e8oyzBgkbuaK/8ycIS/LXsHrriYVwier9B54UyUgY3/Q0uK21FHN5
+# GVxiB1fimy20kik0aX8WY8vM2mZMSkjvqMRjednLuTfdpbSf0bcqz9VxONEK8jp5
+# fYmGW+cGvYA9OJsGZysMZ+ZxtNGs5vz9xZQ6RWl/GPfQ6t7wHLIbnIEXHDBlVVmN
+# DjSYIE7dN/7/Pndtf998lQjvpYPNpihBh7SBcgRAE9yctT1PJr068lMh77eF9SxK
+# k6cz76lZ2r9CNqouyWorUpYXXwNfpbVYBRrStxRVEeKjsPl5XZJ8uqKboSDk
 # SIG # End signature block

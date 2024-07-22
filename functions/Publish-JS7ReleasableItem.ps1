@@ -27,6 +27,7 @@ Specifies the object type which is one of:
 * SCHEDULE
 * WORKINGDAYSCALENDAR
 * NONWORKINGDAYSCALENDAR
+* REPORT
 
 .PARAMETER Folder
 Optionally specifies the folder for which included inventory objects should be published.
@@ -103,7 +104,7 @@ param
     [Parameter(Mandatory=$False,ValueFromPipeline=$True,ValueFromPipelinebyPropertyName=$True)]
     [string] $Path,
     [Parameter(Mandatory=$False,ValueFromPipeline=$False,ValueFromPipelinebyPropertyName=$True)]
-    [ValidateSet('INCLUDESCRIPT','SCHEDULE','WORKINGDAYSCALENDAR','NONWORKINGDAYSCALENDAR',IgnoreCase = $False)]
+    [ValidateSet('INCLUDESCRIPT','SCHEDULE','WORKINGDAYSCALENDAR','NONWORKINGDAYSCALENDAR','REPORT',IgnoreCase = $False)]
     [string[]] $Type,
     [Parameter(Mandatory=$False,ValueFromPipeline=$False,ValueFromPipelinebyPropertyName=$True)]
     [string] $Folder,
@@ -120,7 +121,7 @@ param
     [Parameter(Mandatory=$False,ValueFromPipeline=$False,ValueFromPipelinebyPropertyName=$True)]
     [string] $ObjectName,
     [Parameter(Mandatory=$False,ValueFromPipeline=$False,ValueFromPipelinebyPropertyName=$True)]
-    [ValidateSet('INCLUDESCRIPT','SCHEDULE','WORKINGDAYSCALENDAR','NONWORKINGDAYSCALENDAR',IgnoreCase = $False)]
+    [ValidateSet('INCLUDESCRIPT','SCHEDULE','WORKINGDAYSCALENDAR','NONWORKINGDAYSCALENDAR','REPORT',IgnoreCase = $False)]
     [string] $ObjectType,
     [Parameter(Mandatory=$False,ValueFromPipeline=$False,ValueFromPipelinebyPropertyName=$True)]
     [string] $AuditComment,
@@ -142,6 +143,11 @@ param
         $storeObjects = @()
         $deleteObjects = @()
         $releasableTypes = @('INCLUDESCRIPT','SCHEDULE','WORKINGDAYSCALENDAR','NONWORKINGDAYSCALENDAR')
+
+        if (IsJOCVersion -Major 2 -Minor 7 -Patch 1 )
+        {
+            $releasableTypes += 'REPORT'
+        }
     }
 
     Process

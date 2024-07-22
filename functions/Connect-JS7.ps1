@@ -561,7 +561,6 @@ param
                 throw $message
             }
 
-
             if ( $Id )
             {
                 $body = New-Object PSObject
@@ -594,6 +593,28 @@ param
                 } else {
                     throw ( $response | Format-List -Force | Out-String )
                 }
+            }
+
+
+            $body = New-Object PSObject
+            Add-Member -Membertype NoteProperty -Name 'controllerIds' -value @($script:jsWebService.ControllerId) -InputObject $body
+            Add-Member -Membertype NoteProperty -Name 'agentIds' -value @('unknown') -InputObject $body
+
+            [string] $requestBody = $body | ConvertTo-Json -Depth 100
+            $response = Invoke-JS7WebRequest -Path '/joc/versions' -Body $requestBody
+
+            Write-Debug ".... Invoke-WebRequest response:`n$response"
+
+            if ( $response -and $response.StatusCode -eq 200 -and $response.Content )
+            {
+                $content = $response.Content | ConvertFrom-Json
+                $script:jsWebService.JOCVersion = $content.jocVersion
+                $script:jsWebService.ControllerVersion = $content.controllerVersions[0].version
+                Write-Verbose ".. $($MyInvocation.MyCommand.Name): JOC Cockpit version: $($script:jsWebService.JOCVersion)"
+                Write-Verbose ".. $($MyInvocation.MyCommand.Name): Controller version: $($script:jsWebService.ControllerVersion)"
+            } else {
+                $message = $response | Format-List -Force | Out-String
+                throw $message
             }
 
 

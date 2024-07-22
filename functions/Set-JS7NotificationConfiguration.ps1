@@ -12,36 +12,15 @@ The following REST Web Service API resources are used:
 
 * /inventory/store
 
-.PARAMETER Path
-Specifies the folder, sub-folder and name of the object, e.g. a workflow path that should be
-stored to the inventory.
+.PARAMETER XmlConfiguration
+Specifies the XML object that holds the configuration for notifications that should be stored to the inventory.
 
-.PARAMETER Type
-Specifies the object type which is one of:
+The argument is used alternatively to -JsonConfiguration.
 
-** FOLDER
-* Deployable object types
-** WORKFLOW
-** FILEORDERSOURCE
-** JOBRESOURCE
-** NOTICEBOARD
-** LOCK
-* Releasable object types
-** INCLUDESCRIPT
-** WORKINGDAYSCALENDAR
-** NONWORKINGDAYSCALENDAR
-** SCHEDULE
+.PARAMETER JsonConfiguration
+Specifies the PowerShell object that holds the configuration for notifications that should be stored to the inventory.
 
-.PARAMETER Object
-Specifies the object that should be stored to the inventory. This parameter expects a PowerShell
-custom object [PSCustomObject] as e.g. returned by the Get-JS7InventoryItem cmdlet.
-
-The custom object is converted to JSON by this cmdlet.
-
-.PARAMETER Valid
-Specifies that the inventory object has been validate before using this cmdlet
-
-If such orders exist with a Controller and the -Submit parameter is used then they are cancelled and re-created.
+The argument is used alternatively to -XmlConfiguration.
 
 .PARAMETER AuditComment
 Specifies a free text that indicates the reason for the current intervention, e.g. "business requirement", "maintenance window" etc.

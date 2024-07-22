@@ -376,9 +376,9 @@ param
                         "--cert=$($certificatePath)",
                         "--in=$($Value)" )
                     $result=(& $cmdPath $cmdArgList) | Out-String
-                    # remove trailing \n\r added from Out-String, double \ do to JS7 JOC Cockpit quoting
+                    # remove trailing \n\r added from Out-String, double \ due to JS7 JOC Cockpit quoting
                     $result=((($result -replace "`r`$", '') -replace "`n`$", '') -replace '\\', '\\')
-                    Add-Member -Membertype NoteProperty -Name $Key -value "`"$($result)`"" -InputObject $configuration.arguments -Force
+                    Add-Member -Membertype NoteProperty -Name $Key -value "`"enc:$($result)`"" -InputObject $configuration.arguments -Force
                 } else {
                     if ( $AsBoolean )
                     {
@@ -408,7 +408,7 @@ param
                     $result=(& $cmdPath $cmdArgList) | Out-String
                     # remove trailing \n\r added from Out-String, double \ do to JS7 JOC Cockpit quoting
                     $result=((($result -replace "`r`$", '') -replace "`n`$", '') -replace '\\', '\\')
-                    Add-Member -Membertype NoteProperty -Name "$($Key)_key" -value "`"$($result)`"" -InputObject $configuration.arguments -Force
+                    Add-Member -Membertype NoteProperty -Name "$($Key)_key" -value "`"enc:$($result)`"" -InputObject $configuration.arguments -Force
                     Add-Member -Membertype NoteProperty -Name $Key -value "`"toFile( '$(Get-Content $tempOutfile -Raw)', '*.fil')`"" -InputObject $configuration.arguments -Force
                 } else {
                     Add-Member -Membertype NoteProperty -Name $Key -value "`"toFile( '$(Get-Content $File -Raw)', '*.fil')`"" -InputObject $configuration.arguments -Force
