@@ -327,6 +327,11 @@ param
 
             foreach( $object in $storeObjects )
             {
+                if ( !$object.path )
+                {
+                    continue
+                }
+
                 if ( !$object.valid )
                 {
                     throw "$($MyInvocation.MyCommand.Name): invalid object selected for deployment: path=$($object.path), type=$($object.type)"

@@ -63,27 +63,28 @@ that makes use of this cmdlet.
 
 Find the list of time zone names from https://en.wikipedia.org/wiki/List_of_tz_database_time_zones
 
+.PARAMETER BlockPostion
+Specifies that the order should start execution within the block instruction identified by the label indicated from the argument value.
+
+For use with branches of Fork Instructions consider to specify <fork-label>+<branch-label>, for example
+if a Fork Instruction is labelled "myFork" and a branch is labelled "linux1" then the value of the -BlockPosition argument is "myFork+linux1".
+
+To start at a later position inside a block instruction use the -StartPosition argument.
+
 .PARAMETER StartPosition
-Specifies the position in the workflow that the order will be started for.
+Specifies the label of an instruction in the workflow that the order will be started for.
 
-The first level instructions in a workflow are allowed start positions.
-The position is specified by the numeric index of the instruction in the workflow:
-
-* 0: first instruction
-* 1: second instruction
-* ...
-
-The Get-JS7OrderAddPosition cmdlet returns available positions for adding orders.
+The top-level instructions in a workflow are allowed start positions. If an instruction inside some block Instruction
+should be used as the start position, then the -BlockPosition argument can be used to specify the label of the block
+and the -StartPosition argument can be used to specify the label of an instruction inside the block.
 
 .PARAMETER EndPositions
-Specifies that the order should leave the workflow before the workflow nodes that
-are assigned the specified positions.
+Specifies the labels of instructions in the workflow at which the order will leave the workflow.
+The order will not execute the related instruction.
 
-* 1: second instruction
-* 2: third instruction
-* ...
-
-The Get-JS7OrderAddPosition cmdlet returns available positions for adding orders.
+.PARAMETER ForceJobAdmission
+Specifies that job admission times should not be considered. The order will execute all jobs in the workflow
+without waiting for specified admission times.
 
 .PARAMETER ControllerId
 Optionally specifies the identification of the Controller to which the order is added.
@@ -148,32 +149,20 @@ $orderId = Add-JS7Order -OrderName Test -WorkflowPath /sos/reporting/Reporting -
 Adds andorder for a later date that is specified for the "Europe/Berlin" time zone.
 
 .EXAMPLE
-$orderId = Add-JS7Order -WorkflowPath /sos/reporting/Reporting -At "now+3600" -Variables @{'var1' = 'value1'; 'var2' = 3.14; 'var3' = $true}
+$orderId = Add-JS7Order -WorkflowPath /sos/reporting/Reporting -At "now+3600" -Variables @{'var1'='value1'; 'var2'=3.14; 'var3'=$true}
 
 Adds an order to the indicated workflow. The order will start one hour later and will use the
 variables as specified by the -Variables parameter.
 
 .EXAMPLE
-$orderId = Add-JS7Order -WorkflowPath /ProductDemo/ParallelExecution/pdwFork -StartPosition 1
+$orderId = Add-JS7Order -WorkflowPath /ProductDemo/ParallelExecution/pdwFork -StartPosition "job2"
 
-Adds an order to the second position (index: 1) of the indicated workflow.
-
-.EXAMPLE
-$positions = Get-JS7OrderAddPosition -WorkflowPath /ProductDemo/ParallelExecution/pdwFork
-$orderId = Add-JS7Order -WorkflowPath /ProductDemo/ParallelExecution/pdwFork -StartPosition $positions[2].position
-
-Adds an order to the third position (index: 2) of the indicated workflow.
+Adds an order to the workflow position labelled "job2" of the indicated workflow.
 
 .EXAMPLE
-$orderId = Add-JS7Order -WorkflowPath /ProductDemo/ParallelExecution/pdwFork -EndPositions 1,2
+$orderId = Add-JS7Order -WorkflowPath /ProductDemo/ParallelExecution/pdwFork -EndPositions "job3","job4"
 
-Adds an order for two possible end positions with the second (index: 1) and third (index: 2) position of the indicated workflow.
-
-.EXAMPLE
-$positions = Get-JS7OrderAddPosition -WorkflowPath /ProductDemo/ParallelExecution/pdwFork
-$orderId = $orderId = Add-JS7Order -WorkflowPath /ProductDemo/ParallelExecution/pdwFork -EndPositions @( $positions[2].position, $positions[3].position )
-
-Adds an order for two possible end positions with the third (index: 2) and fourth (index: 3) position of the indicated workflow.
+Adds an order for two possible end positions with the labels "job3" and "job4" of the indicated workflow.
 
 .LINK
 about_JS7
@@ -196,9 +185,13 @@ param
     [Parameter(Mandatory=$False,ValueFromPipeline=$False,ValueFromPipelinebyPropertyName=$True)]
     [string] $Timezone,
     [Parameter(Mandatory=$False,ValueFromPipeline=$False,ValueFromPipelinebyPropertyName=$True)]
-    [object[]] $StartPosition,
+    [string] $BlockPosition,
     [Parameter(Mandatory=$False,ValueFromPipeline=$False,ValueFromPipelinebyPropertyName=$True)]
-    [object[][]] $EndPositions,
+    [string] $StartPosition,
+    [Parameter(Mandatory=$False,ValueFromPipeline=$False,ValueFromPipelinebyPropertyName=$True)]
+    [string[]] $EndPositions,
+    [Parameter(Mandatory=$False,ValueFromPipeline=$False,ValueFromPipelinebyPropertyName=$True)]
+    [switch] $ForceJobAdmission,
     [Parameter(Mandatory=$False,ValueFromPipeline=$False,ValueFromPipelinebyPropertyName=$True)]
     [string] $ControllerId,
     [Parameter(Mandatory=$False,ValueFromPipeline=$False,ValueFromPipelinebyPropertyName=$True)]
@@ -270,14 +263,24 @@ param
             Add-Member -Membertype NoteProperty -Name 'timeZone' -value $Timezone -InputObject $objOrder
         }
 
-        if ( $StartPosition.count )
+        if ( $StartPosition )
         {
             Add-Member -Membertype NoteProperty -Name 'startPosition' -value $StartPosition -InputObject $objOrder
+        }
+
+        if ( $BlockPosition )
+        {
+            Add-Member -Membertype NoteProperty -Name 'blockPosition' -value $BlockPosition -InputObject $objOrder
         }
 
         if ( $EndPositions.count )
         {
             Add-Member -Membertype NoteProperty -Name 'endPositions' -value $EndPositions -InputObject $objOrder
+        }
+
+        if ( $ForceJobAdmission )
+        {
+            Add-Member -Membertype NoteProperty -Name 'forceJobAdmission' -value ($ForceJobAdmission -eq $True) -InputObject $objOrder
         }
 
         if ( $Variables )

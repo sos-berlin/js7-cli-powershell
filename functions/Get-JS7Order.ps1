@@ -27,8 +27,8 @@ Optionally specifies the path and name of a workflow for which orders should be 
 One of the parameters -Folder, -WorkflowPath or -OrderId has to be specified if no pipelined order objects are provided.
 
 .PARAMETER WorkflowVersionId
-Deployed workflows can be assigned a version identifier. This parameter allows selection of
-workflows that are assigned the specified version.
+Deployed workflows are assigned a version identifier. The argument allows to select the
+workflow that is available with the specified version.
 
 .PARAMETER Folder
 Optionally specifies the folder with workflows for which orders should be returned.

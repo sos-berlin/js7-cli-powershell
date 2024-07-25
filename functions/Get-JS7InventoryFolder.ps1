@@ -14,6 +14,10 @@ The following REST Web Service API resources are used:
 .PARAMETER Folder
 Specifies the folder for which workflows should be returned.
 
+.PARAMETER Recursive
+When used with the -Folder parameter specifies that any sub-folders should be looked up.
+By default no sub-folders will be searched for workflows.
+
 .PARAMETER Type
 Specifies the object type which is one of:
 
@@ -32,10 +36,6 @@ Specifies the object type which is one of:
 ** NONWORKINGDAYSCALENDAR
 ** SCHEDULE
 ** REPORT
-
-.PARAMETER Recursive
-When used with the -Folder parameter specifies that any sub-folders should be looked up.
-By default no sub-folders will be searched for workflows.
 
 .OUTPUTS
 This cmdlet returns a PowerShell object that represents the inventory objects.
@@ -56,9 +56,9 @@ param
     [string] $Folder = '/',
     [Parameter(Mandatory=$False,ValueFromPipeline=$False,ValueFromPipelinebyPropertyName=$True)]
     [switch] $Recursive,
-    [Parameter(Mandatory=$True,ValueFromPipeline=$False,ValueFromPipelinebyPropertyName=$True)]
+    [Parameter(Mandatory=$False,ValueFromPipeline=$False,ValueFromPipelinebyPropertyName=$True)]
     [ValidateSet('FOLDER','WORKFLOW','FILEORDERSOURCE','INCLUDESCRIPT','JOBTEMPLATE','JOBRESOURCE','NOTICEBOARD','LOCK','WORKINGDAYSCALENDAR','NONWORKINGDAYSCALENDAR','SCHEDULE','REPORT',IgnoreCase = $False)]
-    [string] $Type,
+    [string[]] $Type,
     [Parameter(Mandatory=$False,ValueFromPipeline=$False,ValueFromPipelinebyPropertyName=$True)]
     [switch] $Valid
 )
@@ -91,90 +91,100 @@ param
         $body = New-Object PSObject
         Add-Member -Membertype NoteProperty -Name 'path' -value $Folder -InputObject $body
         Add-Member -Membertype NoteProperty -Name 'recursive' -value ($Recursive -eq $True) -InputObject $body
-        Add-Member -Membertype NoteProperty -Name 'objectType' -value $Type -InputObject $body
+
+        if ( $Type )
+        {
+            Add-Member -Membertype NoteProperty -Name 'objectTypes' -value $Type -InputObject $body
+        }
+
         Add-Member -Membertype NoteProperty -Name 'onlyValidObjects' -value ($Valid -eq $True) -InputObject $body
 
         [string] $requestBody = $body | ConvertTo-Json -Depth 100
         $response = Invoke-JS7WebRequest -Path '/inventory/read/folder' -Body $requestBody
+        $inventoryItems = @()
 
         if ( $response.StatusCode -eq 200 )
         {
-            switch ($Type.toUpper())
+            if ( $Type )
             {
-                'WORKFLOW'
+                switch ($Type.toUpper())
                 {
-                    $inventoryItems = ( $response | ConvertFrom-Json ).workflows
-                    break;
-                }
+                    'WORKFLOW'
+                    {
+                        $inventoryItems = ( $response | ConvertFrom-Json ).workflows
+                        break;
+                    }
 
-                'FILEORDERSOURCE'
-                {
-                    $inventoryItems = ( $response | ConvertFrom-Json ).fileOrderSources
-                    break;
-                }
+                    'FILEORDERSOURCE'
+                    {
+                        $inventoryItems = ( $response | ConvertFrom-Json ).fileOrderSources
+                        break;
+                    }
 
-                'INCLUDESCRIPT'
-                {
-                    $inventoryItems = ( $response | ConvertFrom-Json ).includeScripts
-                    break;
-                }
+                    'INCLUDESCRIPT'
+                    {
+                        $inventoryItems = ( $response | ConvertFrom-Json ).includeScripts
+                        break;
+                    }
 
-                'JOBTEMPLATE'
-                {
-                    $inventoryItems = ( $response | ConvertFrom-Json ).jobTemplates
-                    break;
-                }
+                    'JOBTEMPLATE'
+                    {
+                        $inventoryItems = ( $response | ConvertFrom-Json ).jobTemplates
+                        break;
+                    }
 
-                'JOBRESOURCE'
-                {
-                    $inventoryItems = ( $response | ConvertFrom-Json ).jobResources
-                    break;
-                }
+                    'JOBRESOURCE'
+                    {
+                        $inventoryItems = ( $response | ConvertFrom-Json ).jobResources
+                        break;
+                    }
 
-                'NOTICEBOARD'
-                {
-                    $inventoryItems = ( $response | ConvertFrom-Json ).noticeBoards
-                    break;
-                }
+                    'NOTICEBOARD'
+                    {
+                        $inventoryItems = ( $response | ConvertFrom-Json ).noticeBoards
+                        break;
+                    }
 
-                'LOCK'
-                {
-                    $inventoryItems = ( $response | ConvertFrom-Json ).locks
-                    break;
-                }
+                    'LOCK'
+                    {
+                        $inventoryItems = ( $response | ConvertFrom-Json ).locks
+                        break;
+                    }
 
-                'WORKINGDAYSCALENDAR'
-                {
-                    $inventoryItems = ( $response | ConvertFrom-Json ).calendars
-                    break;
-                }
+                    'WORKINGDAYSCALENDAR'
+                    {
+                        $inventoryItems = ( $response | ConvertFrom-Json ).calendars
+                        break;
+                    }
 
-                'NONWORKINGDAYSCALENDAR'
-                {
-                    $inventoryItems = ( $response | ConvertFrom-Json ).calendars
-                    break;
-                }
+                    'NONWORKINGDAYSCALENDAR'
+                    {
+                        $inventoryItems = ( $response | ConvertFrom-Json ).calendars
+                        break;
+                    }
 
-                'SCHEDULE'
-                {
-                    $inventoryItems = ( $response | ConvertFrom-Json ).schedules
-                    break;
-                }
+                    'SCHEDULE'
+                    {
+                        $inventoryItems = ( $response | ConvertFrom-Json ).schedules
+                        break;
+                    }
 
-                'REPORT'
-                {
-                    $inventoryItems = ( $response | ConvertFrom-Json ).reports
-                    break;
+                    'REPORT'
+                    {
+                        $inventoryItems = ( $response | ConvertFrom-Json ).reports
+                        break;
+                    }
                 }
+            } else {
+                $inventoryItems = ( $response | ConvertFrom-Json )
             }
-
         } else {
             throw ( $response | Format-List -Force | Out-String )
         }
 
         $inventoryItems
 
-        if ( $returnWorkflows.count )
+        if ( $inventoryItems.count )
         {
             Write-Verbose ".. $($MyInvocation.MyCommand.Name): $($inventoryItems.count) inventory items found"
         } else {
