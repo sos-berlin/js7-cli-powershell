@@ -69,6 +69,7 @@ By default no sub-folders will be searched for exportable objects.
 Specifies that only releasable objects should be exported that include the object types:
 
 * INCLUDESCRIPT
+* JOBTEMPLATE
 * WORKINGDAYSCALENDAR
 * NONWORKINGDAYSCALENDAR
 * SCHEDULE
@@ -123,6 +124,9 @@ instance operated for security level HIGH.
 * The process of export/signing/import must not exceed the max. idle time that is configured for a user's JOC Cockpit session.
 
 Without this parameter the export file is created for backup purposes and can include any deployable and releasable objects.
+
+.PARAMETER UseShortPath
+Specifies that the export file will not use the absolute path of folders but will start from the last sub-folder specified with the -Folder argument.
 
 .PARAMETER ControllerId
 Specifies the ID of the Controller to which objects should be deployed after external signing.
@@ -231,6 +235,8 @@ param
     [Parameter(Mandatory=$False,ValueFromPipeline=$False,ValueFromPipelinebyPropertyName=$True)]
     [switch] $ForSigning,
     [Parameter(Mandatory=$False,ValueFromPipeline=$False,ValueFromPipelinebyPropertyName=$True)]
+    [switch] $UseShortPath,
+    [Parameter(Mandatory=$False,ValueFromPipeline=$False,ValueFromPipelinebyPropertyName=$True)]
     [string] $ControllerId,
     [Parameter(Mandatory=$True,ValueFromPipeline=$False,ValueFromPipelinebyPropertyName=$True)]
     [string] $FilePath,
@@ -244,9 +250,9 @@ param
     [Parameter(Mandatory=$False,ValueFromPipeline=$False,ValueFromPipelinebyPropertyName=$True)]
     [Uri] $AuditTicketLink
 )
-	Begin
-	{
-		Approve-JS7Command $MyInvocation.MyCommand
+    Begin
+    {
+        Approve-JS7Command $MyInvocation.MyCommand
         $stopWatch = Start-JS7StopWatch
 
         if ( $ForSigning -and !$ControllerId )
@@ -382,6 +388,16 @@ param
                     $releasableObjects += $releasableItems.folders.releasables
                 }
 
+                foreach( $releasableFolder in $releasableItems.folders )
+                {
+                    $exportKey = "$($releasableFolder.path)-FOLDER"
+                    if ( !$exportObjects.Item( $exportKey ) )
+                    {
+                        $exportObject = @{ 'area' = 'releasable'; 'path' = "$($releasableFolder.path)"; 'type' = 'FOLDER'; 'released' = $True }
+                        $exportObjects.Add( $exportKey, $exportObject )
+                    }
+                }
+
                 foreach( $releasableObject in $releasableObjects )
                 {
                     if ( $releasableObject.id )
@@ -485,7 +501,7 @@ param
 
                 if ( $response.StatusCode -eq 200 )
                 {
-                    $deployableItems = ( $response.Content | ConvertFrom-JSON )
+                    $deployableItems = ( $response.Content | ConvertFrom-Json )
                 } else {
                     throw ( $response | Format-List -Force | Out-String )
                 }
@@ -495,6 +511,16 @@ param
                 if ( $deployableItems.folders )
                 {
                     $deployableObjects += $deployableItems.folders.deployables
+                }
+
+                foreach( $deployableFolder in $deployableItems.folders )
+                {
+                    $exportKey = "$($deployableFolder.path)-FOLDER"
+                    if ( !$exportObjects.Item( $exportKey ) )
+                    {
+                        $exportObject = @{ 'area' = 'deployable'; 'path' = "$($deployableFolder.path)"; 'type' = 'FOLDER'; 'deployed' = $True }
+                        $exportObjects.Add( $exportKey, $exportObject )
+                    }
                 }
 
                 foreach( $deployableObject in $deployableObjects )
@@ -550,6 +576,7 @@ param
             }
 
             Add-Member -Membertype NoteProperty -Name 'exportFile' -value $exportFile -InputObject $body
+            Add-Member -Membertype NoteProperty -Name 'useShortPath' -value ($UseShortPath -eq $True) -InputObject $body
 
             $deployableDraftConfigurations = @()
             $deployableDeployedConfigurations = @()
@@ -610,6 +637,27 @@ param
                     Add-Member -Membertype NoteProperty -Name 'configuration' -value $draftConfiguration -InputObject $draftConfigurationItem
 
                     $releasableDraftConfigurations += $draftConfigurationItem
+                } elseif ( $object.type -eq 'FOLDER' ) {
+                    $folderConfiguration = New-Object PSObject
+                    Add-Member -Membertype NoteProperty -Name 'path' -value $object.path -InputObject $folderConfiguration
+                    Add-Member -Membertype NoteProperty -Name 'objectType' -value $object.type -InputObject $folderConfiguration
+                    Add-Member -Membertype NoteProperty -Name 'recursive' -value ($Recursive -eq $True) -InputObject $folderConfiguration
+
+                    if ( $object.deployed )
+                    {
+                        $deployedConfigurationItem = New-Object PSObject
+                        Add-Member -Membertype NoteProperty -Name 'configuration' -value $folderConfiguration -InputObject $deployedConfigurationItem
+                        $deployableDeployedConfigurations += $deployedConfigurationItem
+                    }
+
+                    if ( $object.released )
+                    {
+                        $releasedConfigurationItem = New-Object PSObject
+                        Add-Member -Membertype NoteProperty -Name 'configuration' -value $folderConfiguration -InputObject $releasedConfigurationItem
+                        $releasableReleasedConfigurations += $releasedConfigurationItem
+                    }
+                } else {
+                    # Write-Output "unhandled object type: area=$($object.area), type=$($object.type), path=$($object.path), recursive=$($object.recursive)"
                 }
             }
 
