@@ -21,6 +21,7 @@ Specifies the folder, sub-folder and name of the object, e.g. a schedule path.
 Specifies the object type which is one of:
 
 * INCLUDESCRIPT
+* JOBTEMPLATE
 * SCHEDULE
 * WORKINGDAYSCALENDAR
 * NONWORKINGDAYSCALENDAR
@@ -68,7 +69,7 @@ param
     [Parameter(Mandatory=$False,ValueFromPipeline=$True,ValueFromPipelinebyPropertyName=$True)]
     [string] $Path,
     [Parameter(Mandatory=$False,ValueFromPipeline=$False,ValueFromPipelinebyPropertyName=$True)]
-    [ValidateSet('INCLUDESCRIPT','SCHEDULE','WORKINGDAYSCALENDAR','NONWORKINGDAYSCALENDAR','REPORT',IgnoreCase = $False)]
+    [ValidateSet('INCLUDESCRIPT','JOBTEMPLATE','SCHEDULE','WORKINGDAYSCALENDAR','NONWORKINGDAYSCALENDAR','REPORT',IgnoreCase = $False)]
     [string[]] $Type,
     [Parameter(Mandatory=$False,ValueFromPipeline=$False,ValueFromPipelinebyPropertyName=$True)]
     [string] $Folder,
@@ -91,7 +92,7 @@ param
             throw "$($MyInvocation.MyCommand.Name): Audit Log comment required, use parameter -AuditComment if one of the parameters -AuditTimeSpent or -AuditTicketLink is used"
         }
 
-        $releasableTypes = @('INCLUDESCRIPT','SCHEDULE','WORKINGDAYSCALENDAR','NONWORKINGDAYSCALENDAR')
+        $releasableTypes = @('INCLUDESCRIPT','JOBTEMPLATE','SCHEDULE','WORKINGDAYSCALENDAR','NONWORKINGDAYSCALENDAR')
 
         if (IsJOCVersion -Major 2 -Minor 7 -Patch 1 )
         {

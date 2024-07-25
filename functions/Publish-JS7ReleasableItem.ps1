@@ -24,6 +24,7 @@ Specifies the folder, sub-folder and name of the object, e.g. a schedule path.
 Specifies the object type which is one of:
 
 * INCLUDESCRIPT
+* JOBTEMPLATE
 * SCHEDULE
 * WORKINGDAYSCALENDAR
 * NONWORKINGDAYSCALENDAR
@@ -74,7 +75,7 @@ This information is shown in the Audit Log view of JOC Cockpit.
 It can be useful when integrated with a ticket system that logs interventions with JS7.
 
 .INPUTS
-This cmdlet accepts pipelined job objects that are e.g. returned from a Get-JS7Workflow cmdlet.
+This cmdlet accepts pipelined objects that are e.g. returned from a Get-JS7InventoryItem cmdlet.
 
 .OUTPUTS
 This cmdlet returns no output.
@@ -90,9 +91,9 @@ Publish-JS7ReleasableItem -Path /TestCases/sampleSchedule001 -Type 'SCHEDULE'
 Releases the specified schedule from the indicated path for use with a JS7 Controller.
 
 .EXAMPLE
-Publish-JS7ReleasableItem -Path /TestCases/sampleWorkflow -Type 'WORKFLOW' -Delete
+Publish-JS7ReleasableItem -Path /TestCases/sampleSchedule001 -Type 'SCHEDULE' -Delete
 
-Marks for deletion the specified workflow.
+Marks for deletion the specified schedule.
 
 .LINK
 about_JS7
@@ -104,7 +105,7 @@ param
     [Parameter(Mandatory=$False,ValueFromPipeline=$True,ValueFromPipelinebyPropertyName=$True)]
     [string] $Path,
     [Parameter(Mandatory=$False,ValueFromPipeline=$False,ValueFromPipelinebyPropertyName=$True)]
-    [ValidateSet('INCLUDESCRIPT','SCHEDULE','WORKINGDAYSCALENDAR','NONWORKINGDAYSCALENDAR','REPORT',IgnoreCase = $False)]
+    [ValidateSet('INCLUDESCRIPT','JOBTEMPLATE','SCHEDULE','WORKINGDAYSCALENDAR','NONWORKINGDAYSCALENDAR','REPORT',IgnoreCase = $False)]
     [string[]] $Type,
     [Parameter(Mandatory=$False,ValueFromPipeline=$False,ValueFromPipelinebyPropertyName=$True)]
     [string] $Folder,
@@ -121,7 +122,7 @@ param
     [Parameter(Mandatory=$False,ValueFromPipeline=$False,ValueFromPipelinebyPropertyName=$True)]
     [string] $ObjectName,
     [Parameter(Mandatory=$False,ValueFromPipeline=$False,ValueFromPipelinebyPropertyName=$True)]
-    [ValidateSet('INCLUDESCRIPT','SCHEDULE','WORKINGDAYSCALENDAR','NONWORKINGDAYSCALENDAR','REPORT',IgnoreCase = $False)]
+    [ValidateSet('INCLUDESCRIPT','JOBTEMPLATE','SCHEDULE','WORKINGDAYSCALENDAR','NONWORKINGDAYSCALENDAR','REPORT',IgnoreCase = $False)]
     [string] $ObjectType,
     [Parameter(Mandatory=$False,ValueFromPipeline=$False,ValueFromPipelinebyPropertyName=$True)]
     [string] $AuditComment,
@@ -142,7 +143,7 @@ param
 
         $storeObjects = @()
         $deleteObjects = @()
-        $releasableTypes = @('INCLUDESCRIPT','SCHEDULE','WORKINGDAYSCALENDAR','NONWORKINGDAYSCALENDAR')
+        $releasableTypes = @('INCLUDESCRIPT','JOBTEMPLATE','SCHEDULE','WORKINGDAYSCALENDAR','NONWORKINGDAYSCALENDAR')
 
         if (IsJOCVersion -Major 2 -Minor 7 -Patch 1 )
         {

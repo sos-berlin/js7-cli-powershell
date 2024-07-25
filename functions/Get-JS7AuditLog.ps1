@@ -35,6 +35,7 @@ use of commas, for example -Type WORKFLOW,SCHEDULE
 * NONWORKINGDAYSCALENDAR
 * SCHEDULE
 * INCLUDESCRIPT
+* JOBTEMPLATE
 * REPORT
 * DOCUMENTATION
 * ORDER
@@ -209,7 +210,7 @@ param
     [Parameter(Mandatory=$False,ValueFromPipeline=$False,ValueFromPipelinebyPropertyName=$True)]
     [switch] $Recursive,
     [Parameter(Mandatory=$False,ValueFromPipeline=$False,ValueFromPipelinebyPropertyName=$True)]
-    [ValidateSet('WORKFLOW','JOBRESOURCE','LOCK','FILEORDERSOURCE','NOTICEBOARD','WORKINGDAYSCALENDAR','NONWORKINGDAYSCALENDAR','SCHEDULE','INCLUDESCRIPT','REPORT','DOCUMENTATION','ORDER',IgnoreCase = $False)]
+    [ValidateSet('WORKFLOW','JOBRESOURCE','LOCK','FILEORDERSOURCE','NOTICEBOARD','WORKINGDAYSCALENDAR','NONWORKINGDAYSCALENDAR','SCHEDULE','INCLUDESCRIPT','JOBTEMPLATE','REPORT','DOCUMENTATION','ORDER',IgnoreCase = $False)]
     [string[]] $Type,
     [Parameter(Mandatory=$False,ValueFromPipeline=$False,ValueFromPipelinebyPropertyName=$True)]
     [string] $ObjectName,
