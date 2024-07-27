@@ -336,6 +336,11 @@ param
 
                 Write-Verbose ".. $($MyInvocation.MyCommand.Name): $($deployableObjects.count) deployable objects found"
 
+                foreach( $deployableFolder in $deployableItems.folders )
+                {
+                    $storeObjects += @{ 'path' = "$($deployableFolder.path)$($deployableFolder.objectName)"; 'type' = 'FOLDER'; 'valid' = $True; 'released' = $True }
+                }
+
                 foreach( $deployableObject in $deployableObjects )
                 {
                     if ( $deployableObject.objectType -eq 'FOLDER' )
@@ -390,6 +395,11 @@ param
                 }
 
                 Write-Verbose ".. $($MyInvocation.MyCommand.Name): $($releasableObjects.count) releasable objects found"
+
+                foreach( $releasableFolder in $releasableItems.folders )
+                {
+                    $storeObjects += @{ 'path' = "$($releasableFolder.path)$($releasableFolder.objectName)"; 'type' = 'FOLDER'; 'valid' = $True; 'released' = $True }
+                }
 
                 foreach( $releasableObject in $releasableObjects )
                 {

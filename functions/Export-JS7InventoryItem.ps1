@@ -213,7 +213,7 @@ param
     [ValidateSet('WORKFLOW','FILEORDERSOURCE','JOBRESOURCE','NOTICEBOARD','LOCK','INCLUDESCRIPT','JOBTEMPLATE','WORKINGDAYSCALENDAR','NONWORKINGDAYSCALENDAR','SCHEDULE','REPORT',IgnoreCase = $False)]
     [string[]] $Type,
     [Parameter(Mandatory=$False,ValueFromPipeline=$False,ValueFromPipelinebyPropertyName=$True)]
-    [string] $Folder,
+    [string[]] $Folder,
     [Parameter(Mandatory=$False,ValueFromPipeline=$False,ValueFromPipelinebyPropertyName=$True)]
     [switch] $Recursive,
     [Parameter(Mandatory=$False,ValueFromPipeline=$False,ValueFromPipelinebyPropertyName=$True)]
@@ -354,7 +354,7 @@ param
                 {
                     $exportObjects.Add( $exportKey, @{ 'area' = 'releasable'; 'path' = "$($releasableObject.folder)$($releasableObject.objectName)"; 'type' = $releasableObject.objectType; 'released' = $releasableObject.released } )
                 }
-            } elseif ( $Folder ) {
+            } elseif ( $Folder -and $Valid ) {
                 $body = New-Object PSObject
 
                 if ( !$Type )
@@ -364,7 +364,7 @@ param
                     Add-Member -Membertype NoteProperty -Name 'objectTypes' -value $Type -InputObject $body
                 }
 
-                Add-Member -Membertype NoteProperty -Name 'folder' -value $Folder -InputObject $body
+                Add-Member -Membertype NoteProperty -Name 'folder' -value $Folder[0] -InputObject $body
                 Add-Member -Membertype NoteProperty -Name 'recursive' -value ($Recursive -eq $True) -InputObject $body
                 Add-Member -Membertype NoteProperty -Name 'onlyValidObjects' -value ($Valid -eq $True) -InputObject $body
                 Add-Member -Membertype NoteProperty -Name 'withoutDrafts' -value ($NoDraft -eq $True) -InputObject $body
@@ -421,6 +421,10 @@ param
                         }
                     }
                 }
+            } elseif ( $Folder ) {
+                $exportKey = "$($Folder)-releasable-FOLDER"
+                $exportObject = @{ 'area' = 'releasable'; 'path' = "$($Folder[0])"; 'type' = 'FOLDER'; 'released' = $True }
+                $exportObjects.Add( $exportKey, $exportObject )
             }
         }
 
@@ -478,7 +482,7 @@ param
                         $exportObjects.Add( $exportKey, @{ 'area' = 'deployable'; 'path' = $Path; 'type' = $Type[0]; 'deployed' = $deployableObject.deployed } )
                     }
                 }
-            } elseif ( !$Path ) {
+            } elseif ( $Folder -and $Valid ) {
                 $body = New-Object PSObject
 
                 if ( $Folder )
@@ -488,7 +492,7 @@ param
                     Add-Member -Membertype NoteProperty -Name 'objectTypes' -value $Type -InputObject $body
                 }
 
-                Add-Member -Membertype NoteProperty -Name 'folder' -value $Folder -InputObject $body
+                Add-Member -Membertype NoteProperty -Name 'folder' -value $Folder[0] -InputObject $body
                 Add-Member -Membertype NoteProperty -Name 'recursive' -value ($Recursive -eq $True) -InputObject $body
                 Add-Member -Membertype NoteProperty -Name 'onlyValidObjects' -value ($Valid -eq $True) -InputObject $body
                 Add-Member -Membertype NoteProperty -Name 'withoutDrafts' -value ($NoDraft -eq $True) -InputObject $body
@@ -555,6 +559,10 @@ param
                         $exportObjects.Add( $exportKey, $exportObject )
                     }
                 }
+            } elseif ( $Folder ) {
+                $exportKey = "$($Folder)-deployable-FOLDER"
+                $exportObject = @{ 'area' = 'deployable'; 'path' = "$($Folder)"; 'type' = 'FOLDER'; 'deployed' = $True }
+                $exportObjects.Add( $exportKey, $exportObject )
             }
         }
     }
@@ -564,7 +572,6 @@ param
         if ( $exportObjects )
         {
             $body = New-Object PSObject
-
             $exportFile = New-Object PSObject
             Add-Member -Membertype NoteProperty -Name 'format' -value "$Format" -InputObject $exportFile
 
@@ -584,7 +591,7 @@ param
             $releasableReleasedConfigurations = @()
 
             $exportObjects.Keys | ForEach-Object { $object = $exportObjects.Item($_)
-                if ( $object.area -eq 'deployable' -and $object.path -and $object.commitId -and $object.deployed )
+                if ( $object.area -eq 'deployable' -and $object.path -and $object.commitId -and $object.deployed -and $object.type -ne 'FOLDER' )
                 {
                     $deployedConfiguration = New-Object PSObject
                     Add-Member -Membertype NoteProperty -Name 'path' -value $object.path -InputObject $deployedConfiguration
@@ -597,12 +604,20 @@ param
                     $deployableDeployedConfigurations += $deployedConfigurationItem
                 } elseif ( $object.area -eq 'deployable' -and $object.path -and !$object.deployed ) {
                     $draftConfiguration = New-Object PSObject
-                    Add-Member -Membertype NoteProperty -Name 'path' -value $object.path -InputObject $draftConfiguration
-                    Add-Member -Membertype NoteProperty -Name 'objectType' -value $object.type -InputObject $draftConfiguration
 
-                    if ( $object.type -eq 'FOLDER' )
+                    if ( $Folder -and !$Valid )
                     {
+                        Add-Member -Membertype NoteProperty -Name 'folders' -value @($object.path) -InputObject $draftConfiguration
+                        Add-Member -Membertype NoteProperty -Name 'objectTypes' -value $deployableTypes -InputObject $draftConfiguration
                         Add-Member -Membertype NoteProperty -Name 'recursive' -value ($Recursive -eq $True) -InputObject $draftConfiguration
+                    } else {
+                        Add-Member -Membertype NoteProperty -Name 'path' -value $object.path -InputObject $draftConfiguration
+                        Add-Member -Membertype NoteProperty -Name 'objectType' -value $object.type -InputObject $draftConfiguration
+
+                        if ( $object.type -eq 'FOLDER' )
+                        {
+                            Add-Member -Membertype NoteProperty -Name 'recursive' -value ($Recursive -eq $True) -InputObject $draftConfiguration
+                        }
                     }
 
                     $draftConfigurationItem = New-Object PSObject
@@ -611,12 +626,20 @@ param
                     $deployableDraftConfigurations += $draftConfigurationItem
                 } elseif ( $object.area -eq 'releasable' -and $object.path -and $object.released ) {
                     $releasedConfiguration = New-Object PSObject
-                    Add-Member -Membertype NoteProperty -Name 'path' -value $object.path -InputObject $releasedConfiguration
-                    Add-Member -Membertype NoteProperty -Name 'objectType' -value $object.type -InputObject $releasedConfiguration
 
-                    if ( $object.type -eq 'FOLDER' )
+                    if ( $Folder -and !$Valid )
                     {
+                        Add-Member -Membertype NoteProperty -Name 'folders' -value @($object.path) -InputObject $releasedConfiguration
+                        Add-Member -Membertype NoteProperty -Name 'objectTypes' -value $releasableTypes -InputObject $releasedConfiguration
                         Add-Member -Membertype NoteProperty -Name 'recursive' -value ($Recursive -eq $True) -InputObject $releasedConfiguration
+                    } else {
+                        Add-Member -Membertype NoteProperty -Name 'path' -value $object.path -InputObject $releasedConfiguration
+                        Add-Member -Membertype NoteProperty -Name 'objectType' -value $object.type -InputObject $releasedConfiguration
+
+                        if ( $object.type -eq 'FOLDER' )
+                        {
+                            Add-Member -Membertype NoteProperty -Name 'recursive' -value ($Recursive -eq $True) -InputObject $releasedConfiguration
+                        }
                     }
 
                     $releasedConfigurationItem = New-Object PSObject
@@ -625,12 +648,20 @@ param
                     $releasableReleasedConfigurations += $releasedConfigurationItem
                 } elseif ( $object.area -eq 'releasable' -and $object.path -and !$object.released ) {
                     $draftConfiguration = New-Object PSObject
-                    Add-Member -Membertype NoteProperty -Name 'path' -value $object.path -InputObject $draftConfiguration
-                    Add-Member -Membertype NoteProperty -Name 'objectType' -value $object.type -InputObject $draftConfiguration
 
-                    if ( $object.type -eq 'FOLDER' )
+                    if ( $Folder -and !$Valid )
                     {
+                        Add-Member -Membertype NoteProperty -Name 'folders' -value @($object.path) -InputObject $draftConfiguration
+                        Add-Member -Membertype NoteProperty -Name 'objectTypes' -value $releasableTypes -InputObject $draftConfiguration
                         Add-Member -Membertype NoteProperty -Name 'recursive' -value ($Recursive -eq $True) -InputObject $draftConfiguration
+                    } else {
+                        Add-Member -Membertype NoteProperty -Name 'path' -value $object.path -InputObject $draftConfiguration
+                        Add-Member -Membertype NoteProperty -Name 'objectType' -value $object.type -InputObject $draftConfiguration
+
+                        if ( $object.type -eq 'FOLDER' )
+                        {
+                            Add-Member -Membertype NoteProperty -Name 'recursive' -value ($Recursive -eq $True) -InputObject $draftConfiguration
+                        }
                     }
 
                     $draftConfigurationItem = New-Object PSObject
@@ -639,9 +670,23 @@ param
                     $releasableDraftConfigurations += $draftConfigurationItem
                 } elseif ( $object.type -eq 'FOLDER' ) {
                     $folderConfiguration = New-Object PSObject
-                    Add-Member -Membertype NoteProperty -Name 'path' -value $object.path -InputObject $folderConfiguration
-                    Add-Member -Membertype NoteProperty -Name 'objectType' -value $object.type -InputObject $folderConfiguration
-                    Add-Member -Membertype NoteProperty -Name 'recursive' -value ($Recursive -eq $True) -InputObject $folderConfiguration
+
+                    if ( $Folder -and !$Valid )
+                    {
+                        Add-Member -Membertype NoteProperty -Name 'folders' -value @($object.path) -InputObject $folderConfiguration
+                        Add-Member -Membertype NoteProperty -Name 'recursive' -value ($Recursive -eq $True) -InputObject $folderConfiguration
+
+                        if ( $object.deployed )
+                        {
+                            Add-Member -Membertype NoteProperty -Name 'objectTypes' -value $deployableTypes -InputObject $folderConfiguration
+                        } else {
+                            Add-Member -Membertype NoteProperty -Name 'objectTypes' -value $releasableTypes -InputObject $folderConfiguration
+                        }
+                    } else {
+                        Add-Member -Membertype NoteProperty -Name 'path' -value $object.path -InputObject $folderConfiguration
+                        Add-Member -Membertype NoteProperty -Name 'objectType' -value $object.type -InputObject $folderConfiguration
+                        Add-Member -Membertype NoteProperty -Name 'recursive' -value ($Recursive -eq $True) -InputObject $folderConfiguration
+                    }
 
                     if ( $object.deployed )
                     {
@@ -661,7 +706,7 @@ param
                 }
             }
 
-            if ( $deployableDeployedConfigurations.count -or $deployableDraftConfigurations.count )
+            if ( (!$Folder -or $Valid) -and $deployableDeployedConfigurations.count -or $deployableDraftConfigurations.count )
             {
                 $deployablesObj = New-Object PSObject
 
@@ -676,8 +721,7 @@ param
                 }
             }
 
-
-            if ( $releasableReleasedConfigurations.count -or $releasableDraftConfigurations.count )
+            if ( (!$Folder -or $Valid) -and $releasableReleasedConfigurations.count -or $releasableDraftConfigurations.count )
             {
                 $releasablesObj = New-Object PSObject
 
@@ -693,7 +737,7 @@ param
             }
 
 
-            if ( $ForSigning )
+            if ( (!$Folder -or $Valid) -and $ForSigning )
             {
                 $forSigningObj = New-Object PSObject
 
@@ -708,7 +752,7 @@ param
                 }
 
                 Add-Member -Membertype NoteProperty -Name 'forSigning' -value $forSigningObj -InputObject $body
-            } elseif ( $deployablesObj -or $releasablesObj ) {
+            } elseif ( (!$Folder -or $Valid) -and ($deployablesObj -or $releasablesObj) ) {
                 $shallowCopyObj = New-Object PSObject
 
                 if ( $ControllerId )
@@ -727,64 +771,103 @@ param
                 }
 
                 Add-Member -Membertype NoteProperty -Name 'shallowCopy' -value $shallowCopyObj -InputObject $body
-            }
+                Add-Member -Membertype NoteProperty -Name 'onlyValidObjects' -value ($Valid -eq $True) -InputObject $exportObject
+            } elseif ( $Folder -and !$Valid ) {
+                $exportObj = New-Object PSObject
 
-            if ( $deployablesObj -or $releasablesObj )
-            {
-                Add-Member -Membertype NoteProperty -Name 'withoutInvalid' -value ($Valid -eq $True) -InputObject $body
-
-                if ( $AuditComment -or $AuditTimeSpent -or $AuditTicketLink )
+                if ( $ControllerId )
                 {
-                    $objAuditLog = New-Object PSObject
-                    Add-Member -Membertype NoteProperty -Name 'comment' -value $AuditComment -InputObject $objAuditLog
-
-                    if ( $AuditTimeSpent )
-                    {
-                        Add-Member -Membertype NoteProperty -Name 'timeSpent' -value $AuditTimeSpent -InputObject $objAuditLog
-                    }
-
-                    if ( $AuditTicketLink )
-                    {
-                        Add-Member -Membertype NoteProperty -Name 'ticketLink' -value $AuditTicketLink -InputObject $objAuditLog
-                    }
-
-                    Add-Member -Membertype NoteProperty -Name 'auditLog' -value $objAuditLog -InputObject $body
+                    Add-Member -Membertype NoteProperty -Name 'controllerId' -value $ControllerId -InputObject $exportObj
                 }
 
-                if ( $FilePath -and (Test-Path -Path $FilePath -PathType Leaf) )
+                Add-Member -Membertype NoteProperty -Name 'folders' -value $Folder -InputObject $exportObj
+                Add-Member -Membertype NoteProperty -Name 'recursive' -value ($Recursive -eq $True) -InputObject $exportObj
+
+                $objectTypes = @()
+
+                if ( $Deployable )
                 {
-                    Remove-Item -Path $FilePath -Force
+                    $objectTypes += $deployableTypes
                 }
 
-                # not used with Invoke-WebRequest -OutFile
-                # $headers = @{'Accept' = 'application/json, text/plain, */*'; 'Accept-Encoding' = 'gzip, deflate'; 'Content-Disposition' = "attachment; filename*=UTF-8''joc-export.zip" }
-                $headers = @{'Accept' = 'application/json, text/plain, */*'; 'Accept-Encoding' = 'gzip, deflate'}
-
-                [string] $requestBody = $body | ConvertTo-Json -Depth 100
-                $response = Invoke-JS7WebRequest -Path '/inventory/export' -Body $requestBody -Headers $headers -OutFile $FilePath
-
-                if ( Test-Path -Path $FilePath -PathType Leaf )
+                if ( $Releasable )
                 {
-                    if ( isPowerShellVersion 6 )
-                    {
-                        $bytes = Get-Content $FilePath -AsByteStream -TotalCount 1
-                    } else {
-                        $bytes = Get-Content $FilePath -Encoding byte -TotalCount 1
-                    }
+                    $objectTypes += $releasableTypes
+                }
 
-                    # if first character is { (7B, 123) then this indicates a JSON response holding an error
-                    if ( $bytes -eq '123' )
-                    {
-                        throw "$($MyInvocation.MyCommand.Name): error occurred: $(Get-Content $FilePath -Encoding UTF8 -TotalCount 200)"
-                    }
+                Add-Member -Membertype NoteProperty -Name 'objectTypes' -value $objectTypes -InputObject $exportObj
+
+                if ( $ForSigning )
+                {
+                    Add-Member -Membertype NoteProperty -Name 'forSigning' -value $exportObj -InputObject $body
                 } else {
-                    throw "$($MyInvocation.MyCommand.Name): error occurred:`n$($response | Format-List -Force | Out-String)"
+                    Add-Member -Membertype NoteProperty -Name 'shallowCopy' -value $exportObj -InputObject $body
+                }
+            }
+        }
+
+        # if ( $Folder -or $deployablesObj -or $releasablesObj )
+        if ( $forSigningObj -or $shallowCopyObj -or $exportObj )
+        {
+            Add-Member -Membertype NoteProperty -Name 'withoutInvalid' -value ($Valid -eq $True) -InputObject $body
+
+            if ( $AuditComment -or $AuditTimeSpent -or $AuditTicketLink )
+            {
+                $objAuditLog = New-Object PSObject
+                Add-Member -Membertype NoteProperty -Name 'comment' -value $AuditComment -InputObject $objAuditLog
+
+                if ( $AuditTimeSpent )
+                {
+                    Add-Member -Membertype NoteProperty -Name 'timeSpent' -value $AuditTimeSpent -InputObject $objAuditLog
                 }
 
-                Write-Verbose ".. $($MyInvocation.MyCommand.Name): $($exportObjects.count) items exported"
-            } else {
-                Write-Verbose ".. $($MyInvocation.MyCommand.Name): no items exported"
+                if ( $AuditTicketLink )
+                {
+                    Add-Member -Membertype NoteProperty -Name 'ticketLink' -value $AuditTicketLink -InputObject $objAuditLog
+                }
+
+                Add-Member -Membertype NoteProperty -Name 'auditLog' -value $objAuditLog -InputObject $body
             }
+
+            if ( $FilePath -and (Test-Path -Path $FilePath -PathType Leaf) )
+            {
+                Remove-Item -Path $FilePath -Force
+            }
+
+            # not used with Invoke-WebRequest -OutFile
+            # $headers = @{'Accept' = 'application/json, text/plain, */*'; 'Accept-Encoding' = 'gzip, deflate'; 'Content-Disposition' = "attachment; filename*=UTF-8''joc-export.zip" }
+            $headers = @{'Accept' = 'application/json, text/plain, */*'; 'Accept-Encoding' = 'gzip, deflate'}
+
+            [string] $requestBody = $body | ConvertTo-Json -Depth 100
+
+            if ( $Folder -and !$Valid )
+            {
+                $response = Invoke-JS7WebRequest -Path '/inventory/export/folder' -Body $requestBody -Headers $headers -OutFile $FilePath
+            } else {
+                $response = Invoke-JS7WebRequest -Path '/inventory/export' -Body $requestBody -Headers $headers -OutFile $FilePath
+            }
+
+            if ( Test-Path -Path $FilePath -PathType Leaf )
+            {
+                if ( isPowerShellVersion 6 )
+                {
+                    $bytes = Get-Content $FilePath -AsByteStream -TotalCount 1
+                } else {
+                    $bytes = Get-Content $FilePath -Encoding byte -TotalCount 1
+                }
+
+                # if first character is { (7B, 123) then this indicates a JSON response holding an error
+                if ( $bytes -eq '123' )
+                {
+                    throw "$($MyInvocation.MyCommand.Name): error occurred: $(Get-Content $FilePath -Encoding UTF8 -TotalCount 200)"
+                }
+            } else {
+                throw "$($MyInvocation.MyCommand.Name): error occurred:`n$($response | Format-List -Force | Out-String)"
+            }
+
+            Write-Verbose ".. $($MyInvocation.MyCommand.Name): $($exportObjects.count) items exported"
+        } else {
+            Write-Verbose ".. $($MyInvocation.MyCommand.Name): no items exported"
         }
 
         Trace-JS7StopWatch -CommandName $MyInvocation.MyCommand.Name -StopWatch $stopWatch
