@@ -12,7 +12,7 @@ The following REST Web Service API resources are used:
 * /orders/add
 
 .PARAMETER WorkflowPath
-Specifies the path and name of a workflow for which an order should be added.
+Specifies the path and/or name of a workflow for which an order should be added.
 
 .PARAMETER OrderName
 Specifies the name of an order. The JOC Cockpit web service will consider the order name
@@ -191,6 +191,8 @@ param
     [Parameter(Mandatory=$False,ValueFromPipeline=$False,ValueFromPipelinebyPropertyName=$True)]
     [string[]] $EndPositions,
     [Parameter(Mandatory=$False,ValueFromPipeline=$False,ValueFromPipelinebyPropertyName=$True)]
+    [string[]] $Tag,
+    [Parameter(Mandatory=$False,ValueFromPipeline=$False,ValueFromPipelinebyPropertyName=$True)]
     [switch] $ForceJobAdmission,
     [Parameter(Mandatory=$False,ValueFromPipeline=$False,ValueFromPipelinebyPropertyName=$True)]
     [string] $ControllerId,
@@ -286,6 +288,11 @@ param
         if ( $Variables )
         {
             Add-Member -Membertype NoteProperty -Name 'arguments' -value $Variables -InputObject $objOrder
+        }
+
+        if ( $Tag )
+        {
+            Add-Member -Membertype NoteProperty -Name 'tags' -value ($Tag) -InputObject $objOrder
         }
 
         $objOrders += $objOrder

@@ -113,13 +113,13 @@ This cmdlet returns an array of daily plan orders.
 
 .EXAMPLE
 $orders = Get-JS7DailyPlanOrder
-Set-JS7DailyPlanOrder -OrderId $order[0].orderId -ScheduledFor $order[0].plannedStartTime -RelativeScheduledTime '+03:00:00'
+Set-JS7DailyPlanOrder -OrderId $orders[0].orderId -ScheduledFor $orders[0].plannedStartTime -RelativeScheduledTime '+03:00:00'
 
 Moves the start time of a non-cyclic order of the current daily plan date 3 hours forward.
 
 .EXAMPLE
 $orders = Get-JS7DailyPlanOrder
-Set-JS7DailyPlanOrder -OrderId $order[0].orderId -ScheduledFor $order[0].plannedStartTime -RelativeScheduledTime '-03:00:00' -Cycle $order[0].period
+Set-JS7DailyPlanOrder -OrderId $orders[0].orderId -ScheduledFor $orders[0].plannedStartTime -RelativeScheduledTime '-03:00:00' -Cycle $orders[0].period
 
 Moves the start time of a cyclic order of the current daily plan date 3 hours back.
 

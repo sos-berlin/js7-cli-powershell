@@ -12,10 +12,10 @@ The following REST Web Service API resources are used:
 * /daily_plan/orders
 
 .PARAMETER WorkflowPath
-Optionally specifies the path and name of a workflow for which daily plan orders should be returned.
+Optionally specifies the path and/or name of a workflow for which daily plan orders should be returned.
 
 .PARAMETER SchedulePath
-Optionally specifies the path and name of a schedule for which daily plan orders should be returned.
+Optionally specifies the path and/or name of a schedule for which daily plan orders should be returned.
 
 .PARAMETER Folder
 Optionally specifies the folder with workflows for which daily plan orders should be returned.
