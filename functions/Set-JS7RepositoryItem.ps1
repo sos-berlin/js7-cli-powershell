@@ -327,11 +327,11 @@ param
                     throw ( $response | Format-List -Force | Out-String )
                 }
 
+                $deployableObjects = $deployableItems.deployables
+
                 if ( $deployableItems.folders )
                 {
-                    $deployableObjects = $deployableItems.folders.deployables
-                } else {
-                    $deployableObjects = $deployableItems.deployables
+                    $deployableObjects += $deployableItems.folders.deployables
                 }
 
                 Write-Verbose ".. $($MyInvocation.MyCommand.Name): $($deployableObjects.count) deployable objects found"
@@ -387,11 +387,11 @@ param
                     throw ( $response | Format-List -Force | Out-String )
                 }
 
+                $releasableObjects = $releasableItems.releasables
+
                 if ( $releasableItems.folders )
                 {
-                    $releasableObjects = $releasableItems.folders.releasables
-                } else {
-                    $releasableObjects = $releasableItems.releasables
+                    $releasableObjects += $releasableItems.folders.releasables
                 }
 
                 Write-Verbose ".. $($MyInvocation.MyCommand.Name): $($releasableObjects.count) releasable objects found"
