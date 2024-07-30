@@ -187,22 +187,22 @@ param
                 throw ( $response | Format-List -Force | Out-String )
             }
 
+            $releasableObjects = $releasableItems.releasables
+
             if ( $releasableItems.folders )
             {
-                $releasableItems.folders.releasables
-                $returnItemsCount = ($releasableItems.folders.releasables).count
-            } else {
-                $releasableItems.releasables
-                $returnItemsCount = ($releasableItems.releasables).count
+                $releasableObjects += $releasableItems.folders.releasables
             }
+
+            $releasableObjects
         }
     }
 
     End
     {
-        if ( $returnItemsCount )
+        if ( $releasableObjects.count )
         {
-            Write-Verbose ".. $($MyInvocation.MyCommand.Name): $returnItemsCount items returned"
+            Write-Verbose ".. $($MyInvocation.MyCommand.Name): $($releasableObjects.count) items returned"
         } else {
             Write-Verbose ".. $($MyInvocation.MyCommand.Name): no items returned"
         }

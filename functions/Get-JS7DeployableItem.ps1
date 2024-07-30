@@ -184,22 +184,22 @@ param
                 throw ( $response | Format-List -Force | Out-String )
             }
 
+            $deployableObjects = $deployableItems.deployables
+
             if ( $deployableItems.folders )
             {
-                $deployableItems.folders.deployables
-                $returnItemsCount = ($deployableItems.folders.deployables).count
-            } else {
-                $deployableItems.deployables
-                $returnItemsCount = ($deployableItems.deployables).count
+                $deployableObjects += $deployableItems.folders.deployables
             }
+
+            $deployableObjects
         }
     }
 
     End
     {
-        if ( $returnItemsCount )
+        if ( $deployableObjects.count )
         {
-            Write-Verbose ".. $($MyInvocation.MyCommand.Name): $returnObjectItems items found"
+            Write-Verbose ".. $($MyInvocation.MyCommand.Name): $($deployableObjects.count) items found"
         } else {
             Write-Verbose ".. $($MyInvocation.MyCommand.Name): no items found"
         }
