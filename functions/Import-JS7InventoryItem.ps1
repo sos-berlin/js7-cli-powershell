@@ -134,7 +134,7 @@ param
 
         if ( !(isPowerShellVersion 6) )
         {
-            throw "$($MyInvocation.MyCommand.Name): Cmdlet not supported for PowerShell versions older that 6.0"
+            throw "$($MyInvocation.MyCommand.Name): Cmdlet not supported for PowerShell versions older than 6.0"
         }
     }
 
