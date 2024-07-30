@@ -44,6 +44,16 @@ Specifies that all sub-folders should be looked up. By default no sub-folders wi
 .PARAMETER ControllerId
 Specifies one or more Controllers to which the indicated objects should be deployed.
 
+.PARAMETER UpdateDailyPlanFrom
+Specifies the Daily Plan date starting from which orders from the Daily Plan should be updated to use the latest deployed version of a workflow.
+
+This parameter can be used alternatively to -UpdateDailyPlanNow. If none of the parameters is specified, then the Daily Plan will not be updated.
+
+.PARAMETER UpdateDailyPlanNow
+Specifies that any scheduled orders from the Daily Plan should be updated to use the latest deployed version of a workflow.
+
+This parameter can be used alternatively to -UpdateDailyPlanFrom. If none of the parameters is specified, then the Daily Plan will not be updated.
+
 .PARAMETER Delete
 Specifies the action to permanently delete objects from a Controller. Without this switch objects
 are published for use with a Controller.
@@ -127,6 +137,10 @@ param
     [Parameter(Mandatory=$True,ValueFromPipeline=$False,ValueFromPipelinebyPropertyName=$True)]
     [string] $ControllerId,
     [Parameter(Mandatory=$False,ValueFromPipeline=$False,ValueFromPipelinebyPropertyName=$True)]
+    [DateTime] $UpdateDailyPlanFrom,
+    [Parameter(Mandatory=$False,ValueFromPipeline=$False,ValueFromPipelinebyPropertyName=$True)]
+    [switch] $UpdateDailyPlanNow,
+    [Parameter(Mandatory=$False,ValueFromPipeline=$False,ValueFromPipelinebyPropertyName=$True)]
     [switch] $Delete,
     [Parameter(Mandatory=$False,ValueFromPipeline=$False,ValueFromPipelinebyPropertyName=$True)]
     [switch] $Valid,
@@ -152,6 +166,11 @@ param
 	{
 		Approve-JS7Command $MyInvocation.MyCommand
         $stopWatch = Start-JS7StopWatch
+
+        if ( $UpdateDailyPlanFrom -and $UpdateDailyPlanNow )
+        {
+            throw "$($MyInvocation.MyCommand.Name): Only one of the parameters -UpdateDailyPlanFrom and -UpdateDailyPlanNow can be used"
+        }
 
         if ( !$AuditComment -and ( $AuditTimeSpent -or $AuditTicketLink ) )
         {
@@ -274,11 +293,11 @@ param
                 throw ( $response | Format-List -Force | Out-String )
             }
 
+            $deployableObjects = $deployableItems.deployables
+
             if ( $deployableItems.folders )
             {
-                $deployableObjects = $deployableItems.folders.deployables
-            } else {
-                $deployableObjects = $deployableItems.deployables
+                $deployableObjects += $deployableItems.folders.deployables
             }
 
             foreach( $deployableObject in $deployableObjects )
@@ -321,6 +340,13 @@ param
         {
             $body = New-Object PSObject
             Add-Member -Membertype NoteProperty -Name 'controllerIds' -value $controllerIds -InputObject $body
+
+            if ( $UpdateDailyPlanNow )
+            {
+                Add-Member -Membertype NoteProperty -Name 'addOrdersDateFrom' -value 'now' -InputObject $body
+            } elseif ( $UpdateDailyPlanFrom ) {
+                Add-Member -Membertype NoteProperty -Name 'addOrdersDateFrom' -value (Get-Date $UpdateDailyPlanFrom -Format 'yyyy-MM-dd') -InputObject $body
+            }
 
             $draftConfigurations = @()
             $deployConfigurations = @()

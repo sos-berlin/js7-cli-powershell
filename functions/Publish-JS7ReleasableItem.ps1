@@ -37,6 +37,16 @@ This parameter is used alternatively to the -Path parameter that specifies to pu
 .PARAMETER Recursive
 Specifies that all sub-folders should be looked up. By default no sub-folders will be considered.
 
+.PARAMETER UpdateDailyPlanFrom
+Specifies the Daily Plan date starting from which orders from the Daily Plan should be updated to use the latest deployed version of a workflow.
+
+This parameter can be used alternatively to -UpdateDailyPlanNow. If none of the parameters is specified, then the Daily Plan will not be updated.
+
+.PARAMETER UpdateDailyPlanNow
+Specifies that any scheduled orders from the Daily Plan should be updated to use the latest deployed version of a workflow.
+
+This parameter can be used alternatively to -UpdateDailyPlanFrom. If none of the parameters is specified, then the Daily Plan will not be updated.
+
 .PARAMETER Delete
 Specifies the action to permanently delete previously removed objects.
 Without this switch objects are released for use with any JS7 Controller.
@@ -112,6 +122,10 @@ param
     [Parameter(Mandatory=$False,ValueFromPipeline=$False,ValueFromPipelinebyPropertyName=$True)]
     [switch] $Recursive,
     [Parameter(Mandatory=$False,ValueFromPipeline=$False,ValueFromPipelinebyPropertyName=$True)]
+    [DateTime] $UpdateDailyPlanFrom,
+    [Parameter(Mandatory=$False,ValueFromPipeline=$False,ValueFromPipelinebyPropertyName=$True)]
+    [switch] $UpdateDailyPlanNow,
+    [Parameter(Mandatory=$False,ValueFromPipeline=$False,ValueFromPipelinebyPropertyName=$True)]
     [switch] $Delete,
     [Parameter(Mandatory=$False,ValueFromPipeline=$False,ValueFromPipelinebyPropertyName=$True)]
     [switch] $Valid,
@@ -135,6 +149,11 @@ param
 	{
 		Approve-JS7Command $MyInvocation.MyCommand
         $stopWatch = Start-JS7StopWatch
+
+        if ( $UpdateDailyPlanFrom -and $UpdateDailyPlanNow )
+        {
+            throw "$($MyInvocation.MyCommand.Name): Only one of the parameters -UpdateDailyPlanFrom and -UpdateDailyPlanNow can be used"
+        }
 
         if ( !$AuditComment -and ( $AuditTimeSpent -or $AuditTicketLink ) )
         {
@@ -294,6 +313,13 @@ param
         {
             $body = New-Object PSObject
 
+            if ( $UpdateDailyPlanNow )
+            {
+                Add-Member -Membertype NoteProperty -Name 'addOrdersDateFrom' -value 'now' -InputObject $body
+            } elseif ( $UpdateDailyPlanFrom ) {
+                Add-Member -Membertype NoteProperty -Name 'addOrdersDateFrom' -value (Get-Date $UpdateDailyPlanFrom -Format 'yyyy-MM-dd') -InputObject $body
+            }
+
             $objects = @()
             foreach( $object in $storeObjects )
             {
@@ -307,7 +333,6 @@ param
             {
                 Add-Member -Membertype NoteProperty -Name 'update' -value $objects -InputObject $body
             }
-
 
             $objects = @()
             foreach( $object in $deleteObjects )
