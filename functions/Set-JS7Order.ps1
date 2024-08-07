@@ -147,7 +147,7 @@ param
                 throw "$($MyInvocation.MyCommand.Name): argument -Transfer requires to specify one of -WorkflowPath or -WorkflowId arguments"
             }
 
-            if ( $WorkflowPath -and !$WorkflowId )
+            if ( $WorkflowPath -and $WorkflowId )
             {
                 throw "$($MyInvocation.MyCommand.Name): argument -Transfer requires to specify one of -WorkflowPath or -WorkflowId arguments"
             }
@@ -158,7 +158,7 @@ param
             $orderIds += $OrderId
         }
 
-        if ( $Transfer -and ( ($WorkflowPath -and $workflows -notcontains "$($WorkflowPath)-$(WorkflowVersionId)") -or ( $WorkflowId -and ($workflows -notcontains "$($WorkflowId.path)-$($WorkflowId.versionId)") ) ) )
+        if ( $Transfer -and ( ($WorkflowPath -and $workflows -notcontains "$($WorkflowPath)-$($WorkflowVersionId)") -or ( $WorkflowId -and ($workflows -notcontains "$($WorkflowId.path)-$($WorkflowId.versionId)") ) ) )
         {
             if ( $WorkflowPath )
             {
