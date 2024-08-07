@@ -27,11 +27,9 @@ Optionally specifies the folder that includes workflows for which the order hist
 Specifies that any sub-folders should be looked up when used with the -Folder parameter.
 By default no sub-folders will be looked up for workflow paths.
 
-.PARAMETER ExcludeOrder
-This parameter accepts a hashmap of Order IDs and optionally workflow paths that are excluded from the results.
+.PARAMETER ExcludeWorkflow
+This parameter accepts a list of workflow paths that are excluded from the results.
 If a workflow path is specified then all orders of the given workflow are excluded.
-
-   Get-JSOrderHistory -folder /some_folder -ExcludeOrder @{ 'workflowPath'='/some_folder/some_sub_folder/some_workflow' }
 
 .PARAMETER RegularExpression
 Specifies that a regular expession is applied to Order IDs to filter results.
@@ -146,9 +144,9 @@ $items = Get-JS7OrderHistory -WorkflowPath /some_path/some_workflow
 Returns today's order execution history for a given workflow.
 
 .EXAMPLE
-$items = Get-JS7OrderHistory -ExcludeOrder @{ 'workflowPath'='/some_path/some_workflow'; 'orderId'='2020-11-23#P0000000547-orderSampleWorkflow1a' }
+$items = Get-JS7OrderHistory -ExcludeWorkflow workflow1,workflow2
 
-Returns today's order execution history for any orders excluding orders from the specified workflow paths and Order IDs.
+Returns today's order execution history for any orders excluding orders from the specified workflows.
 
 .EXAMPLE
 $items = Get-JS7OrderHistory -Successful -DateFrom "2020-08-11 14:00:00Z"
@@ -209,7 +207,7 @@ param
     [Parameter(Mandatory=$False,ValueFromPipeline=$False,ValueFromPipelinebyPropertyName=$True)]
     [switch] $Recursive,
     [Parameter(Mandatory=$False,ValueFromPipeline=$False,ValueFromPipelinebyPropertyName=$True)]
-    [hashtable] $ExcludeOrder,
+    [string[]] $ExcludeWorkflow,
     [Parameter(Mandatory=$False,ValueFromPipeline=$False,ValueFromPipelinebyPropertyName=$True)]
     [string] $RegularExpression,
     [Parameter(Mandatory=$False,ValueFromPipeline=$False,ValueFromPipelinebyPropertyName=$True)]
@@ -241,7 +239,7 @@ param
         $orders = @()
         $folders = @()
         $historyStates = @()
-        $excludeOrders = @()
+        $excludeWorkflows = @()
     }
 
     Process
@@ -319,27 +317,9 @@ param
             $folders += $objFolder
         }
 
-        if ( $ExcludeOrder )
+        if ( $ExcludeWorkflow )
         {
-            foreach( $excludeOrderItem in $ExcludeOrder )
-            {
-                $objExcludeOrder = New-Object PSObject
-
-                if ( $excludeOrderItem.orderId )
-                {
-                    Add-Member -Membertype NoteProperty -Name 'orderId' -value $excludeOrderItem.orderId -InputObject $objExcludeOrder
-                }
-
-                if ( $excludeOrderItem.workflowPath )
-                {
-                    Add-Member -Membertype NoteProperty -Name 'workflowPath' -value $excludeOrderItem.workflowPath -InputObject $objExcludeOrder
-                }
-
-                if ( $excludeOrderItem.orderId -or $excludeOrderItem.workflowPath )
-                {
-                    $excludeOrders += $objExcludeOrder
-                }
-            }
+            $excludeWorkflows += $ExcludeWorkflow
         }
     }
 
@@ -370,9 +350,9 @@ param
             Add-Member -Membertype NoteProperty -Name 'orders' -value $orders -InputObject $body
         }
 
-        if ( $excludeOrders )
+        if ( $excludeWorkflows )
         {
-            Add-Member -Membertype NoteProperty -Name 'excludeOrders' -value $excludeOrders -InputObject $body
+            Add-Member -Membertype NoteProperty -Name 'excludeWorkflows' -value $excludeWorkflows -InputObject $body
         }
 
         if ( $WorkflowName )

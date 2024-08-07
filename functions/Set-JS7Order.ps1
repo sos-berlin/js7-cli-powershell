@@ -85,11 +85,13 @@ about_JS7
 [cmdletbinding(SupportsShouldProcess)]
 param
 (
-    [Parameter(Mandatory=$True,ValueFromPipeline=$True,ValueFromPipelinebyPropertyName=$True)]
+    [Parameter(Mandatory=$False,ValueFromPipeline=$False,ValueFromPipelinebyPropertyName=$True)]
     [string] $OrderId,
-    [Parameter(Mandatory=$False,ValueFromPipeline=$True,ValueFromPipelinebyPropertyName=$True)]
+    [Parameter(Mandatory=$False,ValueFromPipeline=$False,ValueFromPipelinebyPropertyName=$True)]
+    [PSCustomObject] $WorkflowId,
+    [Parameter(Mandatory=$False,ValueFromPipeline=$False,ValueFromPipelinebyPropertyName=$True)]
     [string] $WorkflowPath,
-    [Parameter(Mandatory=$False,ValueFromPipeline=$True,ValueFromPipelinebyPropertyName=$True)]
+    [Parameter(Mandatory=$False,ValueFromPipeline=$False,ValueFromPipelinebyPropertyName=$True)]
     [string] $WorkflowVersionId,
     [Parameter(Mandatory=$False,ValueFromPipeline=$False,ValueFromPipelinebyPropertyName=$True)]
     [switch] $Transfer,
@@ -109,17 +111,17 @@ param
 
         if ( !$Transfer -and !$LetRun )
         {
-            throw "$($MyInvocation.MyCommand.Name): One of the actions -Transfer, -LetRun must be specified"
+            throw "$($MyInvocation.MyCommand.Name): One of the actions -Transfer or -LetRun must be specified"
+        }
+
+        if ( $Transfer -and $LetRun )
+        {
+            throw "$($MyInvocation.MyCommand.Name): Only one of the actions -Transfer or -LetRun can be specified"
         }
 
         if ( $LetRun -and !$OrderId )
         {
             throw "$($MyInvocation.MyCommand.Name): argument -LetRun requires to specify -OrderId argument"
-        }
-
-        if ( $Transfer -and !$WorkflowPath )
-        {
-            throw "$($MyInvocation.MyCommand.Name): argument -Transfer requires to specify -WorkflowPath, -WorkflowVersionId arguments"
         }
 
         if ( ($WorkflowPath -and !$WorkflowVersionId) -or (!$WorkflowPath -and $WorkflowVersionId) )
@@ -133,19 +135,51 @@ param
         }
 
         $orderIds = @()
+        $workflows = @()
     }
 
     Process
     {
+        if ( $Transfer )
+        {
+            if ( !$WorkflowPath -and !$WorkflowId )
+            {
+                throw "$($MyInvocation.MyCommand.Name): argument -Transfer requires to specify one of -WorkflowPath or -WorkflowId arguments"
+            }
+
+            if ( $WorkflowPath -and !$WorkflowId )
+            {
+                throw "$($MyInvocation.MyCommand.Name): argument -Transfer requires to specify one of -WorkflowPath or -WorkflowId arguments"
+            }
+        }
+
         if ( $LetRun )
         {
             $orderIds += $OrderId
         }
 
-        if ( $Transfer )
+        if ( $Transfer -and ( ($WorkflowPath -and $workflows -notcontains "$($WorkflowPath)-$(WorkflowVersionId)") -or ( $WorkflowId -and ($workflows -notcontains "$($WorkflowId.path)-$($WorkflowId.versionId)") ) ) )
         {
+            if ( $WorkflowPath )
+            {
+                $workflows += "$($WorkflowPath)-$($WorkflowVersionId)"
+            } else {
+                $workflows += "$($WorkflowId.path)-$($WorkflowId.versionId)"
+            }
+
             $body = New-Object PSObject
             Add-Member -Membertype NoteProperty -Name 'controllerId' -value $script:jsWebService.ControllerId -InputObject $body
+
+            if ( $WorkflowId )
+            {
+                Add-Member -Membertype NoteProperty -Name 'workflowId' -value $WorkflowId -InputObject $body
+            } elseif ( $WorkflowPath ) {
+                $workflowObj = New-Object PSObject
+                Add-Member -Membertype NoteProperty -Name 'path' -value $WorkflowPath -InputObject $workflowObj
+                Add-Member -Membertype NoteProperty -Name 'versionId' -value $WorkflowVersionId -InputObject $workflowObj
+
+                Add-Member -Membertype NoteProperty -Name 'workflowId' -value $workflowObj -InputObject $body
+            }
 
             if ( $AuditComment -or $AuditTimeSpent -or $AuditTicketLink )
             {
@@ -167,18 +201,12 @@ param
 
             if ( $PSCmdlet.ShouldProcess( 'orders', '/workflow/transition' ) )
             {
-                $workflowObj = New-Object PSObject
-                Add-Member -Membertype NoteProperty -Name 'path' -value $WorkflowPath -InputObject $workflowObj
-                Add-Member -Membertype NoteProperty -Name 'versionId' -value $WorkflowVersionId -InputObject $workflowObj
-
-                Add-Member -Membertype NoteProperty -Name 'workflowId' -value $workflowObj -InputObject $body
-
                 [string] $requestBody = $body | ConvertTo-Json -Depth 100
                 $response = Invoke-JS7WebRequest '/workflow/transition' $requestBody
 
                 if ( $response.StatusCode -eq 200 )
                 {
-                    $requestResult = ( $response.Content | ConvertFrom-JSON )
+                    $requestResult = ( $response.Content | ConvertFrom-Json )
 
                     if ( !$requestResult.ok )
                     {
@@ -195,35 +223,34 @@ param
 
     End
     {
-        $body = New-Object PSObject
-        Add-Member -Membertype NoteProperty -Name 'controllerId' -value $script:jsWebService.ControllerId -InputObject $body
-
-        if ( $AuditComment -or $AuditTimeSpent -or $AuditTicketLink )
-        {
-            $objAuditLog = New-Object PSObject
-            Add-Member -Membertype NoteProperty -Name 'comment' -value $AuditComment -InputObject $objAuditLog
-
-            if ( $AuditTimeSpent )
-            {
-                Add-Member -Membertype NoteProperty -Name 'timeSpent' -value $AuditTimeSpent -InputObject $objAuditLog
-            }
-
-            if ( $AuditTicketLink )
-            {
-                Add-Member -Membertype NoteProperty -Name 'ticketLink' -value $AuditTicketLink -InputObject $objAuditLog
-            }
-
-            Add-Member -Membertype NoteProperty -Name 'auditLog' -value $objAuditLog -InputObject $body
-        }
-
         if ( $LetRun )
         {
+            $body = New-Object PSObject
+            Add-Member -Membertype NoteProperty -Name 'controllerId' -value $script:jsWebService.ControllerId -InputObject $body
+            Add-Member -Membertype NoteProperty -Name 'orderIds' -value $orderIds -InputObject $body
+
+            if ( $AuditComment -or $AuditTimeSpent -or $AuditTicketLink )
+            {
+                $objAuditLog = New-Object PSObject
+                Add-Member -Membertype NoteProperty -Name 'comment' -value $AuditComment -InputObject $objAuditLog
+
+                if ( $AuditTimeSpent )
+                {
+                    Add-Member -Membertype NoteProperty -Name 'timeSpent' -value $AuditTimeSpent -InputObject $objAuditLog
+                }
+
+                if ( $AuditTicketLink )
+                {
+                    Add-Member -Membertype NoteProperty -Name 'ticketLink' -value $AuditTicketLink -InputObject $objAuditLog
+                }
+
+                Add-Member -Membertype NoteProperty -Name 'auditLog' -value $objAuditLog -InputObject $body
+            }
+
             if ( $PSCmdlet.ShouldProcess( 'orders', '/orders/continue' ) )
             {
-                Add-Member -Membertype NoteProperty -Name 'orderIds' -value $orderIds -InputObject $body
-
                 [string] $requestBody = $body | ConvertTo-Json -Depth 100
-                $response = Invoke-JS7WebRequest '/orders/cancel' $requestBody
+                $response = Invoke-JS7WebRequest '/orders/continue' $requestBody
 
                 if ( $response.StatusCode -eq 200 )
                 {

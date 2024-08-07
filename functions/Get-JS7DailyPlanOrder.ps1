@@ -23,6 +23,14 @@ Optionally specifies the folder with workflows for which daily plan orders shoul
 .PARAMETER Recursive
 When used with the -Folder parameter then any sub-folders of the specified folder will be looked up.
 
+.PARAMETER ControllerId
+Limits results to orders assigned the specified Controller.
+
+.PARAMETER Tag
+Filters orders by a list of tags.
+
+If more than one tag is specified then they are separated by comma.
+
 .PARAMETER DateFrom
 Optionally specifies the date starting from which daily plan orders should be returned.
 Consider that a UTC date has to be provided.
@@ -151,6 +159,8 @@ param
     [switch] $Recursive,
     [Parameter(Mandatory=$False,ValueFromPipelinebyPropertyName=$True)]
     [string] $ControllerId,
+    [Parameter(Mandatory=$False,ValueFromPipeline=$False,ValueFromPipelinebyPropertyName=$True)]
+    [string[]] $Tag,
     [Parameter(Mandatory=$False,ValueFromPipelinebyPropertyName=$True)]
     [DateTime] $DateFrom = (Get-Date (Get-Date).ToUniversalTime() -Format 'yyyy-MM-dd'),
     [Parameter(Mandatory=$False,ValueFromPipelinebyPropertyName=$True)]
@@ -181,6 +191,7 @@ param
         $schedulePaths = @()
         $scheduleFolders = @()
         $controllerIds = @()
+        $tags = @()
         $states = @()
     }
 
@@ -269,6 +280,11 @@ param
         if ( $ControllerId )
         {
             $controllerIds += $ControllerId
+        }
+
+        if ( $Tag )
+        {
+            $tags += $Tag
         }
     }
 
@@ -360,6 +376,11 @@ param
         if ( $controllerIds )
         {
             Add-Member -Membertype NoteProperty -Name 'controllerIds' -value $controllerIds -InputObject $body
+        }
+
+        if ( $tags )
+        {
+            Add-Member -Membertype NoteProperty -Name 'tags' -value $tags -InputObject $body
         }
 
         if ( $states )
