@@ -15,6 +15,7 @@ Consider that this cmdlet requires PowerShell version 6.0 or newer.
 The following REST Web Service API resources are used:
 
 * /inventory/import
+* /inventory/deployment/import_deploy
 
 .PARAMETER FilePath
 Specifies the path to the archive file that includes objects for import to the JOC Cockpit inventory.
@@ -50,6 +51,35 @@ from objects with the same path in the archive file.
 
 Without this parameter objects from the import file are ignored if objects with the same path
 exist in the JOC Cockpit inventory.
+
+.PARAMETER Deploy
+When deploying scheduling objects for high security level then they must be exported for signing and must be digitally signed,
+for example using the Export-JS7InventoryFolder and Sign-JS7Workflow cmdlets. Deployment is performed on import of the signed worfklows.
+
+The switch specifieds that both operations to import and to deploy should be performed for high security level.
+
+The switch requires to specify the -ControllerId and -SignatureAlgorithm arguments.
+
+.PARAMETER ControllerId
+When deploying scheduling objects for high security level then they must be exported for signing and must be digitally signed,
+for example using the Export-JS7InventoryFolder and Sign-JS7Workflow cmdlets. Deployment is performed on import of the signed worfklows.
+
+The argument specifies the identification of the Controller to which scheduling objects should be deployed.
+
+The argument requires to specify the -Deploy and -SignatureAlgorithm arguments.
+
+.PARAMETER SignatureAlgorithm
+When deploying scheduling objects for high security level then they must be exported for signing and must be digitally signed,
+for example using the Export-JS7InventoryFolder and Sign-JS7Workflow cmdlets. Deployment is performed on import of the signed worfklows.
+
+The argument specifies the algorithm used when creating signatures:
+
+* SHA256withECDSA
+* SHA512withECDSA
+* SHA256withRSA
+* SHA512withRSA
+
+The argument requires to specify the -Deploy and -ControllerId arguments.
 
 .PARAMETER AuditComment
 Specifies a free text that indicates the reason for the current intervention, e.g. "business requirement", "maintenance window" etc.
@@ -111,6 +141,12 @@ param
     [Parameter(Mandatory=$False,ValueFromPipeline=$False,ValueFromPipelinebyPropertyName=$True)]
     [switch] $Overwrite,
     [Parameter(Mandatory=$False,ValueFromPipeline=$False,ValueFromPipelinebyPropertyName=$True)]
+    [switch] $Deploy,
+    [Parameter(Mandatory=$False,ValueFromPipeline=$False,ValueFromPipelinebyPropertyName=$True)]
+    [string] $ControllerId,
+    [Parameter(Mandatory=$False,ValueFromPipeline=$False,ValueFromPipelinebyPropertyName=$True)]
+    [string] $SignatureAlgorithm,
+    [Parameter(Mandatory=$False,ValueFromPipeline=$False,ValueFromPipelinebyPropertyName=$True)]
     [string] $AuditComment,
     [Parameter(Mandatory=$False,ValueFromPipeline=$False,ValueFromPipelinebyPropertyName=$True)]
     [int] $AuditTimeSpent,
@@ -130,6 +166,16 @@ param
         if ( $Overwrite -and ($Suffix -or $Prefix) )
         {
             throw "$($MyInvocation.MyCommand.Name): Conflicting parameters -Overwrite and -Suffix, -Prefix"
+        }
+
+        if ( $Deploy -and !$ControllerId )
+        {
+            throw "$($MyInvocation.MyCommand.Name): Argument -Deploy requires to specify -ControllerId"
+        }
+
+        if ( $Deploy -and !$SignatureAlgorithm )
+        {
+            throw "$($MyInvocation.MyCommand.Name): Argument -Deploy requires to specify -SignatureAlgorithm"
         }
 
         if ( !(isPowerShellVersion 6) )
@@ -162,34 +208,49 @@ param
             $stringContent.Headers.ContentDisposition = $stringHeader
             $multipartContent.Add( $stringContent )
 
-            $stringHeader = [System.Net.Http.Headers.ContentDispositionHeaderValue]::new("form-data")
-            $stringHeader.Name = "targetFolder"
-            $stringContent = [System.Net.Http.StringContent]::new( $TargetFolder )
-            $stringContent.Headers.ContentDisposition = $stringHeader
-            $multipartContent.Add( $stringContent )
-
-            $stringHeader = [System.Net.Http.Headers.ContentDispositionHeaderValue]::new("form-data")
-            $stringHeader.Name = "overwrite"
-            $StringContent = [System.Net.Http.StringContent]::new( ($Overwrite -eq $True) )
-            $stringContent.Headers.ContentDisposition = $stringHeader
-            $multipartContent.Add( $stringContent )
-
-            if ( $Prefix )
+            if ( $Deploy )
             {
                 $stringHeader = [System.Net.Http.Headers.ContentDispositionHeaderValue]::new("form-data")
-                $stringHeader.Name = "prefix"
-                $stringContent = [System.Net.Http.StringContent]::new( $Prefix )
+                $stringHeader.Name = "controllerId"
+                $stringContent = [System.Net.Http.StringContent]::new( $ControllerId )
                 $stringContent.Headers.ContentDisposition = $stringHeader
                 $multipartContent.Add( $stringContent )
-            }
 
-            if ( $Suffix )
-            {
                 $stringHeader = [System.Net.Http.Headers.ContentDispositionHeaderValue]::new("form-data")
-                $stringHeader.Name = "suffix"
-                $stringContent = [System.Net.Http.StringContent]::new( $Suffix )
+                $stringHeader.Name = "signatureAlgorithm"
+                $stringContent = [System.Net.Http.StringContent]::new( $SignatureAlgorithm )
                 $stringContent.Headers.ContentDisposition = $stringHeader
                 $multipartContent.Add( $stringContent )
+            } else {
+                $stringHeader = [System.Net.Http.Headers.ContentDispositionHeaderValue]::new("form-data")
+                $stringHeader.Name = "targetFolder"
+                $stringContent = [System.Net.Http.StringContent]::new( $TargetFolder )
+                $stringContent.Headers.ContentDisposition = $stringHeader
+                $multipartContent.Add( $stringContent )
+
+                $stringHeader = [System.Net.Http.Headers.ContentDispositionHeaderValue]::new("form-data")
+                $stringHeader.Name = "overwrite"
+                $StringContent = [System.Net.Http.StringContent]::new( ($Overwrite -eq $True) )
+                $stringContent.Headers.ContentDisposition = $stringHeader
+                $multipartContent.Add( $stringContent )
+
+                if ( $Prefix )
+                {
+                    $stringHeader = [System.Net.Http.Headers.ContentDispositionHeaderValue]::new("form-data")
+                    $stringHeader.Name = "prefix"
+                    $stringContent = [System.Net.Http.StringContent]::new( $Prefix )
+                    $stringContent.Headers.ContentDisposition = $stringHeader
+                    $multipartContent.Add( $stringContent )
+                }
+
+                if ( $Suffix )
+                {
+                    $stringHeader = [System.Net.Http.Headers.ContentDispositionHeaderValue]::new("form-data")
+                    $stringHeader.Name = "suffix"
+                    $stringContent = [System.Net.Http.StringContent]::new( $Suffix )
+                    $stringContent.Headers.ContentDisposition = $stringHeader
+                    $multipartContent.Add( $stringContent )
+                }
             }
 
             if ( $AuditComment -or $AuditTimeSpent -or $AuditTicketLink )
@@ -213,7 +274,12 @@ param
                 $multipartContent.Add( $stringContent )
             }
 
-            $response = Invoke-JS7WebRequest -Path '/inventory/import' -Body $multipartContent -Method 'POST' -ContentType $Null
+            if ( $Deploy )
+            {
+                $response = Invoke-JS7WebRequest -Path '/inventory/deployment/import_deploy' -Body $multipartContent -Method 'POST' -ContentType $Null
+            } else {
+                $response = Invoke-JS7WebRequest -Path '/inventory/import' -Body $multipartContent -Method 'POST' -ContentType $Null
+            }
 
             if ( $response.StatusCode -ne 200 )
             {
