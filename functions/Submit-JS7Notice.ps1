@@ -80,7 +80,7 @@ This cmdlet does not accept pipelined input.
 This cmdlet returns no output.
 
 .EXAMPLE
-Submit-JS7Notice -NoticeBoardPath -Folder /ProductDemo/Sequencing/pdSequenceSynchroneously -NoticeId 2022-03-24
+Submit-JS7Notice -NoticeBoardPath /ProductDemo/Sequencing/pdSequenceSynchroneously -NoticeId 2022-03-24
 
 Submits a Notice to the indicated Notice Board.
 
