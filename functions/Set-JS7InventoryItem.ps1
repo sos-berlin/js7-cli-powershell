@@ -41,7 +41,7 @@ custom object [PSCustomObject] as e.g. returned by the Get-JS7InventoryItem cmdl
 The custom object is converted to JSON by this cmdlet.
 
 .PARAMETER Valid
-Specifies that the inventory object has been validate before using this cmdlet
+Specifies that the inventory object has been validated before using this cmdlet
 
 If such orders exist with a Controller and the -Submit parameter is used then they are cancelled and re-created.
 

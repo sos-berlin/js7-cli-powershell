@@ -9,8 +9,8 @@ This cmdlet suspends an order in a JS7 Controller.
 Suspended orders can later on be resumed by use of the Resume-JS7Order cmdlet.
 
 If an order is in a running state, for example if a job is executed for the order then by default the
-Agent will wait for that job to be completed before suspending the order. However, this behavior can be
-changed by instructing the Agent to immediately kill running orders.
+Agent will wait for the job to be completed before suspending the order. This behavior can be
+changed by instructing the Agent to foribly terminate running jobs.
 
 The following REST Web Service API resources are used:
 
@@ -19,8 +19,17 @@ The following REST Web Service API resources are used:
 .PARAMETER OrderId
 Specifies the identifier of the order.
 
-.PARAMETER Kill
-Specifies if the running task for the indicated order should be sent a SIGTERM signal (default, -Kill:$false) or a SIGKILLL signal (-Kill:$true).
+.PARAMETER Force
+Specifies if the running task for the indicated order should be sent a SIGTERM signal (default, -Force:$false) or a SIGKILLL signal (-Force:$true).
+
+.PARAMETER Reset
+Specifies that the instruction currently executed by the order will be reset.
+
+The Retry Instruction and Cycle Instruction when resumed will use the initial retry/cycle counter.
+Without reset option an order can be resumed from the retry/cycle counter with which it has been suspended.
+
+.PARAMETER Deep
+Specifies that child orders in a Fork-Join Instruction or ForkList-Join Instruction will be subject to suspension.
 
 .PARAMETER AuditComment
 Specifies a free text that indicates the reason for the current intervention, e.g. "business requirement", "maintenance window" etc.
@@ -75,8 +84,13 @@ param
 (
     [Parameter(Mandatory=$True,ValueFromPipeline=$True,ValueFromPipelinebyPropertyName=$True)]
     [string] $OrderId,
+    [Alias('Kill')]
     [Parameter(Mandatory=$False,ValueFromPipeline=$False,ValueFromPipelinebyPropertyName=$True)]
-    [switch] $Kill,
+    [switch] $Force,
+    [Parameter(Mandatory=$False,ValueFromPipeline=$False,ValueFromPipelinebyPropertyName=$True)]
+    [switch] $Reset,
+    [Parameter(Mandatory=$False,ValueFromPipeline=$False,ValueFromPipelinebyPropertyName=$True)]
+    [switch] $Deep,
     [Parameter(Mandatory=$False,ValueFromPipeline=$False,ValueFromPipelinebyPropertyName=$True)]
     [string] $AuditComment,
     [Parameter(Mandatory=$False,ValueFromPipeline=$False,ValueFromPipelinebyPropertyName=$True)]
@@ -110,9 +124,19 @@ param
             Add-Member -Membertype NoteProperty -Name 'controllerId' -value $script:jsWebService.ControllerId -InputObject $body
             Add-Member -Membertype NoteProperty -Name 'orderIds' -value $orders -InputObject $body
 
-            if ( $Kill )
+            if ( $Force )
             {
                 Add-Member -Membertype NoteProperty -Name 'kill' -value $True -InputObject $body
+            }
+
+            if ( $Reset )
+            {
+                Add-Member -Membertype NoteProperty -Name 'reset' -value $True -InputObject $body
+            }
+
+            if ( $Deep )
+            {
+                Add-Member -Membertype NoteProperty -Name 'deep' -value $True -InputObject $body
             }
 
             if ( $AuditComment -or $AuditTimeSpent -or $AuditTicketLink )
