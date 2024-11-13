@@ -140,7 +140,7 @@ param
             Add-Member -Membertype NoteProperty -Name 'controllerId' -value $script:jsWebService.ControllerId -InputObject $body
             Add-Member -Membertype NoteProperty -Name 'configuration' -value '<?xml version="1.0" encoding="UTF-8" standalone="no" ?><Configurations/>' -InputObject $body
             Add-Member -Membertype NoteProperty -Name 'configurationJson' -value '{}' -InputObject $body
-            Add-Member -Membertype NoteProperty -Name 'id' -value -1 -InputObject $body
+            Add-Member -Membertype NoteProperty -Name 'id' -value 0 -InputObject $body
             Add-Member -Membertype NoteProperty -Name 'name' -value $Name -InputObject $body
             Add-Member -Membertype NoteProperty -Name 'objectType' -value 'YADE' -InputObject $body
             Add-Member -Membertype NoteProperty -Name 'schema' -value $Schema -InputObject $body
