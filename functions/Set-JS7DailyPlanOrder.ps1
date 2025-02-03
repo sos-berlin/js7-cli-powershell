@@ -90,6 +90,10 @@ If end positions are specified then the order will terminate with one of the end
 .PARAMETER ForceJobSubmission
 Specifies that admission times of jobs in the workflow will not be considered.
 
+.PARAMETER KeepDailyPlanAssignment
+Specifies that orders will remain assigned the original daily plan date in case that their start time is modified for
+a date and time different from the original daily plan date.
+
 .PARAMETER AuditComment
 Specifies a free text that indicates the reason for the current intervention, e.g. "business requirement", "maintenance window" etc.
 
@@ -158,6 +162,8 @@ param
     [string] $BlockPosition,
     [Parameter(Mandatory=$False,ValueFromPipelinebyPropertyName=$True)]
     [switch] $ForceJobAdmission,
+    [Parameter(Mandatory=$False,ValueFromPipelinebyPropertyName=$True)]
+    [switch] $KeepDailyPlanAssignment,
     [Parameter(Mandatory=$False,ValueFromPipeline=$False,ValueFromPipelinebyPropertyName=$True)]
     [string] $AuditComment,
     [Parameter(Mandatory=$False,ValueFromPipeline=$False,ValueFromPipelinebyPropertyName=$True)]
@@ -208,13 +214,15 @@ param
                 'm' { $dailyPlanScheduledFor = (Get-Date).AddMonths( "$($dateDirection)$($dateRange)" ) }
                 'y' { $dailyPlanScheduledFor = (Get-Date).AddYears( "$($dateDirection)$($dateRange)" ) }
             }
+
+            $dailyPlanScheduledFor = Get-Date $dailyPlanScheduledFor -Format 'yyyy-MM-dd'
         } else {
-            $dailyPlanScheduledFor = Get-Date (Get-Date $ScheduledFor)
+            $dailyPlanScheduledFor = Get-Date $ScheduledFor -Format 'yyyy-MM-dd'
         }
 
         if ( $ScheduledDate )
         {
-            $dailyPlanScheduledFor = Get-Date $dailyPlanScheduledFor -Year (Get-Date $ScheduledDate).Year -Month (Get-Date $ScheduledDate).Month -Day (Get-Date $ScheduledDate).Day
+            $dailyPlanScheduledFor = Get-Date $dailyPlanScheduledFor -Year (Get-Date $ScheduledDate).Year -Month (Get-Date $ScheduledDate).Month -Day (Get-Date $ScheduledDate).Day -Format 'yyyy-MM-dd'
         }
 
         if ( $RelativeScheduledDate )
@@ -230,6 +238,8 @@ param
                 'm' { $dailyPlanScheduledFor = $dailyPlanScheduledFor.AddMonths( "$($dateDirection)$($dateRange)" ) }
                 'y' { $dailyPlanScheduledFor = $dailyPlanScheduledFor.AddYears( "$($dateDirection)$($dateRange)" ) }
             }
+
+            $dailyPlanScheduledFor = Get-Date $dailyPlanScheduledFor -Format 'yyyy-MM-dd'
         }
 
         if ( $RelativeScheduledTime )
@@ -239,7 +249,7 @@ param
             $dailyPlanScheduledFor = $dailyPlanScheduledFor.AddMinutes( "$($dateDirection)$($RelativeScheduledTime.Substring( 4, 2 ))" )
             $dailyPlanScheduledFor = $dailyPlanScheduledFor.AddSeconds( "$($dateDirection)$($RelativeScheduledTime.Substring( 7, 2 ))" )
         } else {
-            $dailyPlanScheduledFor = Get-Date $dailyPlanScheduledFor
+            $dailyPlanScheduledFor = Get-Date $dailyPlanScheduledFor -Format 'yyyy-MM-dd'
         }
 
         Write-Verbose ".. $($MyInvocation.MyCommand.Name): updating daily plan for date $dailyPlanScheduledFor"
@@ -334,6 +344,11 @@ param
         if ( $ForceJobAdmission )
         {
             Add-Member -Membertype NoteProperty -Name 'forceJobAdmission' -value ( $ForceJobAdmission -eq $True ) -InputObject $body
+        }
+
+        if ( $KeepDailyPlanAssignment )
+        {
+            Add-Member -Membertype NoteProperty -Name 'stickDailyPlanDate' -value ( $ForceJobAdmission -eq $True ) -InputObject $body
         }
 
         if ( $AuditComment -or $AuditTimeSpent -or $AuditTicketLink )

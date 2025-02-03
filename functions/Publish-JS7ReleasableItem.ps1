@@ -37,6 +37,13 @@ This parameter is used alternatively to the -Path parameter that specifies to pu
 .PARAMETER Recursive
 Specifies that all sub-folders should be looked up. By default no sub-folders will be considered.
 
+.PARAMETER Change
+Specifies the identifier of an inventory change. Scheduling objects indicated with the change and
+dependencies will be released.
+
+If in addition the -Folder parameter is used, then scheduling objects of the change will be limited
+to objects located in the specified folder.
+
 .PARAMETER UpdateDailyPlanFrom
 Specifies the Daily Plan date starting from which orders from the Daily Plan should be updated to use the latest deployed version of a workflow.
 
@@ -60,10 +67,16 @@ Specifies that no draft objects should be released. This boils down to the fact 
 .PARAMETER NoReleased
 Specifies that no previously released objects should be released.
 
+.PARAMETER NoReferencing
+Specifies that no referencing objects from dependencies of objects subject to the indicated -Change should be included.
+
+.PARAMETER NoReferences
+Specifies that no references to objects from dependencies of objects subject to the indicated -Change should be included.
+
 .PARAMETER ObjectName
 Internal use for pipelining.
 
-.PARAMETER ObjectName
+.PARAMETER ObjectType
 Internal use for pipelining.
 
 .PARAMETER AuditComment
@@ -122,6 +135,8 @@ param
     [Parameter(Mandatory=$False,ValueFromPipeline=$False,ValueFromPipelinebyPropertyName=$True)]
     [switch] $Recursive,
     [Parameter(Mandatory=$False,ValueFromPipeline=$False,ValueFromPipelinebyPropertyName=$True)]
+    [string[]] $Change,
+    [Parameter(Mandatory=$False,ValueFromPipeline=$False,ValueFromPipelinebyPropertyName=$True)]
     [DateTime] $UpdateDailyPlanFrom,
     [Parameter(Mandatory=$False,ValueFromPipeline=$False,ValueFromPipelinebyPropertyName=$True)]
     [switch] $UpdateDailyPlanNow,
@@ -133,6 +148,10 @@ param
     [switch] $NoDraft,
     [Parameter(Mandatory=$False,ValueFromPipeline=$False,ValueFromPipelinebyPropertyName=$True)]
     [switch] $NoReleased,
+    [Parameter(Mandatory=$False,ValueFromPipeline=$False,ValueFromPipelinebyPropertyName=$True)]
+    [switch] $NoReferencing,
+    [Parameter(Mandatory=$False,ValueFromPipeline=$False,ValueFromPipelinebyPropertyName=$True)]
+    [switch] $NoReferences,
     [Parameter(Mandatory=$False,ValueFromPipeline=$False,ValueFromPipelinebyPropertyName=$True)]
     [string] $ObjectName,
     [Parameter(Mandatory=$False,ValueFromPipeline=$False,ValueFromPipelinebyPropertyName=$True)]
@@ -160,6 +179,8 @@ param
             throw "$($MyInvocation.MyCommand.Name): Audit Log comment required, use parameter -AuditComment if one of the parameters -AuditTimeSpent or -AuditTicketLink is used"
         }
 
+        $objectCount = 0
+        $changes = @()
         $storeObjects = @()
         $deleteObjects = @()
         $releasableTypes = @('INCLUDESCRIPT','JOBTEMPLATE','SCHEDULE','WORKINGDAYSCALENDAR','NONWORKINGDAYSCALENDAR')
@@ -208,9 +229,14 @@ param
             throw "$($MyInvocation.MyCommand.Name): only one of the parameters -Path or -Folder can be used"
         }
 
-        if ( !$Path -and !$Folder )
+        if ( $Path -and $Change )
         {
-            throw "$($MyInvocation.MyCommand.Name): one of the parameters -Path or -Folder has to be used"
+            throw "$($MyInvocation.MyCommand.Name): only one of the parameters -Path or -Change can be used"
+        }
+
+        if ( !$Path -and !$Folder -and !$Change )
+        {
+            throw "$($MyInvocation.MyCommand.Name): one of the parameters -Path, -Folder or -Change has to be used"
         }
 
         if ( $Type.count )
@@ -228,8 +254,10 @@ param
             $Type = $releasableTypes
         }
 
-        if ( $Path )
+        if ( $Change )
         {
+            $changes += $Change
+        } elseif ( $Path ) {
             $body = New-Object PSObject
             Add-Member -Membertype NoteProperty -Name 'objectType' -value $Type[0] -InputObject $body
             Add-Member -Membertype NoteProperty -Name 'path' -value $Path -InputObject $body
@@ -309,8 +337,31 @@ param
 
     End
     {
-        if ( $storeObjects.count -or $deleteObjects.count )
+        if ( $changes.count )
         {
+            $changeItems = Get-JS7InventoryChange -Name $changes -Detailed
+
+            if ( !$changeItems )
+            {
+                throw "$($MyInvocation.MyCommand.Name): no changes found"
+            }
+
+            if ( $Folder.count )
+            {
+                $configurations = Get-JS7ConfigurationMerge -ChangeItems $changeItems -Dependencies (Get-JS7InventoryDependencies -OperationType DEPLOY -Folder $Folder -Configuration $changeItems.configurations -NoReferencing:$NoReferencing -NoReferences:$NoReferences)
+            } else {
+                $configurations = Get-JS7ConfigurationMerge -ChangeItems $changeItems -Dependencies (Get-JS7InventoryDependencies -OperationType DEPLOY -Configuration $changeItems.configurations -NoReferencing:$NoReferencing -NoReferences:$NoReferences)
+            }
+
+            $body = New-Object PSObject
+            $releasableConfigurations = @($configurations | Where-Object { $_.configuration.objectType -in $releasableTypes })
+
+            if ( $releasableConfigurations.count )
+            {
+                $objectCount += $releasableConfigurations.configuration.count
+                Add-Member -Membertype NoteProperty -Name 'update' -value ([PSObject[]] $releasableConfigurations.configuration) -InputObject $body
+            }
+        } elseif ( $storeObjects.count -or $deleteObjects.count ) {
             $body = New-Object PSObject
 
             if ( $UpdateDailyPlanNow )
@@ -331,6 +382,7 @@ param
 
             if ( $objects )
             {
+                $objectCount += $objects.count
                 Add-Member -Membertype NoteProperty -Name 'update' -value $objects -InputObject $body
             }
 
@@ -345,9 +397,13 @@ param
 
             if ( $objects )
             {
+                $objectCount += $objects.count
                 Add-Member -Membertype NoteProperty -Name 'delete' -value $objects -InputObject $body
             }
+        }
 
+        if ( $objectCount )
+        {
             if ( $AuditComment -or $AuditTimeSpent -or $AuditTicketLink )
             {
                 $objAuditLog = New-Object PSObject
@@ -381,7 +437,7 @@ param
                 throw ( $response | Format-List -Force | Out-String )
             }
 
-            Write-Verbose ".. $($MyInvocation.MyCommand.Name): $($storeObjects.count+$deleteObjects.count) items released"
+            Write-Verbose ".. $($MyInvocation.MyCommand.Name): $($objectCount) items released"
         } else {
             Write-Verbose ".. $($MyInvocation.MyCommand.Name): no items released"
         }

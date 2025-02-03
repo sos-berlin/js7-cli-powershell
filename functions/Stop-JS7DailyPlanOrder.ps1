@@ -9,10 +9,25 @@ Cancels daily plan orders from a JS7 Controller.
 
 The following REST Web Service API resources are used:
 
-* /orders/daily_plan/cancel
+* /daily_plan/orders/cancel
 
 .PARAMETER OrderId
 Optionally specifies the Order ID of the daily plan order that should be cancelled.
+
+.PARAMETER WorkflowPath
+Optionally specifies the path and name of a workflow for which daily plan orders should be cancelled.
+
+.PARAMETER WorkflowFolder
+Optionally specifies the folder with workflows for which daily plan orders should be cancelled.
+
+.PARAMETER SchedulePath
+Optionally specifies the path and name of a schedule for which daily plan orders should be cancelled.
+
+.PARAMETER ScheduleFolder
+Optionally specifies the folder with schedules for which daily plan orders should be cancelled.
+
+.PARAMETER Recursive
+When used with the -WorkflowFolder or -ScheduleFolder parameters then any sub-folders of the specified folder will be looked up.
 
 .PARAMETER ControllerId
 Specifies the Controller to which daily plan orders have been submitted and should be cancelled.
@@ -22,15 +37,13 @@ together with the workflows that are indicated with their respective parameters.
 
 .PARAMETER DateFrom
 Optionally specifies the date starting from which daily plan orders should be cancelled.
-Consider that a UTC date has to be provided.
 
-Default: Beginning of the current day as a UTC date
+Default: The current day in the local time zone
 
 .PARAMETER DateTo
 Optionally specifies the date until which daily plan orders should be cancelled.
-Consider that a UTC date has to be provided.
 
-Default: End of the current day as a UTC date
+Default: The current day in the local time zone
 
 .PARAMETER RelativeDateFrom
 Specifies a relative date starting from which daily plan orders should be cancelled, e.g.
@@ -112,7 +125,17 @@ param
     [Parameter(Mandatory=$False,ValueFromPipelinebyPropertyName=$True)]
     [string] $ControllerId,
     [Parameter(Mandatory=$False,ValueFromPipelinebyPropertyName=$True)]
-    [DateTime] $DateFrom = (Get-Date (Get-Date).ToUniversalTime() -Format 'yyyy-MM-dd'),
+    [string] $WorkflowPath,
+    [Parameter(Mandatory=$False,ValueFromPipelinebyPropertyName=$True)]
+    [string] $WorkflowFolder,
+    [Parameter(Mandatory=$False,ValueFromPipeline=$False,ValueFromPipelinebyPropertyName=$True)]
+    [string] $SchedulePath,
+    [Parameter(Mandatory=$False,ValueFromPipeline=$False,ValueFromPipelinebyPropertyName=$True)]
+    [string] $ScheduleFolder,
+    [Parameter(Mandatory=$False,ValueFromPipeline=$False,ValueFromPipelinebyPropertyName=$True)]
+    [switch] $Recursive,
+    [Parameter(Mandatory=$False,ValueFromPipelinebyPropertyName=$True)]
+    [DateTime] $DateFrom = (Get-Date),
     [Parameter(Mandatory=$False,ValueFromPipelinebyPropertyName=$True)]
     [DateTime] $DateTo,
     [Parameter(Mandatory=$False,ValueFromPipelinebyPropertyName=$True)]
@@ -132,15 +155,77 @@ param
         $stopWatch = Start-JS7StopWatch
 
         $orderIds = @()
+        $workflowPaths = @()
+        $workflowFolders = @()
+        $schedulePaths = @()
+        $scheduleFolders = @()
+        $controllerIds = @()
     }
 
     Process
     {
-        Write-Debug ".. $($MyInvocation.MyCommand.Name): parameter OrderId=$OrderId"
+        Write-Debug ".. $($MyInvocation.MyCommand.Name): parameter OrderId=$OrderId, WorkflowPath=$WorkflowPath, WorkflowFolder=$WorkflowFolder, SchedulePath=$SchedulePath, ScheduleFolder=$ScheduleFolder"
+
+        if ( $WorkflowFolder -and $WorkflowFolder -ne '/' )
+        {
+            if ( !$WorkflowFolder.startsWith( '/' ) ) {
+                $WorkflowFolder = '/' + $WorkflowFolder
+            }
+
+            if ( $WorkflowFolder.endsWith( '/' ) )
+            {
+                $WorkflowFolder = $WorkflowFolder.Substring( 0, $WorkflowFolder.Length-1 )
+            }
+        }
+
+        if ( $ScheduleFolder -and $ScheduleFolder -ne '/' )
+        {
+            if ( !$ScheduleFolder.startsWith( '/' ) ) {
+                $ScheduleFolder = '/' + $ScheduleFolder
+            }
+
+            if ( $ScheduleFolder.endsWith( '/' ) )
+            {
+                $ScheduleFolder = $ScheduleFolder.Substring( 0, $ScheduleFolder.Length-1 )
+            }
+        }
 
         if ( $OrderId )
         {
             $orderIds += $OrderId
+        }
+
+        if ( $WorkflowPath )
+        {
+            $workflowPaths += $WorkflowPath
+        }
+
+        if ( $WorkflowFolder )
+        {
+            $objFolder = New-Object PSObject
+            Add-Member -Membertype NoteProperty -Name 'folder' -value $WorkflowFolder -InputObject $objFolder
+            Add-Member -Membertype NoteProperty -Name 'recursive' -value ($Recursive -eq $True) -InputObject $objFolder
+
+            $workflowFolders += $objFolder
+        }
+
+        if ( $SchedulePath )
+        {
+            $schedulePaths += $SchedulePath
+        }
+
+        if ( $ScheduleFolder )
+        {
+            $objFolder = New-Object PSObject
+            Add-Member -Membertype NoteProperty -Name 'folder' -value $ScheduleFolder -InputObject $objFolder
+            Add-Member -Membertype NoteProperty -Name 'recursive' -value ($Recursive -eq $True) -InputObject $objFolder
+
+            $scheduleFolders += $objFolder
+        }
+
+        if ( $ControllerId )
+        {
+            $controllerIds += $ControllerId
         }
     }
 
@@ -159,8 +244,10 @@ param
                 'm' { $dailyPlanDateFrom = (Get-Date).AddMonths( "$($dateDirection)$($dateRange)" ) }
                 'y' { $dailyPlanDateFrom = (Get-Date).AddYears( "$($dateDirection)$($dateRange)" ) }
             }
+
+            $dailyPlanDateFrom = Get-Date $dailyPlanDateFrom -Format 'yyyy-MM-dd'
         } else {
-            $dailyPlanDateFrom = Get-Date (Get-Date $DateFrom)
+            $dailyPlanDateFrom = Get-Date $DateFrom -Format 'yyyy-MM-dd'
         }
 
         if ( $RelativeDateTo )
@@ -176,82 +263,93 @@ param
                 'm' { $dailyPlanDateTo = (Get-Date).AddMonths( "$($dateDirection)$($dateRange)" ) }
                 'y' { $dailyPlanDateTo = (Get-Date).AddYears( "$($dateDirection)$($dateRange)" ) }
             }
+
+            $dailyPlanDateTo = Get-Date $dailyPlanDateTo -Format 'yyyy-MM-dd'
         } else {
             if ( !$DateTo )
             {
-                $DateTo = $dailyPlanDateFrom
+                $dailyPlanDateTo = Get-Date $dailyPlanDateFrom -Format 'yyyy-MM-dd'
+            } else {
+                $dailyPlanDateTo = Get-Date $DateTo -Format 'yyyy-MM-dd'
             }
-
-            $dailyPlanDateTo = Get-Date (Get-Date $DateTo)
         }
 
         Write-Verbose ".. $($MyInvocation.MyCommand.Name): cancelling daily plan orders for date range $dailyPlanDateFrom - $dailyPlanDateTo"
-        $loops = 0
 
-        for( $day=$dailyPlanDateFrom; $day -le $dailyPlanDateTo; $day=$day.AddDays(1) )
+        $body = New-Object PSObject
+
+        Add-Member -Membertype NoteProperty -Name 'dailyPlanDateFrom' -value "$($dailyPlanDateFrom)" -InputObject $body
+        Add-Member -Membertype NoteProperty -Name 'dailyPlanDateTo' -value "$($dailyPlanDateTo)" -InputObject $body
+
+        if ( $orderIds )
         {
-            $body = New-Object PSObject
+            Add-Member -Membertype NoteProperty -Name 'orderIds' -value $orderIds -InputObject $body
+        }
 
-            if ( $ControllerId ) {
-                Add-Member -Membertype NoteProperty -Name 'controllerId' -value $ControllerId -InputObject $body
-            } else {
-                Add-Member -Membertype NoteProperty -Name 'controllerId' -value $script:jsWebService.ControllerId -InputObject $body
+        if ( $workflowPaths )
+        {
+            Add-Member -Membertype NoteProperty -Name 'workflowPaths' -value $workflowPaths -InputObject $body
+        }
+
+        if ( $workflowFolders )
+        {
+            Add-Member -Membertype NoteProperty -Name 'workflowFolders' -value $workflowFolders -InputObject $body
+        }
+
+        if ( $schedulePaths )
+        {
+            Add-Member -Membertype NoteProperty -Name 'schedulePaths' -value $schedulePaths -InputObject $body
+        }
+
+        if ( $scheduleFolders )
+        {
+            Add-Member -Membertype NoteProperty -Name 'scheduleFolders' -value $scheduleFolders -InputObject $body
+        }
+
+        if ( $controllerIds )
+        {
+            Add-Member -Membertype NoteProperty -Name 'controllerIds' -value $controllerIds -InputObject $body
+        } else {
+            Add-Member -Membertype NoteProperty -Name 'controllerIds' -value @( $script:jsWebService.ControllerId ) -InputObject $body
+        }
+
+        if ( $AuditComment -or $AuditTimeSpent -or $AuditTicketLink )
+        {
+            $objAuditLog = New-Object PSObject
+            Add-Member -Membertype NoteProperty -Name 'comment' -value $AuditComment -InputObject $objAuditLog
+
+            if ( $AuditTimeSpent )
+            {
+                Add-Member -Membertype NoteProperty -Name 'timeSpent' -value $AuditTimeSpent -InputObject $objAuditLog
             }
 
-            if ( $orderIds )
+            if ( $AuditTicketLink )
             {
-                Add-Member -Membertype NoteProperty -Name 'orderIds' -value $orderIds -InputObject $body
+                Add-Member -Membertype NoteProperty -Name 'ticketLink' -value $AuditTicketLink -InputObject $objAuditLog
             }
 
-            Add-Member -Membertype NoteProperty -Name 'dailyPlanDateFrom' -value (Get-Date $day -Format 'yyyy-MM-dd') -InputObject $body
+            Add-Member -Membertype NoteProperty -Name 'auditLog' -value $objAuditLog -InputObject $body
+        }
 
-            if ( $AuditComment -or $AuditTimeSpent -or $AuditTicketLink )
+        if ( $PSCmdlet.ShouldProcess( $Path, '/daily_plan/orders/cancel' ) )
+        {
+            [string] $requestBody = $body | ConvertTo-Json -Depth 100
+            $response = Invoke-JS7WebRequest -Path '/daily_plan/orders/cancel' -Body $requestBody
+
+            if ( $response.StatusCode -eq 200 )
             {
-                $objAuditLog = New-Object PSObject
-                Add-Member -Membertype NoteProperty -Name 'comment' -value $AuditComment -InputObject $objAuditLog
+                $requestResult = ( $response.Content | ConvertFrom-Json )
 
-                if ( $AuditTimeSpent )
+                if ( !$requestResult.ok )
                 {
-                    Add-Member -Membertype NoteProperty -Name 'timeSpent' -value $AuditTimeSpent -InputObject $objAuditLog
-                }
-
-                if ( $AuditTicketLink )
-                {
-                    Add-Member -Membertype NoteProperty -Name 'ticketLink' -value $AuditTicketLink -InputObject $objAuditLog
-                }
-
-                Add-Member -Membertype NoteProperty -Name 'auditLog' -value $objAuditLog -InputObject $body
-            }
-
-            if ( $PSCmdlet.ShouldProcess( $Path, '/daily_plan/orders/cancel' ) )
-            {
-                [string] $requestBody = $body | ConvertTo-Json -Depth 100
-                $response = Invoke-JS7WebRequest -Path '/daily_plan/orders/cancel' -Body $requestBody
-
-                if ( $response.StatusCode -eq 200 )
-                {
-                    $requestResult = ( $response.Content | ConvertFrom-Json )
-
-                    if ( !$requestResult.ok )
-                    {
-                        throw ( $response | Format-List -Force | Out-String )
-                    }
-                } else {
                     throw ( $response | Format-List -Force | Out-String )
                 }
-
-                Write-Verbose ".. $($MyInvocation.MyCommand.Name): Daily Plan orders cancelled for: $(Get-Date $day -Format 'yyyy-MM-dd')"
+            } else {
+                throw ( $response | Format-List -Force | Out-String )
             }
-
-            $loops++
         }
 
-        if ( $loops )
-        {
-            Write-Verbose ".. $($MyInvocation.MyCommand.Name): Daily Plan orders cancelled for $loops days"
-        } else {
-            Write-Verbose ".. $($MyInvocation.MyCommand.Name): no Daily Plan orders cancelled"
-        }
+        Write-Verbose ".. $($MyInvocation.MyCommand.Name): Daily Plan orders cancelled"
 
         Trace-JS7StopWatch -CommandName $MyInvocation.MyCommand.Name -StopWatch $stopWatch
         Update-JS7Session

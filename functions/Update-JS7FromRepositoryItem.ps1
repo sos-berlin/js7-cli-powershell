@@ -43,11 +43,24 @@ which objects from a local Git repository are updated.
 Specifies that all sub-folders should be looked up if the -Folder parameter is used.
 By default no sub-folders will be looked up.
 
+.PARAMETER Change
+Specifies the identifier of an inventory change. Scheduling objects indicated with the change and
+dependencies will be updated from JOC Cockpit's Git repository.
+
+If in addition the -Folder parameter is used, then scheduling objects of the change will be limited
+to objects located in the specified folder.
+
 .PARAMETER Local
 Specifies that a repository holding local scheduling objects should be used.
 This corresponds to the LOCAL category. If this switch is not used then then
 ROLLOUT category is assumed for a repository that holds scheduling objects
 intended for rollout to later environments such as test, prod.
+
+.PARAMETER NoReferencing
+Specifies that no referencing objects from dependencies of objects subject to the indicated -Change should be included.
+
+.PARAMETER NoReferences
+Specifies that no references to objects from dependencies of objects subject to the indicated -Change should be included.
 
 .PARAMETER AuditComment
 Specifies a free text that indicates the reason for the current intervention, e.g. "business requirement", "maintenance window" etc.
@@ -107,7 +120,13 @@ param
     [Parameter(Mandatory=$False,ValueFromPipeline=$False,ValueFromPipelinebyPropertyName=$False)]
     [switch] $Recursive,
     [Parameter(Mandatory=$False,ValueFromPipeline=$False,ValueFromPipelinebyPropertyName=$True)]
+    [string[]] $Change,
+    [Parameter(Mandatory=$False,ValueFromPipeline=$False,ValueFromPipelinebyPropertyName=$True)]
     [switch] $Local,
+    [Parameter(Mandatory=$False,ValueFromPipeline=$False,ValueFromPipelinebyPropertyName=$True)]
+    [switch] $NoReferencing,
+    [Parameter(Mandatory=$False,ValueFromPipeline=$False,ValueFromPipelinebyPropertyName=$True)]
+    [switch] $NoReferences,
     [Parameter(Mandatory=$False,ValueFromPipeline=$False,ValueFromPipelinebyPropertyName=$True)]
     [string] $AuditComment,
     [Parameter(Mandatory=$False,ValueFromPipeline=$False,ValueFromPipelinebyPropertyName=$True)]
@@ -125,6 +144,8 @@ param
             throw "$($MyInvocation.MyCommand.Name): Audit Log comment required, use parameter -AuditComment if one of the parameters -AuditTimeSpent or -AuditTicketLink is used"
         }
 
+        $objectCount = 0
+        $changes = @()
         $updatableConfigurations = @()
     }
 
@@ -150,13 +171,15 @@ param
             throw "$($MyInvocation.MyCommand.Name): only one of the parameters -Path or -Folder can be used"
         }
 
-        if ( !$Path -and !$Folder )
+        if ( !$Path -and !$Folder -and !$Change )
         {
-            throw "$($MyInvocation.MyCommand.Name): one of the parameters -Path or -Folder has to be used"
+            throw "$($MyInvocation.MyCommand.Name): one of the parameters -Path, -Folder or -Change has to be used"
         }
 
-        if ( $Path )
+        if ( $Change )
         {
+            $changes += $Change
+        } elseif ( $Path ) {
             $updatableObj = New-Object PSObject
             Add-Member -Membertype NoteProperty -Name 'path' -value $Path -InputObject $updatableObj
             Add-Member -Membertype NoteProperty -Name 'objectType' -value $Type -InputObject $updatableObj
@@ -168,9 +191,12 @@ param
             Add-Member -Membertype NoteProperty -Name 'recursive' -value ($Recursive -eq $True) -InputObject $updatableObj
         }
 
-        $updatableConfigurationObj = New-Object PSObject
-        Add-Member -Membertype NoteProperty -Name 'configuration' -value $updatableObj -InputObject $updatableConfigurationObj
-        $updatableConfigurations += $updatableConfigurationObj
+        if ( !$Change )
+        {
+            $updatableConfigurationObj = New-Object PSObject
+            Add-Member -Membertype NoteProperty -Name 'configuration' -value $updatableObj -InputObject $updatableConfigurationObj
+            $updatableConfigurations += $updatableConfigurationObj
+        }
     }
 
     End
@@ -183,8 +209,24 @@ param
         }
 
         $body = New-Object PSObject
-        Add-Member -Membertype NoteProperty -Name 'configurations' -value $updatableConfigurations -InputObject $body
         Add-Member -Membertype NoteProperty -Name 'category' -value $category -InputObject $body
+
+        if ( $changes.count )
+        {
+            $changeItems = Get-JS7InventoryChange -Name $changes -Detailed
+
+            if ( !$changeItems )
+            {
+                throw "$($MyInvocation.MyCommand.Name): no changes found"
+            }
+
+            $configurations = Get-JS7ConfigurationMerge -ChangeItems $changeItems -Dependencies (Get-JS7InventoryDependencies -OperationType DEPLOY -Folder $Folder -Configuration $changeItems.configurations -NoReferencing:$NoReferencing -NoReferences:$NoReferences)
+            $objectCount = $configurations.configuration.count
+            Add-Member -Membertype NoteProperty -Name 'configurations' -value $configurations -InputObject $body
+        } else {
+            $objectCount = $updatableConfigurations.configuration.count
+            Add-Member -Membertype NoteProperty -Name 'configurations' -value $updatableConfigurations -InputObject $body
+        }
 
         if ( $AuditComment -or $AuditTimeSpent -or $AuditTicketLink )
         {
@@ -221,7 +263,12 @@ param
                 throw ( $response | Format-List -Force | Out-String )
             }
 
-            Write-Verbose ".. $($MyInvocation.MyCommand.Name): object updated: $Path"
+            if ( $objectCount -gt 0 )
+            {
+                Write-Verbose ".. $($MyInvocation.MyCommand.Name): $($objectCount) objects updated: $Path"
+            } else {
+                Write-Verbose ".. $($MyInvocation.MyCommand.Name): no items updated"
+            }
         }
 
         Trace-JS7StopWatch -CommandName $MyInvocation.MyCommand.Name -StopWatch $stopWatch

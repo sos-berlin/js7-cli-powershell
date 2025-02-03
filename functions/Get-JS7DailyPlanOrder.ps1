@@ -33,15 +33,15 @@ If more than one tag is specified then they are separated by comma.
 
 .PARAMETER DateFrom
 Optionally specifies the date starting from which daily plan orders should be returned.
-Consider that a UTC date has to be provided.
+A date in the local time zone can be specified and will be converted to UTC.
 
-Default: Beginning of the current day as a UTC date
+Default: The current day in the local time zone
 
 .PARAMETER DateTo
 Optionally specifies the date until which daily plan orders should be returned.
-Consider that a UTC date has to be provided.
+A date in the local time zone can be specified and will be converted to UTC.
 
-Default: End of the current day as a UTC date
+Default: The current day in the local time zone
 
 .PARAMETER RelativeDateFrom
 Specifies a relative date starting from which daily plan orders should be returned, e.g.
@@ -76,8 +76,8 @@ Optionally a time offset can be specified, e.g. -1d+02:00, as otherwise midnight
 This parameter takes precedence over the -DateTo parameter.
 
 .PARAMETER Timezone
-Specifies the timezone to which dates should be converted in the daily plan information.
-A timezone can e.g. be specified like this:
+Specifies the timezone to which dates should be converted in the daily plan return information.
+A timezone can be specified like this:
 
   Get-JSDailyPlanOrder -Timezone (Get-Timezone -Id 'GMT Standard Time')
 
@@ -162,7 +162,7 @@ param
     [Parameter(Mandatory=$False,ValueFromPipeline=$False,ValueFromPipelinebyPropertyName=$True)]
     [string[]] $Tag,
     [Parameter(Mandatory=$False,ValueFromPipelinebyPropertyName=$True)]
-    [DateTime] $DateFrom = (Get-Date (Get-Date).ToUniversalTime() -Format 'yyyy-MM-dd'),
+    [DateTime] $DateFrom = (Get-Date),
     [Parameter(Mandatory=$False,ValueFromPipelinebyPropertyName=$True)]
     [DateTime] $DateTo,
     [Parameter(Mandatory=$False,ValueFromPipelinebyPropertyName=$True)]
@@ -314,8 +314,10 @@ param
                 'm' { $dailyPlanDateFrom = (Get-Date).AddMonths( "$($dateDirection)$($dateRange)" ) }
                 'y' { $dailyPlanDateFrom = (Get-Date).AddYears( "$($dateDirection)$($dateRange)" ) }
             }
+
+            $dailyPlanDateFrom = Get-Date $dailyPlanDateFrom -Format 'yyyy-MM-dd'
         } else {
-            $dailyPlanDateFrom = Get-Date (Get-Date $DateFrom)
+            $dailyPlanDateFrom = Get-Date $DateFrom -Format 'yyyy-MM-dd'
         }
 
         if ( $RelativeDateTo )
@@ -331,13 +333,15 @@ param
                 'm' { $dailyPlanDateTo = (Get-Date).AddMonths( "$($dateDirection)$($dateRange)" ) }
                 'y' { $dailyPlanDateTo = (Get-Date).AddYears( "$($dateDirection)$($dateRange)" ) }
             }
+
+            $dailyPlanDateTo = Get-Date $dailyPlanDateTo -Format 'yyyy-MM-dd'
         } else {
             if ( !$DateTo )
             {
-                $DateTo = $dailyPlanDateFrom
+                $dailyPlanDateTo = Get-Date $dailyPlanDateFrom -Format 'yyyy-MM-dd'
+            } else {
+                $dailyPlanDateTo = Get-Date $DateTo -Format 'yyyy-MM-dd'
             }
-
-            $dailyPlanDateTo = Get-Date (Get-Date $DateTo)
         }
 
         Write-Verbose ".. $($MyInvocation.MyCommand.Name): retrieving daily plan for date range $dailyPlanDateFrom - $dailyPlanDateTo"
@@ -345,8 +349,8 @@ param
         $body = New-Object PSObject
         Add-Member -Membertype NoteProperty -Name 'controllerId' -value $script:jsWebService.ControllerId -InputObject $body
 
-        Add-Member -Membertype NoteProperty -Name 'dailyPlanDateFrom' -value (Get-Date $dailyPlanDateFrom -Format 'yyyy-MM-dd') -InputObject $body
-        Add-Member -Membertype NoteProperty -Name 'dailyPlanDateTo' -value (Get-Date $dailyPlanDateTo -Format 'yyyy-MM-dd')  -InputObject $body
+        Add-Member -Membertype NoteProperty -Name 'dailyPlanDateFrom' -value "$($dailyPlanDateFrom)" -InputObject $body
+        Add-Member -Membertype NoteProperty -Name 'dailyPlanDateTo' -value "$($dailyPlanDateTo)" -InputObject $body
 
         if ( $orderIds )
         {
@@ -376,6 +380,8 @@ param
         if ( $controllerIds )
         {
             Add-Member -Membertype NoteProperty -Name 'controllerIds' -value $controllerIds -InputObject $body
+        } else {
+            Add-Member -Membertype NoteProperty -Name 'controllerIds' -value @( $script:jsWebService.ControllerId ) -InputObject $body
         }
 
         if ( $tags )

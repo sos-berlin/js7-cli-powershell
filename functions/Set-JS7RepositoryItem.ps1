@@ -48,6 +48,13 @@ store objects to a local Git repository.
 Specifies that all sub-folders should be looked up if the -Folder parameter is used.
 By default no sub-folders will be looked up.
 
+.PARAMETER Change
+Specifies the identifier of an inventory change. Scheduling objects indicated with the change and
+dependencies will be stored to JOC Cockpit's Git repository.
+
+If in addition the -Folder parameter is used, then scheduling objects of the change will be limited
+to objects located in the specified folder.
+
 .PARAMETER ControllerId
 Optionally limits the selection of deployed scheduling objects to the Controller indicated with the Controller ID.
 Objects that are deployed to other Controllers will not be stored to the repository.
@@ -70,6 +77,12 @@ Specifies that no previously deployed objects should be stored.
 
 .PARAMETER NoReleased
 Specifies that no previously released objects should be stored.
+
+.PARAMETER NoReferencing
+Specifies that no referencing objects from dependencies of objects subject to the indicated -Change should be included.
+
+.PARAMETER NoReferences
+Specifies that no references to objects from dependencies of objects subject to the indicated -Change should be included.
 
 .PARAMETER Latest
 If used with the -Path parameter then -Latest specifies that only the latest deployed object will be considered.
@@ -123,6 +136,11 @@ Stores any objects such as job resources and schedules from the specified folder
 to the repository of category LOCAL. Deployable objects are considered only if
 previously deployed to the indicated Controller.
 
+.EXAMPLE
+Set-JSRepositoryItem -Folder /TestRepo -Change CH-TestRepo-01
+
+Stores any scheduling objects indicated by the change and located in the indicated folder to the repository of category ROLLOUT.
+
 .LINK
 about_JS7
 
@@ -140,6 +158,8 @@ param
     [Parameter(Mandatory=$False,ValueFromPipeline=$False,ValueFromPipelinebyPropertyName=$True)]
     [switch] $Recursive,
     [Parameter(Mandatory=$False,ValueFromPipeline=$False,ValueFromPipelinebyPropertyName=$True)]
+    [string[]] $Change,
+    [Parameter(Mandatory=$False,ValueFromPipeline=$False,ValueFromPipelinebyPropertyName=$True)]
     [switch] $Local,
     [Parameter(Mandatory=$False,ValueFromPipeline=$False,ValueFromPipelinebyPropertyName=$True)]
     [string] $ControllerId,
@@ -154,6 +174,10 @@ param
     [Parameter(Mandatory=$False,ValueFromPipeline=$False,ValueFromPipelinebyPropertyName=$True)]
     [switch] $Latest,
     [Parameter(Mandatory=$False,ValueFromPipeline=$False,ValueFromPipelinebyPropertyName=$True)]
+    [switch] $NoReferencing,
+    [Parameter(Mandatory=$False,ValueFromPipeline=$False,ValueFromPipelinebyPropertyName=$True)]
+    [switch] $NoReferences,
+    [Parameter(Mandatory=$False,ValueFromPipeline=$False,ValueFromPipelinebyPropertyName=$True)]
     [string] $AuditComment,
     [Parameter(Mandatory=$False,ValueFromPipeline=$False,ValueFromPipelinebyPropertyName=$True)]
     [int] $AuditTimeSpent,
@@ -165,11 +189,18 @@ param
 		Approve-JS7Command $MyInvocation.MyCommand
         $stopWatch = Start-JS7StopWatch
 
+        if ( !$Path -and !$Folder -and !$Change )
+        {
+            throw "$($MyInvocation.MyCommand.Name): one of -Path, -Folder or -Change arguments is required"
+        }
+
         if ( !$AuditComment -and ( $AuditTimeSpent -or $AuditTicketLink ) )
         {
             throw "$($MyInvocation.MyCommand.Name): Audit Log comment required, use parameter -AuditComment if one of the parameters -AuditTimeSpent or -AuditTicketLink is used"
         }
 
+        $objectCount = 0
+        $changes = @()
         $storeObjects = @()
         $deployableTypes = @('WORKFLOW','FILEORDERSOURCE','JOBRESOURCE','NOTICEBOARD','LOCK')
         $releasableTypes = @('INCLUDESCRIPT','JOBTEMPLATE','WORKINGDAYSCALENDAR','NONWORKINGDAYSCALENDAR','SCHEDULE')
@@ -189,22 +220,27 @@ param
 
         if ( $Path -and !$Type )
         {
-            throw "$($MyInvocation.MyCommand.Name): path requires to specify the object type, use -Type parameter"
+            throw "$($MyInvocation.MyCommand.Name): path requires to specify the object type, use -Type argument"
         }
 
         if ( $Path -and ($Type.count -gt 1) )
         {
-            throw "$($MyInvocation.MyCommand.Name): path requires to specify a single object type, use -Type parameter"
+            throw "$($MyInvocation.MyCommand.Name): path requires to specify a single object type, use -Type argument"
         }
 
         if ( $Path -and $Folder )
         {
-            throw "$($MyInvocation.MyCommand.Name): only one of the parameters -Path or -Folder can be used"
+            throw "$($MyInvocation.MyCommand.Name): only one of the -Path or -Folder arguments can be used"
         }
 
-        if ( !$Path -and !$Folder )
+        if ( $Path -and $Change )
         {
-            throw "$($MyInvocation.MyCommand.Name): one of the parameters -Path or -Folder has to be used"
+            throw "$($MyInvocation.MyCommand.Name): only one of -Path and -Change arguments is allowed"
+        }
+
+        if ( !$Path -and !$Folder -and !$Change )
+        {
+            throw "$($MyInvocation.MyCommand.Name): one of the parameters -Path, -Folder or -Change has to be used"
         }
 
         if ( $Folder -and $Type.count -eq 0 )
@@ -213,8 +249,10 @@ param
             $Type += $releasableTypes
         }
 
-        if ( $Path )
+        if ( $Change )
         {
+            $changes += $Change
+        } elseif ( $Path ) {
             $curType = $Type[0]
 
             if ( $deployableTypes.contains( $curType ) )
@@ -419,8 +457,35 @@ param
 
     End
     {
-        if ( $storeObjects.count )
+        if ( $changes.count )
         {
+            $changeItems = Get-JS7InventoryChange -Name $changes -Detailed
+
+            if ( !$changeItems )
+            {
+                throw "$($MyInvocation.MyCommand.Name): no changes found"
+            }
+
+            $configurations = Get-JS7ConfigurationMerge -ChangeItems $changeItems -Dependencies (Get-JS7InventoryDependencies -OperationType DEPLOY -Folder $Folder -Configuration $changeItems.configurations -NoReferencing:$NoReferencing -NoReferences:$NoReferences)
+            $objectCount = $configurations.configuration.count
+            $draftConfiguration = New-Object PSObject
+            Add-Member -Membertype NoteProperty -Name 'draftConfigurations' -value $configurations -InputObject $draftConfiguration
+
+            $body = New-Object PSObject
+
+            if ( $ControllerId )
+            {
+                Add-Member -Membertype NoteProperty -Name 'controllerId' -value $ControllerId -InputObject $body
+            }
+
+            if ( $Local -eq $True )
+            {
+                Add-Member -Membertype NoteProperty -Name 'local' -value $draftConfiguration -InputObject $body
+            } else {
+                Add-Member -Membertype NoteProperty -Name 'rollout' -value $draftConfiguration -InputObject $body
+            }
+        } elseif ( $storeObjects.count ) {
+            $objectCount = $storeObjects.count
             if ( $Local )
             {
                 $category = 'local'
@@ -494,46 +559,49 @@ param
 
                 Add-Member -Membertype NoteProperty -Name $category -value $storeObject -InputObject $body
             }
+        }
 
-            if ( $AuditComment -or $AuditTimeSpent -or $AuditTicketLink )
+        if ( $AuditComment -or $AuditTimeSpent -or $AuditTicketLink )
+        {
+            $objAuditLog = New-Object PSObject
+            Add-Member -Membertype NoteProperty -Name 'comment' -value $AuditComment -InputObject $objAuditLog
+
+            if ( $AuditTimeSpent )
             {
-                $objAuditLog = New-Object PSObject
-                Add-Member -Membertype NoteProperty -Name 'comment' -value $AuditComment -InputObject $objAuditLog
-
-                if ( $AuditTimeSpent )
-                {
-                    Add-Member -Membertype NoteProperty -Name 'timeSpent' -value $AuditTimeSpent -InputObject $objAuditLog
-                }
-
-                if ( $AuditTicketLink )
-                {
-                    Add-Member -Membertype NoteProperty -Name 'ticketLink' -value $AuditTicketLink -InputObject $objAuditLog
-                }
-
-                Add-Member -Membertype NoteProperty -Name 'auditLog' -value $objAuditLog -InputObject $body
+                Add-Member -Membertype NoteProperty -Name 'timeSpent' -value $AuditTimeSpent -InputObject $objAuditLog
             }
 
-            if ( $PSCmdlet.ShouldProcess( 'set repository item', '/inventory/repository/store' ) )
+            if ( $AuditTicketLink )
             {
-                [string] $requestBody = $body | ConvertTo-Json -Depth 100
-                $response = Invoke-JS7WebRequest -Path '/inventory/repository/store' -Body $requestBody
+                Add-Member -Membertype NoteProperty -Name 'ticketLink' -value $AuditTicketLink -InputObject $objAuditLog
+            }
 
-                if ( $response.StatusCode -eq 200 )
+            Add-Member -Membertype NoteProperty -Name 'auditLog' -value $objAuditLog -InputObject $body
+        }
+
+        if ( $PSCmdlet.ShouldProcess( 'set repository item', '/inventory/repository/store' ) )
+        {
+            [string] $requestBody = $body | ConvertTo-Json -Depth 100
+            $response = Invoke-JS7WebRequest -Path '/inventory/repository/store' -Body $requestBody
+
+            if ( $response.StatusCode -eq 200 )
+            {
+                $requestResult = ( $response.Content | ConvertFrom-JSON )
+
+                if ( !$requestResult.ok )
                 {
-                    $requestResult = ( $response.Content | ConvertFrom-Json )
-
-                    if ( !$requestResult.ok )
-                    {
-                        throw ( $response | Format-List -Force | Out-String )
-                    }
-                } else {
                     throw ( $response | Format-List -Force | Out-String )
                 }
+            } else {
+                throw ( $response | Format-List -Force | Out-String )
             }
 
-            Write-Verbose ".. $($MyInvocation.MyCommand.Name): $($storeObjects.count) items stored"
-        } else {
-            Write-Verbose ".. $($MyInvocation.MyCommand.Name): no items stored"
+            if ( $objectCount -gt 0 )
+            {
+                Write-Verbose ".. $($MyInvocation.MyCommand.Name): $($objectCount) items stored"
+            } else {
+                Write-Verbose ".. $($MyInvocation.MyCommand.Name): no items stored"
+            }
         }
 
         Trace-JS7StopWatch -CommandName $MyInvocation.MyCommand.Name -StopWatch $stopWatch

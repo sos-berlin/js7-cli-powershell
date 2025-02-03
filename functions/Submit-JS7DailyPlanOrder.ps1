@@ -37,15 +37,13 @@ workflows that are indicated with the respective parameters.
 
 .PARAMETER DateFrom
 Optionally specifies the date starting from which daily plan orders should be submitted.
-Consider that a UTC date has to be provided.
 
-Default: Beginning of the current day as a UTC date
+Default: The current day in the local time zone
 
 .PARAMETER DateTo
 Optionally specifies the date until which daily plan orders should be submitted.
-Consider that a UTC date has to be provided.
 
-Default: End of the current day as a UTC date
+Default: The current day in the local time zone
 
 .PARAMETER RelativeDateFrom
 Specifies a relative date starting from which daily plan orders should be submitted, e.g.
@@ -142,7 +140,7 @@ param
     [Parameter(Mandatory=$False,ValueFromPipelinebyPropertyName=$True)]
     [string] $ControllerId,
     [Parameter(Mandatory=$False,ValueFromPipelinebyPropertyName=$True)]
-    [DateTime] $DateFrom = (Get-Date (Get-Date).ToUniversalTime() -Format 'yyyy-MM-dd'),
+    [DateTime] $DateFrom = (Get-Date),
     [Parameter(Mandatory=$False,ValueFromPipelinebyPropertyName=$True)]
     [DateTime] $DateTo,
     [Parameter(Mandatory=$False,ValueFromPipelinebyPropertyName=$True)]
@@ -196,7 +194,6 @@ param
                 $ScheduleFolder = $ScheduleFolder.Substring( 0, $ScheduleFolder.Length-1 )
             }
         }
-
 
         if ( $OrderId )
         {
@@ -252,8 +249,10 @@ param
                 'm' { $dailyPlanDateFrom = (Get-Date).AddMonths( "$($dateDirection)$($dateRange)" ) }
                 'y' { $dailyPlanDateFrom = (Get-Date).AddYears( "$($dateDirection)$($dateRange)" ) }
             }
+
+            $dailyPlanDateFrom = Get-Date $dailyPlanDateFrom -Format 'yyyy-MM-dd'
         } else {
-            $dailyPlanDateFrom = Get-Date (Get-Date $DateFrom)
+            $dailyPlanDateFrom = Get-Date $DateFrom -Format 'yyyy-MM-dd'
         }
 
         if ( $RelativeDateTo )
@@ -269,105 +268,90 @@ param
                 'm' { $dailyPlanDateTo = (Get-Date).AddMonths( "$($dateDirection)$($dateRange)" ) }
                 'y' { $dailyPlanDateTo = (Get-Date).AddYears( "$($dateDirection)$($dateRange)" ) }
             }
+
+            $dailyPlanDateTo = Get-Date $dailyPlanDateTo -Format 'yyyy-MM-dd'
         } else {
             if ( !$DateTo )
             {
-                $DateTo = $dailyPlanDateFrom
+                $dailyPlanDateTo = Get-Date $dailyPlanDateFrom -Format 'yyyy-MM-dd'
+            } else {
+                $dailyPlanDateTo = Get-Date $DateTo -Format 'yyyy-MM-dd'
             }
-
-            $dailyPlanDateTo = Get-Date (Get-Date $DateTo)
         }
 
         Write-Verbose ".. $($MyInvocation.MyCommand.Name): submitting daily plan orders for date range $dailyPlanDateFrom - $dailyPlanDateTo"
-        $loops = 0
 
-        for( $day=$dailyPlanDateFrom; $day -le $dailyPlanDateTo; $day=$day.AddDays(1) )
+        $body = New-Object PSObject
+
+        Add-Member -Membertype NoteProperty -Name 'dailyPlanDateFrom' -value "$($dailyPlanDateFrom)" -InputObject $body
+        Add-Member -Membertype NoteProperty -Name 'dailyPlanDateTo' -value "$($dailyPlanDateTo)" -InputObject $body
+
+        if ( $orderIds )
         {
-            $body = New-Object PSObject
-            Add-Member -Membertype NoteProperty -Name 'controllerId' -value $script:jsWebService.ControllerId -InputObject $body
+            Add-Member -Membertype NoteProperty -Name 'orderIds' -value $orderIds -InputObject $body
+        }
 
-            $filter = New-Object PSObject
-            Add-Member -Membertype NoteProperty -Name 'dailyPlanDate' -value (Get-Date $day -Format 'yyyy-MM-dd') -InputObject $filter
+        if ( $workflowPaths )
+        {
+            Add-Member -Membertype NoteProperty -Name 'workflowPaths' -value $workflowPaths -InputObject $body
+        }
 
-            if ( $orderIds )
+        if ( $workflowFolders )
+        {
+            Add-Member -Membertype NoteProperty -Name 'workflowFolders' -value $workflowFolders -InputObject $body
+        }
+
+        if ( $schedulePaths )
+        {
+            Add-Member -Membertype NoteProperty -Name 'schedulePaths' -value $schedulePaths -InputObject $body
+        }
+
+        if ( $scheduleFolders )
+        {
+            Add-Member -Membertype NoteProperty -Name 'scheduleFolders' -value $scheduleFolders -InputObject $body
+        }
+
+        if ( $controllerIds )
+        {
+            Add-Member -Membertype NoteProperty -Name 'controllerIds' -value $controllerIds -InputObject $body
+        } else {
+            Add-Member -Membertype NoteProperty -Name 'controllerIds' -value @( $script:jsWebService.ControllerId ) -InputObject $body
+        }
+
+        if ( $AuditComment -or $AuditTimeSpent -or $AuditTicketLink )
+        {
+            $objAuditLog = New-Object PSObject
+            Add-Member -Membertype NoteProperty -Name 'comment' -value $AuditComment -InputObject $objAuditLog
+
+            if ( $AuditTimeSpent )
             {
-                Add-Member -Membertype NoteProperty -Name 'orderIds' -value $orderIds -InputObject $filter
+                Add-Member -Membertype NoteProperty -Name 'timeSpent' -value $AuditTimeSpent -InputObject $objAuditLog
             }
 
-            if ( $workflowPaths )
+            if ( $AuditTicketLink )
             {
-                Add-Member -Membertype NoteProperty -Name 'workflowPaths' -value $workflowPaths -InputObject $filter
+                Add-Member -Membertype NoteProperty -Name 'ticketLink' -value $AuditTicketLink -InputObject $objAuditLog
             }
 
-            if ( $workflowFolders )
+            Add-Member -Membertype NoteProperty -Name 'auditLog' -value $objAuditLog -InputObject $body
+        }
+
+        [string] $requestBody = $body | ConvertTo-Json -Depth 100
+        $response = Invoke-JS7WebRequest -Path '/daily_plan/orders/submit' -Body $requestBody
+
+        if ( $response.StatusCode -eq 200 )
+        {
+            $requestResult = ( $response.Content | ConvertFrom-JSON )
+
+            if ( !$requestResult.ok )
             {
-                Add-Member -Membertype NoteProperty -Name 'workflowFolders' -value $workflowFolders -InputObject $filter
-            }
-
-            if ( $schedulePaths )
-            {
-                Add-Member -Membertype NoteProperty -Name 'schedulePaths' -value $schedulePaths -InputObject $filter
-            }
-
-            if ( $scheduleFolders )
-            {
-                Add-Member -Membertype NoteProperty -Name 'scheduleFolders' -value $scheduleFolders -InputObject $filter
-            }
-
-            if ( $controllerIds )
-            {
-                Add-Member -Membertype NoteProperty -Name 'controllerIds' -value $controllerIds -InputObject $filter
-            }
-
-            if ( $filter )
-            {
-               Add-Member -Membertype NoteProperty -Name 'filter' -value $filter -InputObject $body
-            }
-
-            if ( $AuditComment -or $AuditTimeSpent -or $AuditTicketLink )
-            {
-                $objAuditLog = New-Object PSObject
-                Add-Member -Membertype NoteProperty -Name 'comment' -value $AuditComment -InputObject $objAuditLog
-
-                if ( $AuditTimeSpent )
-                {
-                    Add-Member -Membertype NoteProperty -Name 'timeSpent' -value $AuditTimeSpent -InputObject $objAuditLog
-                }
-
-                if ( $AuditTicketLink )
-                {
-                    Add-Member -Membertype NoteProperty -Name 'ticketLink' -value $AuditTicketLink -InputObject $objAuditLog
-                }
-
-                Add-Member -Membertype NoteProperty -Name 'auditLog' -value $objAuditLog -InputObject $body
-            }
-
-            [string] $requestBody = $body | ConvertTo-Json -Depth 100
-            $response = Invoke-JS7WebRequest -Path '/daily_plan/orders/submit' -Body $requestBody
-
-            if ( $response.StatusCode -eq 200 )
-            {
-                $requestResult = ( $response.Content | ConvertFrom-JSON )
-
-                if ( !$requestResult.ok )
-                {
-                    throw ( $response | Format-List -Force | Out-String )
-                }
-            } else {
                 throw ( $response | Format-List -Force | Out-String )
             }
-
-            Write-Verbose ".. $($MyInvocation.MyCommand.Name): Daily Plan orders submitted for: $(Get-Date $day -Format 'yyyy-MM-dd')"
-
-            $loops++
-        }
-
-        if ( $loops )
-        {
-            Write-Verbose ".. $($MyInvocation.MyCommand.Name): Daily Plan orders submitted for $loops days"
         } else {
-            Write-Verbose ".. $($MyInvocation.MyCommand.Name): no Daily Plan orders submitted"
+            throw ( $response | Format-List -Force | Out-String )
         }
+
+        Write-Verbose ".. $($MyInvocation.MyCommand.Name): Daily Plan orders submitted"
 
         Trace-JS7StopWatch -CommandName $MyInvocation.MyCommand.Name -StopWatch $stopWatch
         Update-JS7Session

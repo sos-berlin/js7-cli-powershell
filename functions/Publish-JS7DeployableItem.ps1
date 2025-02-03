@@ -41,6 +41,13 @@ This parameter is used alternatively to the -Path parameter that specifies to pu
 .PARAMETER Recursive
 Specifies that all sub-folders should be looked up. By default no sub-folders will be considered.
 
+.PARAMETER Change
+Specifies the identifier of an inventory change. Scheduling objects indicated with the change and
+dependencies will be deployed.
+
+If in addition the -Folder parameter is used, then scheduling objects of the change will be limited
+to objects located in the specified folder.
+
 .PARAMETER ControllerId
 Specifies one or more Controllers to which the indicated objects should be deployed.
 
@@ -72,10 +79,16 @@ Specifies that no previously deployed objects should be deployed. This is useful
 If used with the -Path parameter then -Latest specifies that only the latest deployed object will be considered for redeployment.
 This parameter is not considered if the -NoDeployed parameter is used.
 
+.PARAMETER NoReferencing
+Specifies that no referencing objects from dependencies of objects subject to the indicated -Change should be included.
+
+.PARAMETER NoReferences
+Specifies that no references to objects from dependencies of objects subject to the indicated -Change should be included.
+
 .PARAMETER ObjectName
 Internal use for pipelining.
 
-.PARAMETER ObjectName
+.PARAMETER ObjectType
 Internal use for pipelining.
 
 .PARAMETER AuditComment
@@ -134,6 +147,8 @@ param
     [string] $Folder,
     [Parameter(Mandatory=$False,ValueFromPipeline=$False,ValueFromPipelinebyPropertyName=$True)]
     [switch] $Recursive,
+    [Parameter(Mandatory=$False,ValueFromPipeline=$False,ValueFromPipelinebyPropertyName=$True)]
+    [string[]] $Change,
     [Parameter(Mandatory=$True,ValueFromPipeline=$False,ValueFromPipelinebyPropertyName=$True)]
     [string] $ControllerId,
     [Parameter(Mandatory=$False,ValueFromPipeline=$False,ValueFromPipelinebyPropertyName=$True)]
@@ -150,6 +165,10 @@ param
     [switch] $NoDeployed,
     [Parameter(Mandatory=$False,ValueFromPipeline=$False,ValueFromPipelinebyPropertyName=$True)]
     [switch] $Latest,
+    [Parameter(Mandatory=$False,ValueFromPipeline=$False,ValueFromPipelinebyPropertyName=$True)]
+    [switch] $NoReferencing,
+    [Parameter(Mandatory=$False,ValueFromPipeline=$False,ValueFromPipelinebyPropertyName=$True)]
+    [switch] $NoReferences,
     [Parameter(Mandatory=$False,ValueFromPipeline=$False,ValueFromPipelinebyPropertyName=$True)]
     [string] $ObjectName,
     [Parameter(Mandatory=$False,ValueFromPipeline=$False,ValueFromPipelinebyPropertyName=$True)]
@@ -177,6 +196,8 @@ param
             throw "$($MyInvocation.MyCommand.Name): Audit Log comment required, use parameter -AuditComment if one of the parameters -AuditTimeSpent or -AuditTicketLink is used"
         }
 
+        $objectCount = 0
+        $changes = @()
         $controllerIds = @()
         $storeObjects = @()
         $deleteObjects = @()
@@ -222,9 +243,14 @@ param
             throw "$($MyInvocation.MyCommand.Name): only one of the parameters -Path or -Folder can be used"
         }
 
-        if ( !$Path -and !$Folder )
+        if ( $Path -and $Change )
         {
-            throw "$($MyInvocation.MyCommand.Name): one of the parameters -Path or -Folder has to be used"
+            throw "$($MyInvocation.MyCommand.Name): only one of the parameters -Path or -Change can be used"
+        }
+
+        if ( !$Path -and !$Folder -and !$Change )
+        {
+            throw "$($MyInvocation.MyCommand.Name): one of the parameters -Path, -Folder or -Change has to be used"
         }
 
         if ( $Type.count )
@@ -242,8 +268,10 @@ param
             $Type = $deployableTypes
         }
 
-        if ( $Path )
+        if ( $Change )
         {
+            $changes += $Change
+        } elseif ( $Path ) {
             $body = New-Object PSObject
             Add-Member -Membertype NoteProperty -Name 'objectType' -value $Type[0] -InputObject $body
             Add-Member -Membertype NoteProperty -Name 'path' -value $Path -InputObject $body
@@ -336,8 +364,39 @@ param
 
     End
     {
-        if ( $storeObjects.count -or $deleteObjects.count )
+        if ( $changes.count )
         {
+            $changeItems = Get-JS7InventoryChange -Name $changes -Detailed
+
+            if ( !$changeItems )
+            {
+                throw "$($MyInvocation.MyCommand.Name): no changes found"
+            }
+
+            if ( $Folder.count )
+            {
+                $configurations = Get-JS7ConfigurationMerge -ChangeItems $changeItems -Dependencies (Get-JS7InventoryDependencies -OperationType DEPLOY -Folder $Folder -Configuration $changeItems.configurations -NoReferencing:$NoReferencing -NoReferences:$NoReferences)
+            } else {
+                $configurations = Get-JS7ConfigurationMerge -ChangeItems $changeItems -Dependencies (Get-JS7InventoryDependencies -OperationType DEPLOY -Configuration $changeItems.configurations -NoReferencing:$NoReferencing -NoReferences:$NoReferences)
+            }
+
+            $body = New-Object PSObject
+            $deployableConfigurations = @($configurations | Where-Object { $_.configuration.objectType -in $deployableTypes })
+
+            if ( $deployableConfigurations.count )
+            {
+                $deployableDraftConfiguration = New-Object PSObject
+                Add-Member -Membertype NoteProperty -Name 'draftConfigurations' -value ([PSObject[]] $deployableConfigurations) -InputObject $deployableDraftConfiguration
+
+                $objectCount += $deployableConfigurations.configuration.count
+                Add-Member -Membertype NoteProperty -Name 'store' -value $deployableDraftConfiguration -InputObject $body
+            }
+
+            if ( $controllerIds )
+            {
+                Add-Member -Membertype NoteProperty -Name 'controllerIds' -value $controllerIds -InputObject $body
+            }
+        } elseif ( $storeObjects.count -or $deleteObjects.count ) {
             $body = New-Object PSObject
             Add-Member -Membertype NoteProperty -Name 'controllerIds' -value $controllerIds -InputObject $body
 
@@ -395,11 +454,13 @@ param
                 if ( $draftConfigurations.count )
                 {
                     Add-Member -Membertype NoteProperty -Name 'draftConfigurations' -value $draftConfigurations -InputObject $storeObject
+                    $objectCount += $draftConfigurations.count
                 }
 
                 if ( $deployConfigurations.count )
                 {
                     Add-Member -Membertype NoteProperty -Name 'deployConfigurations' -value $deployConfigurations -InputObject $storeObject
+                    $objectCount += $deployConfigurations.count
                 }
 
                 Add-Member -Membertype NoteProperty -Name 'store' -value $storeObject -InputObject $body
@@ -423,12 +484,15 @@ param
 
             if ( $deployConfigurations.count )
             {
+                $objectCount += $deployConfigurations.count
                 $deleteObject = New-Object PSObject
                 Add-Member -Membertype NoteProperty -Name 'deployConfigurations' -value $deployConfigurations -InputObject $deleteObject
                 Add-Member -Membertype NoteProperty -Name 'delete' -value $deleteObject -InputObject $body
             }
+        }
 
-
+        if ( $objectCount )
+        {
             if ( $AuditComment -or $AuditTimeSpent -or $AuditTicketLink )
             {
                 $objAuditLog = New-Object PSObject
@@ -462,7 +526,7 @@ param
                 throw ( $response | Format-List -Force | Out-String )
             }
 
-            Write-Verbose ".. $($MyInvocation.MyCommand.Name): $($storeObjects.count + $deleteObjects.count) items deployed"
+            Write-Verbose ".. $($MyInvocation.MyCommand.Name): $($objectCount) items deployed"
         } else {
             Write-Verbose ".. $($MyInvocation.MyCommand.Name): no items deployed"
         }

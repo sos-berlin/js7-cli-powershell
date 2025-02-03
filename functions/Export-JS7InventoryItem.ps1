@@ -65,6 +65,13 @@ This parameter is used alternatively to the -Path parameter that specifies expor
 Specifies that all sub-folders should be looked up if the -Folder parameter is used.
 By default no sub-folders will be searched for exportable objects.
 
+.PARAMETER Change
+Specifies the identifier of an inventory change. Scheduling objects indicated with the change and
+dependencies will be exported.
+
+If in addition the -Folder parameter is used, then scheduling objects of the change will be limited
+to objects located in the specified folder.
+
 .PARAMETER Releasable
 Specifies that only releasable objects should be exported that include the object types:
 
@@ -137,6 +144,12 @@ Specifies the path to the archive file that the exported inventory objects are w
 
 .PARAMETER Format
 Specifies the type of the archive file that will be returned: ZIP, TAR_GZ.
+
+.PARAMETER NoReferencing
+Specifies that no referencing objects from dependencies of objects subject to the indicated -Change should be included.
+
+.PARAMETER NoReferences
+Specifies that no references to objects from dependencies of objects subject to the indicated -Change should be included.
 
 .PARAMETER AuditComment
 Specifies a free text that indicates the reason for the current intervention, e.g. "business requirement", "maintenance window" etc.
@@ -217,6 +230,8 @@ param
     [Parameter(Mandatory=$False,ValueFromPipeline=$False,ValueFromPipelinebyPropertyName=$True)]
     [switch] $Recursive,
     [Parameter(Mandatory=$False,ValueFromPipeline=$False,ValueFromPipelinebyPropertyName=$True)]
+    [string[]] $Change,
+    [Parameter(Mandatory=$False,ValueFromPipeline=$False,ValueFromPipelinebyPropertyName=$True)]
     [switch] $Releasable,
     [Parameter(Mandatory=$False,ValueFromPipeline=$False,ValueFromPipelinebyPropertyName=$True)]
     [switch] $Deployable,
@@ -244,6 +259,10 @@ param
     [ValidateSet('ZIP','TAR_GZ',IgnoreCase = $False)]
     [string] $Format = 'ZIP',
     [Parameter(Mandatory=$False,ValueFromPipeline=$False,ValueFromPipelinebyPropertyName=$True)]
+    [switch] $NoReferencing,
+    [Parameter(Mandatory=$False,ValueFromPipeline=$False,ValueFromPipelinebyPropertyName=$True)]
+    [switch] $NoReferences,
+    [Parameter(Mandatory=$False,ValueFromPipeline=$False,ValueFromPipelinebyPropertyName=$True)]
     [string] $AuditComment,
     [Parameter(Mandatory=$False,ValueFromPipeline=$False,ValueFromPipelinebyPropertyName=$True)]
     [int] $AuditTimeSpent,
@@ -267,13 +286,15 @@ param
 
         $formats = @{ 'ZIP' = 'zip'; 'TAR_GZ' = 'tar.gz' }
         $deployableTypes = @('WORKFLOW','FILEORDERSOURCE','JOBRESOURCE','NOTICEBOARD','LOCK')
-        $releasableTypes = @('INCLUDESCRIPT','JOBTEMPLATE','WORKINGDAYSCALENDAR','NONWORKINGDAYSCALENDAR','SCHEDULE')
+        $releasableTypes = @('INCLUDESCRIPT','JOBTEMPLATE','WORKINGDAYSCALENDAR','NONWORKINGDAYSCALENDAR','SCHEDULE','REPORT')
 
         if (IsJOCVersion -Major 2 -Minor 7 -Patch 1 )
         {
             $releasableTypes += 'REPORT'
         }
 
+        $objectCount = 0
+        $changes = @()
         $exportObjects = @{}
         $deployablesObj = $null
         $releasablesObj = $null
@@ -301,9 +322,14 @@ param
             throw "$($MyInvocation.MyCommand.Name): only one of the parameters -Path or -Folder can be used"
         }
 
-        if ( !$Path -and !$Folder )
+        if ( $Path -and $Change )
         {
-            throw "$($MyInvocation.MyCommand.Name): one of the parameters -Path or -Folder has to be used"
+            throw "$($MyInvocation.MyCommand.Name): only one of the parameters -Path or -Change can be used"
+        }
+
+        if ( !$Path -and !$Folder -and !$Change )
+        {
+            throw "$($MyInvocation.MyCommand.Name): one of the parameters -Path, -Folder or -Change has to be used"
         }
 
         if ( !$Deployable -and !$Releasable )
@@ -317,8 +343,10 @@ param
             $NoRemoved = $True
         }
 
-        if ( $Releasable )
+        if ( $Change )
         {
+            $changes += $Change
+        } elseif ( $Releasable ) {
             if ( $Path -and ($releasableTypes -contains $Type[0]) )
             {
                 $body = New-Object PSObject
@@ -569,7 +597,7 @@ param
 
     End
     {
-        if ( $exportObjects )
+        if ( $changes.count -or $exportObjects)
         {
             $body = New-Object PSObject
             $exportFile = New-Object PSObject
@@ -584,11 +612,65 @@ param
 
             Add-Member -Membertype NoteProperty -Name 'exportFile' -value $exportFile -InputObject $body
             Add-Member -Membertype NoteProperty -Name 'useShortPath' -value ($UseShortPath -eq $True) -InputObject $body
+        }
+
+        if ( $changes.count )
+        {
+            $changeItems = Get-JS7InventoryChange -Name $changes -Detailed
+
+            if ( !$changeItems )
+            {
+                throw "$($MyInvocation.MyCommand.Name): no changes found"
+            }
+
+            $exportables = New-Object PSObject
+
+            if ( $Folder.count )
+            {
+                $configurations = Get-JS7ConfigurationMerge -ChangeItems $changeItems -Dependencies (Get-JS7InventoryDependencies -OperationType DEPLOY -Folder $Folder[0] -Configuration $changeItems.configurations -NoReferencing:$NoReferencing -NoReferences:$NoReferences)
+            } else {
+                $configurations = Get-JS7ConfigurationMerge -ChangeItems $changeItems -Dependencies (Get-JS7InventoryDependencies -OperationType DEPLOY -Configuration $changeItems.configurations -NoReferencing:$NoReferencing -NoReferences:$NoReferences)
+            }
+
+            if ( $Deployable )
+            {
+                $deployableConfigurations = @($configurations | Where-Object { $_.configuration.objectType -in $deployableTypes })
+                $deployableDraftConfiguration = New-Object PSObject
+                Add-Member -Membertype NoteProperty -Name 'draftConfigurations' -value $deployableConfigurations -InputObject $deployableDraftConfiguration
+
+                $objectCount += $deployableConfigurations.configuration.count
+                Add-Member -Membertype NoteProperty -Name 'deployables' -value $deployableDraftConfiguration -InputObject $exportables
+            }
+
+            if ( $Releasable )
+            {
+                $releasableConfigurations = @($configurations | Where-Object { $_.configuration.objectType -in $releasableTypes })
+                $releasableDraftConfiguration = New-Object PSObject
+                Add-Member -Membertype NoteProperty -Name 'draftConfigurations' -value $releasableConfigurations -InputObject $releasableDraftConfiguration
+
+                $objectCount += $releasableConfigurations.configuration.count
+                Add-Member -Membertype NoteProperty -Name 'releasables' -value $releasableDraftConfiguration -InputObject $exportables
+            }
+
+            if ( $ForSigning -eq $True )
+            {
+                Add-Member -Membertype NoteProperty -Name 'forSigning' -value $exportables -InputObject $body
+            } else {
+                Add-Member -Membertype NoteProperty -Name 'shallowCopy' -value $exportables -InputObject $body
+            }
+
+            if ( $ControllerId )
+            {
+                Add-Member -Membertype NoteProperty -Name 'controllerId' -value $ControllerId -InputObject $body
+            }
+        } elseif ( $exportObjects ) {
 
             $deployableDraftConfigurations = @()
             $deployableDeployedConfigurations = @()
             $releasableDraftConfigurations = @()
             $releasableReleasedConfigurations = @()
+
+            $objectCount = $exportObjects.count
 
             $exportObjects.Keys | ForEach-Object { $object = $exportObjects.Item($_)
                 if ( $object.area -eq 'deployable' -and $object.path -and $object.commitId -and $object.deployed -and $object.type -ne 'FOLDER' )
@@ -807,7 +889,7 @@ param
         }
 
         # if ( $Folder -or $deployablesObj -or $releasablesObj )
-        if ( $forSigningObj -or $shallowCopyObj -or $exportObj )
+        if ( $forSigningObj -or $shallowCopyObj -or $exportObj -or $changes.count )
         {
             Add-Member -Membertype NoteProperty -Name 'withoutInvalid' -value ($Valid -eq $True) -InputObject $body
 
@@ -840,7 +922,7 @@ param
 
             [string] $requestBody = $body | ConvertTo-Json -Depth 100
 
-            if ( $Folder -and !$Valid )
+            if ( $Folder -and !$Valid -and !$Change )
             {
                 $response = Invoke-JS7WebRequest -Path '/inventory/export/folder' -Body $requestBody -Headers $headers -OutFile $FilePath
             } else {
@@ -865,7 +947,7 @@ param
                 throw "$($MyInvocation.MyCommand.Name): error occurred:`n$($response | Format-List -Force | Out-String)"
             }
 
-            Write-Verbose ".. $($MyInvocation.MyCommand.Name): $($exportObjects.count) items exported"
+            Write-Verbose ".. $($MyInvocation.MyCommand.Name): $($objectCount) items exported"
         } else {
             Write-Verbose ".. $($MyInvocation.MyCommand.Name): no items exported"
         }

@@ -34,25 +34,26 @@ Specifies the Controller to which daily plan orders are submitted should the -Su
 Without this parameter daily plan orders are submitted to any Controllers that are deployed together with the
 workflows that are indicated with their respective schedules.
 
-.PARAMETER Submit
-Specifies to immediately submit the daily plan orders to a JS7 Controller.
-
 .PARAMETER Overwrite
 Specifies to overwrite daily plan orders for the same date and schedule.
 
 If such orders exist with a Controller and the -Submit parameter is used then they are cancelled and re-created.
 
+.PARAMETER Submit
+Specifies to immediately submit the daily plan orders to a JS7 Controller.
+
+.PARAMETER NonAutoPlanned
+Specifies thtat orders will be created from schedules that are not configured for automated planning of orders.
+
 .PARAMETER DateFrom
 Optionally specifies the date starting from which daily plan orders should be created.
-Consider that a UTC date has to be provided.
 
-Default: Beginning of the current day as a UTC date
+Default: The current day in the local time zone
 
 .PARAMETER DateTo
 Optionally specifies the date until which daily plan orders should be created.
-Consider that a UTC date has to be provided.
 
-Default: End of the current day as a UTC date
+Default: The current day in the local time zone
 
 .PARAMETER RelativeDateFrom
 Specifies a relative date starting from which daily plan orders should be created, e.g.
@@ -150,11 +151,13 @@ param
     [Parameter(Mandatory=$False,ValueFromPipelinebyPropertyName=$True)]
     [string] $ControllerId,
     [Parameter(Mandatory=$False,ValueFromPipelinebyPropertyName=$True)]
-    [switch] $Submit,
-    [Parameter(Mandatory=$False,ValueFromPipelinebyPropertyName=$True)]
     [switch] $Overwrite,
     [Parameter(Mandatory=$False,ValueFromPipelinebyPropertyName=$True)]
-    [DateTime] $DateFrom = (Get-Date (Get-Date).ToUniversalTime() -Format 'yyyy-MM-dd'),
+    [switch] $Submit,
+    [Parameter(Mandatory=$False,ValueFromPipelinebyPropertyName=$True)]
+    [switch] $NonAutoPlanned,
+    [Parameter(Mandatory=$False,ValueFromPipelinebyPropertyName=$True)]
+    [DateTime] $DateFrom = (Get-Date),
     [Parameter(Mandatory=$False,ValueFromPipelinebyPropertyName=$True)]
     [DateTime] $DateTo,
     [Parameter(Mandatory=$False,ValueFromPipelinebyPropertyName=$True)]
@@ -182,7 +185,6 @@ param
         $scheduleFolders = @()
         $workflowPaths = @()
         $workflowFolders = @()
-        $controllerIds = @()
     }
 
     Process
@@ -243,11 +245,6 @@ param
 
             $scheduleFolders += $objFolder
         }
-
-        if ( $ControllerId )
-        {
-            $controllerIds += $ControllerId
-        }
     }
 
     End
@@ -265,8 +262,10 @@ param
                 'm' { $dailyPlanDateFrom = (Get-Date).AddMonths( "$($dateDirection)$($dateRange)" ) }
                 'y' { $dailyPlanDateFrom = (Get-Date).AddYears( "$($dateDirection)$($dateRange)" ) }
             }
+
+            $dailyPlanDateFrom = Get-Date $dailyPlanDateFrom -Format 'yyyy-MM-dd'
         } else {
-            $dailyPlanDateFrom = Get-Date (Get-Date $DateFrom)
+            $dailyPlanDateFrom = Get-Date $DateFrom -Format 'yyyy-MM-dd'
         }
 
         if ( $RelativeDateTo )
@@ -282,22 +281,31 @@ param
                 'm' { $dailyPlanDateTo = (Get-Date).AddMonths( "$($dateDirection)$($dateRange)" ) }
                 'y' { $dailyPlanDateTo = (Get-Date).AddYears( "$($dateDirection)$($dateRange)" ) }
             }
+
+            $dailyPlanDateTo = Get-Date $dailyPlanDateTo -Format 'yyyy-MM-dd'
         } else {
             if ( !$DateTo )
             {
-                $DateTo = $dailyPlanDateFrom
+                $dailyPlanDateTo = Get-Date $dailyPlanDateFrom -Format 'yyyy-MM-dd'
+            } else {
+                $dailyPlanDateTo = Get-Date $DateTo -Format 'yyyy-MM-dd'
             }
-
-            $dailyPlanDateTo = Get-Date (Get-Date $DateTo)
         }
 
         Write-Verbose ".. $($MyInvocation.MyCommand.Name): removing daily plan orders for date range $dailyPlanDateFrom - $dailyPlanDateTo"
         $loops = 0
 
-        for( $day=$dailyPlanDateFrom; $day -le $dailyPlanDateTo; $day=$day.AddDays(1) )
+        for( $day=(Get-Date $dailyPlanDateFrom); $day -le (Get-Date $dailyPlanDateTo); $day=(Get-Date $day).AddDays(1) )
         {
             $body = New-Object PSObject
-            Add-Member -Membertype NoteProperty -Name 'controllerId' -value $script:jsWebService.ControllerId -InputObject $body
+
+            if ( $ControllerId )
+            {
+                Add-Member -Membertype NoteProperty -Name 'controllerId' -value $ControllerId -InputObject $body
+            } else {
+                Add-Member -Membertype NoteProperty -Name 'controllerId' -value $script:jsWebService.ControllerId -InputObject $body
+            }
+
             Add-Member -Membertype NoteProperty -Name 'dailyPlanDate' -value (Get-Date $day -Format 'yyyy-MM-dd') -InputObject $body
 
             if ( $workflowPaths -or $workflowFolders )
@@ -334,13 +342,9 @@ param
                 Add-Member -Membertype NoteProperty -Name 'schedulePaths' -value $schedulePathsObj -InputObject $body
             }
 
-            if ( $controllerIds )
-            {
-                Add-Member -Membertype NoteProperty -Name 'controllerIds' -value $controllerIds -InputObject $body
-            }
-
-            Add-Member -Membertype NoteProperty -Name 'withSubmit' -value ($Submit -eq $True) -InputObject $body
             Add-Member -Membertype NoteProperty -Name 'overwrite' -value ($Overwrite -eq $True) -InputObject $body
+            Add-Member -Membertype NoteProperty -Name 'withSubmit' -value ($Submit -eq $True) -InputObject $body
+            Add-Member -Membertype NoteProperty -Name 'includeNonAutoPlannedOrders' -value ($NonAutoPlanned -eq $True) -InputObject $body
 
             if ( $AuditComment -or $AuditTimeSpent -or $AuditTicketLink )
             {

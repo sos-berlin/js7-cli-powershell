@@ -37,11 +37,24 @@ Specifies the object type which is one of:
 Alternatively to use of -Path the parameter specifies a JOC Cockpit inventory folder to be used to
 remove the respecive folder and objects from a local Git repository.
 
+.PARAMETER Change
+Specifies the identifier of an inventory change. Scheduling objects indicated with the change and
+dependencies will be removed from JOC Cockpit's Git repository.
+
+If in addition the -Folder parameter is used, then scheduling objects of the change will be limited
+to objects located in the specified folder.
+
 .PARAMETER Local
 Specifies that a repository holding scheduling objects that are local to the environment should be used.
 This corresponds to the LOCAL category. If this switch is not used then the
 ROLLOUT category is assumed for a repository that holds scheduling objects
 intended for rollout to later environments such as test, prod.
+
+.PARAMETER NoReferencing
+Specifies that no referencing objects from dependencies of objects subject to the indicated -Change should be included.
+
+.PARAMETER NoReferences
+Specifies that no references to objects from dependencies of objects subject to the indicated -Change should be included.
 
 .PARAMETER AuditComment
 Specifies a free text that indicates the reason for the current intervention, e.g. "business requirement", "maintenance window" etc.
@@ -97,7 +110,13 @@ param
     [Parameter(Mandatory=$False,ValueFromPipeline=$False,ValueFromPipelinebyPropertyName=$True)]
     [string] $Folder,
     [Parameter(Mandatory=$False,ValueFromPipeline=$False,ValueFromPipelinebyPropertyName=$True)]
+    [string[]] $Change,
+    [Parameter(Mandatory=$False,ValueFromPipeline=$False,ValueFromPipelinebyPropertyName=$True)]
     [switch] $Local,
+    [Parameter(Mandatory=$False,ValueFromPipeline=$False,ValueFromPipelinebyPropertyName=$True)]
+    [switch] $NoReferencing,
+    [Parameter(Mandatory=$False,ValueFromPipeline=$False,ValueFromPipelinebyPropertyName=$True)]
+    [switch] $NoReferences,
     [Parameter(Mandatory=$False,ValueFromPipeline=$False,ValueFromPipelinebyPropertyName=$True)]
     [string] $AuditComment,
     [Parameter(Mandatory=$False,ValueFromPipeline=$False,ValueFromPipelinebyPropertyName=$True)]
@@ -110,11 +129,18 @@ param
 		Approve-JS7Command $MyInvocation.MyCommand
         $stopWatch = Start-JS7StopWatch
 
+        if ( !$Path -and !$Folder -and !$Change )
+        {
+            throw "$($MyInvocation.MyCommand.Name): one of -Path, -Folder or -Change arguments is required"
+        }
+
         if ( !$AuditComment -and ( $AuditTimeSpent -or $AuditTicketLink ) )
         {
             throw "$($MyInvocation.MyCommand.Name): Audit Log comment required, use parameter -AuditComment if one of the parameters -AuditTimeSpent or -AuditTicketLink is used"
         }
 
+        $objectCount = 0
+        $changes = @()
         $removableConfigurations = @()
     }
 
@@ -140,13 +166,15 @@ param
             throw "$($MyInvocation.MyCommand.Name): only one of the parameters -Path or -Folder can be used"
         }
 
-        if ( !$Path -and !$Folder )
+        if ( !$Path -and !$Folder -and !$Change )
         {
             throw "$($MyInvocation.MyCommand.Name): one of the parameters -Path or -Folder has to be used"
         }
 
-        if ( $Path )
+        if ( $Change )
         {
+            $changes += $Change
+        } elseif ( $Path ) {
             $removableObj = New-Object PSObject
             Add-Member -Membertype NoteProperty -Name 'path' -value $Path -InputObject $removableObj
             Add-Member -Membertype NoteProperty -Name 'objectType' -value $Type -InputObject $removableObj
@@ -156,10 +184,13 @@ param
             Add-Member -Membertype NoteProperty -Name 'objectType' -value 'FOLDER' -InputObject $removableObj
         }
 
-        $removableConfigurationObj = New-Object PSObject
-        Add-Member -Membertype NoteProperty -Name 'configuration' -value $removableObj -InputObject $removableConfigurationObj
+        if ( !$Change )
+        {
+            $removableConfigurationObj = New-Object PSObject
+            Add-Member -Membertype NoteProperty -Name 'configuration' -value $removableObj -InputObject $removableConfigurationObj
 
-        $removableConfigurations += $removableConfigurationObj
+            $removableConfigurations += $removableConfigurationObj
+        }
     }
 
     End
@@ -172,8 +203,24 @@ param
         }
 
         $body = New-Object PSObject
-        Add-Member -Membertype NoteProperty -Name 'configurations' -value $removableConfigurations -InputObject $body
         Add-Member -Membertype NoteProperty -Name 'category' -value $category -InputObject $body
+
+        if ( $changes.count )
+        {
+            $changeItems = Get-JS7InventoryChange -Name $changes -Detailed
+
+            if ( !$changeItems )
+            {
+                throw "$($MyInvocation.MyCommand.Name): no changes found"
+            }
+
+            $configurations = Get-JS7ConfigurationMerge -ChangeItems $changeItems -Dependencies (Get-JS7InventoryDependencies -OperationType DEPLOY -Folder $Folder -Configuration $changeItems.configurations -NoReferencing:$NoReferencing -NoReferences:$NoReferences)
+            $objectCount = $configurations.configuration.count
+            Add-Member -Membertype NoteProperty -Name 'configurations' -value $configurations -InputObject $body
+        } else {
+            $objectCount = $removableConfigurations.configuration.count
+            Add-Member -Membertype NoteProperty -Name 'configurations' -value $removableConfigurations -InputObject $body
+        }
 
         if ( $AuditComment -or $AuditTimeSpent -or $AuditTicketLink )
         {
@@ -210,7 +257,12 @@ param
                 throw ( $response | Format-List -Force | Out-String )
             }
 
-            Write-Verbose ".. $($MyInvocation.MyCommand.Name): object(s) deleted: $Path"
+            if ( $objectCount -gt 0 )
+            {
+                Write-Verbose ".. $($MyInvocation.MyCommand.Name): $($objectCount) items deleted"
+            } else {
+                Write-Verbose ".. $($MyInvocation.MyCommand.Name): no items deleted"
+            }
         }
 
         Trace-JS7StopWatch -CommandName $MyInvocation.MyCommand.Name -StopWatch $stopWatch
