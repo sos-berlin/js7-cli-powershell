@@ -153,7 +153,6 @@ param
             $Recursive = $True
         }
 
-
         if ( $WorkingDays )
         {
             $type = 'WORKINGDAYSCALENDAR'
@@ -189,7 +188,7 @@ param
 
             if ( $calendarPaths.count )
             {
-                Add-Member -Membertype NoteProperty -Name 'calendars' -value $calendarPaths -InputObject $body
+                Add-Member -Membertype NoteProperty -Name 'calendarPaths' -value $calendarPaths -InputObject $body
             }
 
             if ( $folders.count )

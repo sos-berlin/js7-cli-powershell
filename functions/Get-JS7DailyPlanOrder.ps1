@@ -11,6 +11,9 @@ The following REST Web Service API resources are used:
 
 * /daily_plan/orders
 
+.PARAMETER OrderId
+Optionally specifies one or more Order IDs that identify orders in the daily plan.
+
 .PARAMETER WorkflowPath
 Optionally specifies the path and/or name of a workflow for which daily plan orders should be returned.
 
@@ -247,6 +250,21 @@ param
         if ( $OrderId )
         {
             $orderIds += $OrderId
+            $date = ( $OrderId | Select-String -Pattern "^#(\d{4}-\d{2}-\d{2})#" ).matches.groups[1].value
+
+            if ( !$DateFrom )
+            {
+                $DateFrom = Get-Date $date
+            } elseif ( (Get-Date $date) -lt (Get-Date $DateFrom) ) {
+                $DateFrom = $date
+            }
+
+            if ( !$DateTo )
+            {
+                $DateTo = Get-Date $date
+            } elseif ( (Get-Date $date) -gt (Get-Date $DateTo) ) {
+                $DateTo = $date
+            }
         }
 
         if ( $WorkflowPath )

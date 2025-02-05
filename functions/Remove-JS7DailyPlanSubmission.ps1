@@ -16,15 +16,13 @@ Specifies the Controller from which daily plan submissions should be removed.
 
 .PARAMETER DateFrom
 Optionally specifies the date starting from which daily plan submissions should be removed.
-Consider that a UTC date has to be provided.
 
-Default: Beginning of the current day as a UTC date
+Default: The current day in the local time zone
 
 .PARAMETER DateTo
 Optionally specifies the date until which daily plan submissions should be removed.
-Consider that a UTC date has to be provided.
 
-Default: End of the current day as a UTC date
+Default: The current day in the local time zone
 
 .PARAMETER RelativeDateFrom
 Specifies a relative date starting from which daily plan submissions should be removed, e.g.
@@ -99,7 +97,7 @@ param
     [Parameter(Mandatory=$False,ValueFromPipelinebyPropertyName=$True)]
     [string] $ControllerId,
     [Parameter(Mandatory=$False,ValueFromPipelinebyPropertyName=$True)]
-    [DateTime] $DateFrom,
+    [DateTime] $DateFrom = (Get-Date),
     [Parameter(Mandatory=$False,ValueFromPipelinebyPropertyName=$True)]
     [DateTime] $DateTo,
     [Parameter(Mandatory=$False,ValueFromPipelinebyPropertyName=$True)]
@@ -139,8 +137,10 @@ param
                 'm' { $dailyPlanDateFrom = (Get-Date).AddMonths( "$($dateDirection)$($dateRange)" ) }
                 'y' { $dailyPlanDateFrom = (Get-Date).AddYears( "$($dateDirection)$($dateRange)" ) }
             }
+
+            $dailyPlanDateFrom = Get-Date $dailyPlanDateFrom -Format 'yyyy-MM-dd'
         } else {
-            $dailyPlanDateFrom = Get-Date (Get-Date $DateFrom)
+            $dailyPlanDateFrom = Get-Date $DateFrom -Format 'yyyy-MM-dd'
         }
 
         if ( $RelativeDateTo )
@@ -156,82 +156,72 @@ param
                 'm' { $dailyPlanDateTo = (Get-Date).AddMonths( "$($dateDirection)$($dateRange)" ) }
                 'y' { $dailyPlanDateTo = (Get-Date).AddYears( "$($dateDirection)$($dateRange)" ) }
             }
+
+            $dailyPlanDateTo = Get-Date $dailyPlanDateTo -Format 'yyyy-MM-dd'
         } else {
             if ( !$DateTo )
             {
-                $DateTo = $dailyPlanDateFrom
+                $dailyPlanDateTo = Get-Date $dailyPlanDateFrom -Format 'yyyy-MM-dd'
+            } else {
+                $dailyPlanDateTo = Get-Date $DateTo -Format 'yyyy-MM-dd'
             }
-
-            $dailyPlanDateTo = Get-Date (Get-Date $DateTo)
         }
 
         Write-Verbose ".. $($MyInvocation.MyCommand.Name): removing daily plan submissions for date range $dailyPlanDateFrom - $dailyPlanDateTo"
-        $loops = 0
 
-        for( $day=$dailyPlanDateFrom; $day -le $dailyPlanDateTo; $day=$day.AddDays(1) )
-        {
-            $body = New-Object PSObject
+        $body = New-Object PSObject
 
-            if ( $ControllerId ) {
-                Add-Member -Membertype NoteProperty -Name 'controllerId' -value $ControllerId -InputObject $body
-            } else {
-                Add-Member -Membertype NoteProperty -Name 'controllerId' -value $script:jsWebService.ControllerId -InputObject $body
-            }
-
-            $filter = New-Object PSObject
-            Add-Member -Membertype NoteProperty -Name 'dateFor' -value (Get-Date $day -Format 'yyyy-MM-dd') -InputObject $filter
-
-            if ( $filter )
-            {
-               Add-Member -Membertype NoteProperty -Name 'filter' -value $filter -InputObject $body
-            }
-
-            if ( $AuditComment -or $AuditTimeSpent -or $AuditTicketLink )
-            {
-                $objAuditLog = New-Object PSObject
-                Add-Member -Membertype NoteProperty -Name 'comment' -value $AuditComment -InputObject $objAuditLog
-
-                if ( $AuditTimeSpent )
-                {
-                    Add-Member -Membertype NoteProperty -Name 'timeSpent' -value $AuditTimeSpent -InputObject $objAuditLog
-                }
-
-                if ( $AuditTicketLink )
-                {
-                    Add-Member -Membertype NoteProperty -Name 'ticketLink' -value $AuditTicketLink -InputObject $objAuditLog
-                }
-
-                Add-Member -Membertype NoteProperty -Name 'auditLog' -value $objAuditLog -InputObject $body
-            }
-
-            if ( $PSCmdlet.ShouldProcess( 'submissions', '/daily_plan/submissions/delete' ) )
-            {
-                [string] $requestBody = $body | ConvertTo-Json -Depth 100
-                $response = Invoke-JS7WebRequest -Path '/daily_plan/submissions/delete' -Body $requestBody
-
-                if ( $response.StatusCode -eq 200 )
-                {
-                    $requestResult = ( $response.Content | ConvertFrom-Json )
-
-                    if ( !$requestResult.ok )
-                    {
-                        throw ( $response | Format-List -Force | Out-String )
-                    }
-                } else {
-                    throw ( $response | Format-List -Force | Out-String )
-                }
-
-                Write-Verbose ".. $($MyInvocation.MyCommand.Name): Daily Plan submissions removed for: $(Get-Date $day -Format 'yyyy-MM-dd')"
-            }
-
-            $loops++
+        if ( $ControllerId ) {
+            Add-Member -Membertype NoteProperty -Name 'controllerId' -value $ControllerId -InputObject $body
+        } else {
+            Add-Member -Membertype NoteProperty -Name 'controllerId' -value $script:jsWebService.ControllerId -InputObject $body
         }
 
-        if ( $loops )
+        $filter = New-Object PSObject
+        Add-Member -Membertype NoteProperty -Name 'dateFrom' -value (Get-Date $dailyPlanDateFrom -Format 'yyyy-MM-dd') -InputObject $filter
+        Add-Member -Membertype NoteProperty -Name 'dateTo' -value (Get-Date $dailyPlanDateTo -Format 'yyyy-MM-dd') -InputObject $filter
+
+        if ( $filter )
         {
-            Write-Verbose ".. $($MyInvocation.MyCommand.Name): Daily Plan submissions removed for $loops days"
-        } else {
-            Write-Verbose ".. $($MyInvocation.MyCommand.Name): no Daily Plan submissions removed"
+           Add-Member -Membertype NoteProperty -Name 'filter' -value $filter -InputObject $body
+        }
+
+        if ( $AuditComment -or $AuditTimeSpent -or $AuditTicketLink )
+        {
+            $objAuditLog = New-Object PSObject
+            Add-Member -Membertype NoteProperty -Name 'comment' -value $AuditComment -InputObject $objAuditLog
+
+            if ( $AuditTimeSpent )
+            {
+                Add-Member -Membertype NoteProperty -Name 'timeSpent' -value $AuditTimeSpent -InputObject $objAuditLog
+            }
+
+            if ( $AuditTicketLink )
+            {
+                Add-Member -Membertype NoteProperty -Name 'ticketLink' -value $AuditTicketLink -InputObject $objAuditLog
+            }
+
+            Add-Member -Membertype NoteProperty -Name 'auditLog' -value $objAuditLog -InputObject $body
+        }
+
+        if ( $PSCmdlet.ShouldProcess( 'submissions', '/daily_plan/submissions/delete' ) )
+        {
+            [string] $requestBody = $body | ConvertTo-Json -Depth 100
+            $response = Invoke-JS7WebRequest -Path '/daily_plan/submissions/delete' -Body $requestBody
+
+            if ( $response.StatusCode -eq 200 )
+            {
+                $requestResult = ( $response.Content | ConvertFrom-Json )
+
+                if ( !$requestResult.ok )
+                {
+                    throw ( $response | Format-List -Force | Out-String )
+                }
+            } else {
+                throw ( $response | Format-List -Force | Out-String )
+            }
+
+            Write-Verbose ".. $($MyInvocation.MyCommand.Name): Daily Plan submissions removed"
         }
 
         Trace-JS7StopWatch -CommandName $MyInvocation.MyCommand.Name -StopWatch $stopWatch

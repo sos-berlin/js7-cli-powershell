@@ -14,6 +14,24 @@ The following REST Web Service API resources are used:
 .PARAMETER OrderId
 Specifies the identifier of an order.
 
+.PARAMETER WorkflowPath
+Optionally specifies the path and name of a workflow for which orders should be resumed.
+
+One of the parameters -Folder, -WorkflowPath or -OrderId has to be specified if no pipelined order objects are provided.
+
+.PARAMETER WorkflowVersionId
+Deployed workflows are assigned a version identifier. The argument allows to select the
+workflow that is available with the specified version.
+
+.PARAMETER Folder
+Optionally specifies the folder of workflows for which orders should be resumed.
+
+One of the parameters -Folder, -OrderId, -Folders or -State has to be specified.
+
+.PARAMETER Recursive
+When used with the -Folder parameter specifies that any sub-folders should be looked up.
+By default no sub-folders will be searched for workflows.
+
 .PARAMETER Position
 Specifies the position in the workflow for which the order should be resumed,
 i.e. the order will continue to execute with the instruction indicated by the position.
@@ -28,15 +46,6 @@ i.e. a list of names and values.
 Example:
 $orderArgs = @{ 'arg1' = 'value1'; 'arg2' = 'value2' }
 
-.PARAMETER Folder
-Optionally specifies the folder of workflows for which orders should be resumed.
-
-One of the parameters -Folder, -OrderId, -Folders or -State has to be specified.
-
-.PARAMETER Recursive
-When used with the -Folder parameter specifies that any sub-folders should be looked up.
-By default no sub-folders will be searched for workflows.
-
 .PARAMETER State
 Limits the scope of orders to be resumed to the following order states:
 
@@ -49,6 +58,12 @@ Limits the scope of orders to be resumed to the following order states:
 * PROMPTING
 * FAILED
 * BLOCKED
+
+.PARAMETER Force
+Specifies that jobs marked as non-restartable will be forced to restart on resumption of the order.
+
+.PARAMETER FromCurrentBlock
+Specifies that orders should be resumed from the begin of the current block instruction in which they are suspended or failed.
 
 .PARAMETER AuditComment
 Specifies a free text that indicates the reason for the current intervention, e.g. "business requirement", "maintenance window" etc.
@@ -120,6 +135,10 @@ param
 (
     [Parameter(Mandatory=$False,ValueFromPipeline=$True,ValueFromPipelinebyPropertyName=$True)]
     [string] $OrderId,
+    [Parameter(Mandatory=$False,ValueFromPipeline=$True,ValueFromPipelinebyPropertyName=$True)]
+    [string] $WorkflowPath,
+    [Parameter(Mandatory=$False,ValueFromPipeline=$False,ValueFromPipelinebyPropertyName=$True)]
+    [string] $WorkflowVersionId,
     [Parameter(Mandatory=$False,ValueFromPipeline=$False,ValueFromPipelinebyPropertyName=$False)]
     [object[]] $Position,
     [Parameter(Mandatory=$False,ValueFromPipeline=$False,ValueFromPipelinebyPropertyName=$True)]
@@ -131,6 +150,10 @@ param
     [Parameter(Mandatory=$False,ValueFromPipeline=$False,ValueFromPipelinebyPropertyName=$False)]
     [ValidateSet('PENDING','SCHEDULED','INPROGRESS','RUNNING','SUSPENDED','WAITING','PROMPTING','FAILED','BLOCKED',IgnoreCase = $False)]
     [string[]] $State,
+    [Parameter(Mandatory=$False,ValueFromPipeline=$False,ValueFromPipelinebyPropertyName=$True)]
+    [switch] $Force,
+    [Parameter(Mandatory=$False,ValueFromPipeline=$False,ValueFromPipelinebyPropertyName=$True)]
+    [switch] $FromCurrentBlock,
     [Parameter(Mandatory=$False,ValueFromPipeline=$False,ValueFromPipelinebyPropertyName=$True)]
     [string] $AuditComment,
     [Parameter(Mandatory=$False,ValueFromPipeline=$False,ValueFromPipelinebyPropertyName=$True)]
@@ -149,6 +172,7 @@ param
         }
 
         $orders = @()
+        $workflows = @()
         $folders = @()
         $states = @()
     }
@@ -158,6 +182,19 @@ param
         if ( $OrderId )
         {
             $orders += $OrderId
+        }
+
+        if ( $WorkflowPath )
+        {
+            $objWorkflow = New-Object PSObject
+            Add-Member -Membertype NoteProperty -Name 'path' -value $Workflow -InputObject $objWorkflow
+
+            if ( $WorkflowVersionId )
+            {
+                Add-Member -Membertype NoteProperty -Name 'version' -value $WorkflowVersionId -InputObject $objWorkflow
+            }
+
+            $workflows += $objWorkflow
         }
 
         if ( $Folder )
@@ -183,10 +220,17 @@ param
     {
         $body = New-Object PSObject
         Add-Member -Membertype NoteProperty -Name 'controllerId' -value $script:jsWebService.ControllerId -InputObject $body
+        Add-Member -Membertype NoteProperty -Name 'force' -value ($Force -eq $True) -InputObject $body
+        Add-Member -Membertype NoteProperty -Name 'fromCurrentBlock' -value ($FromCurrentBlock -eq $True) -InputObject $body
 
         if ( $orders.count )
         {
             Add-Member -Membertype NoteProperty -Name 'orderIds' -value $orders -InputObject $body
+        }
+
+        if ( $workflows.count )
+        {
+            Add-Member -Membertype NoteProperty -Name 'workflowIds' -value $workflows -InputObject $body
         }
 
         if ( ($orders.count -eq 1) -and $Position )

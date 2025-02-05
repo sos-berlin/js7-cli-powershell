@@ -302,7 +302,6 @@ param
             $states += 'BLOCKED'
         }
 
-
         if ( $OrderId )
         {
             $body = New-Object PSObject
@@ -321,7 +320,7 @@ param
 
             if ( $response.StatusCode -eq 200 )
             {
-                $returnOrders = ( $response.Content | ConvertFrom-JSON )
+                $returnOrders = ( $response.Content | ConvertFrom-Json )
             } elseif ( $response.StatusCode -eq 420 -and $IgnoreFailed ) {
                 # exception not forwarded
             } else {

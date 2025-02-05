@@ -193,6 +193,21 @@ param
         if ( $OrderId )
         {
             $orderIds += $OrderId
+            $date = ( $OrderId | Select-String -Pattern "^#(\d{4}-\d{2}-\d{2})#" ).matches.groups[1].value
+
+            if ( !$DateFrom )
+            {
+                $DateFrom = Get-Date $date
+            } elseif ( (Get-Date $date) -lt (Get-Date $DateFrom) ) {
+                $DateFrom = $date
+            }
+
+            if ( !$DateTo )
+            {
+                $DateTo = Get-Date $date
+            } elseif ( (Get-Date $date) -gt (Get-Date $DateTo) ) {
+                $DateTo = $date
+            }
         }
 
         if ( $WorkflowPath )
