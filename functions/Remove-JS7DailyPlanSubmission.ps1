@@ -221,7 +221,7 @@ param
                 throw ( $response | Format-List -Force | Out-String )
             }
 
-            Write-Verbose ".. $($MyInvocation.MyCommand.Name): Daily Plan submissions removed"
+            Write-Verbose ".. $($MyInvocation.MyCommand.Name): Daily Plan planned orders and empty submissions removed"
         }
 
         Trace-JS7StopWatch -CommandName $MyInvocation.MyCommand.Name -StopWatch $stopWatch

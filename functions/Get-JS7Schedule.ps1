@@ -8,8 +8,8 @@ Returns schedules from the JOC Cockpit inventory
 Schedules are selected from the JOC Cockpit inventory
 
 * by the path and name of a schedule,
-* by the folder of the schedule location including sub-folders,
-* by the path and name of a workflow.
+* by the path and name of a workflow,
+* by the folder of the schedule location including sub-folders.
 
 Resulting schedules can be forwarded to other cmdlets for pipelined bulk operations.
 
@@ -45,14 +45,14 @@ Returns all schedules that are configured with the folder "/some_folder"
 including any sub-folders.
 
 .EXAMPLE
-$schedule = Get-JS7Schedule -SchedulePath /BusinessDays
+$schedule = Get-JS7Schedule -SchedulePath /BusinessDays/DailySchedule
 
-Returns the schedule that is stored with the path "/BusinessDays".
+Returns the "DailySchedule" schedule that is stored with the "/BusinessDays" folder.
 
 .EXAMPLE
-$schedules = Get-JS7Schedule -WorkflowPath /some/path
+$schedules = Get-JS7Schedule -WorkflowPath /Invoicing/reminders
 
-Returns the schedules that are assigned the given workflow.
+Returns any schedules that are assigned the given workflow.
 
 .LINK
 about_JS7
@@ -66,7 +66,7 @@ param
     [Parameter(Mandatory=$False,ValueFromPipeline=$True,ValueFromPipelinebyPropertyName=$True)]
     [string] $WorkflowPath,
     [Parameter(Mandatory=$False,ValueFromPipeline=$False,ValueFromPipelinebyPropertyName=$True)]
-    [string] $Folder = '/',
+    [string] $Folder,
     [Parameter(Mandatory=$False,ValueFromPipeline=$False,ValueFromPipelinebyPropertyName=$False)]
     [switch] $Recursive
 )
@@ -130,7 +130,7 @@ param
 
         if ( $SchedulePath )
         {
-            $SchedulePaths += $SchedulePath
+            $schedulePaths += $SchedulePath
         }
 
         if ( $WorkflowPath )
@@ -155,28 +155,21 @@ param
 
         if ( $schedulePaths.count -or $workflowPaths.count -or $folders.count )
         {
-            #$selector = New-Object PSObject
+            $selector = New-Object PSObject
 
             if ( $schedulePaths.count )
             {
-                Add-Member -Membertype NoteProperty -Name 'schedulePaths' -value $schedulePaths -InputObject $body
+                Add-Member -Membertype NoteProperty -Name 'schedulePaths' -value $schedulePaths -InputObject $selector
             }
 
             if ( $workflowPaths.count )
             {
-                Add-Member -Membertype NoteProperty -Name 'workflowPaths' -value $workflowPaths -InputObject $body
-
-                $objFolder = New-Object PSObject
-                    Add-Member -Membertype NoteProperty -Name 'folder' -value (Split-Path -Path $WorkflowPath -Parent).Replace('\\', '/').Replace('\', '/') -InputObject $objFolder
-                    Add-Member -Membertype NoteProperty -Name 'recursive' -value $False -InputObject $objFolder
-                Add-Member -Membertype NoteProperty -Name 'folders' -value @($objFolder) -InputObject $body
-
-            } elseif ( $folders.count )
-            {
-                Add-Member -Membertype NoteProperty -Name 'folders' -value $folders -InputObject $body
+                Add-Member -Membertype NoteProperty -Name 'workflowPaths' -value $workflowPaths -InputObject $selector
+            } elseif ( $folders.count ) {
+                Add-Member -Membertype NoteProperty -Name 'folders' -value $folders -InputObject $selector
             }
 
-            # Add-Member -Membertype NoteProperty -Name 'selector' -value $selector -InputObject $body
+            Add-Member -Membertype NoteProperty -Name 'selector' -value $selector -InputObject $body
         }
 
         [string] $requestBody = $body | ConvertTo-Json -Depth 100
