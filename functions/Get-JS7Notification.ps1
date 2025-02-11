@@ -19,9 +19,9 @@ Optionally specifies the unique identifier of the Controller for which notificat
 
 .PARAMETER DateFrom
 Specifies the date starting from which notifications should be returned.
-Consider that a UTC date has to be provided.
+The date can be specified from any time zone.
 
-Default: Beginning of the current day as a UTC date
+Default: Beginning of current day in UTC timezone
 
 .PARAMETER RelativeDateFrom
 Specifies a relative date starting from which notifications should be returned, for example
@@ -87,9 +87,9 @@ $items = Get-JS7Notification -DateFrom "2020-08-11 14:00:00Z"
 Returns the notifications that were created after the specified UTC date and time.
 
 .EXAMPLE
-$items = Get-JS7Notification -DateFrom (Get-Date -Hour 0 -Minute 0 -Second 0).AddDays(-7).ToUniversalTime()
+$items = Get-JS7Notification -DateFrom (Get-Date -Hour 0 -Minute 0 -Second 0).AddDays(-7)
 
-Returns the notifications for the last seven days.
+Returns the notifications since the last seven days calculated in the current timezone.
 
 .EXAMPLE
 $items = Get-JS7Notification -RelativeDateFrom -1d
@@ -106,7 +106,7 @@ param
     [Parameter(Mandatory=$False,ValueFromPipeline=$True,ValueFromPipelinebyPropertyName=$True)]
     [string] $ControllerId,
     [Parameter(Mandatory=$False,ValueFromPipeline=$False,ValueFromPipelinebyPropertyName=$True)]
-    [DateTime] $DateFrom = (Get-Date -Hour 0 -Minute 0 -Second 0).ToUniversalTime(),
+    [DateTime] $DateFrom = (Get-Date -Hour 0 -Minute 0 -Second 0),
     [Parameter(Mandatory=$False,ValueFromPipeline=$False,ValueFromPipelinebyPropertyName=$True)]
     [string] $RelativeDateFrom,
     [Parameter(Mandatory=$False,ValueFromPipeline=$False,ValueFromPipelinebyPropertyName=$True)]
@@ -176,21 +176,16 @@ param
             throw ( $response | Format-List -Force | Out-String )
         }
 
-        if ( $Timezone.Id -eq 'UTC' )
+        if ( $Timezone -and $Timezone.Id -ne 'UTC' )
         {
-            $returnNotificationItems
-        } else {
-            $returnNotificationItems | Select-Object -Property `
-                                           notificationId, `
-                                           recoveredNotificationId, `
-                                           type, `
-                                           hasMonitors, `
-                                           controllerId, `
-                                           orderId, `
-                                           workflow, `
-                                           @{name='jobs'; expression={ $_.job } }, `
-                                           @{name='created'; expression={ ( [System.TimeZoneInfo]::ConvertTimeFromUtc( [datetime]::SpecifyKind( [datetime] "$($_.created)".Substring(0, 19), 'UTC'), $Timezone ) ).ToString("yyyy-MM-dd HH:mm:ss") + $timezoneOffset }}
+            foreach( $returnNotificationItem in $returnNotificationItems )
+            {
+                Add-Member -Membertype NoteProperty -Name 'jobs' -value $returnNotificationItem.job -InputObject $returnNotificationItem
+                $returnNotificationItem.created = ( [System.TimeZoneInfo]::ConvertTimeFromUtc( [datetime]::SpecifyKind( [datetime] "$($returnNotificationItem.created)".Substring(0, 19), 'UTC'), $Timezone ) ).ToString("yyyy-MM-dd HH:mm:ss") + $timezoneOffset
+            }
         }
+
+        $returnNotificationItems
 
         if ( $returnNotificationItems.count )
         {

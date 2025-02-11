@@ -385,18 +385,12 @@ param
             throw ( $response | Format-List -Force | Out-String )
         }
 
-        if ( $Timezone.Id -eq 'UTC' )
+        if ( $Timezone -and $Timezone.Id -ne 'UTC' )
         {
-            $returnAuditLogItems
-        } else {
-            $returnAuditLogItems | Select-Object -Property `
-                                           account, `
-                                           category, `
-                                           controllerId, `
-                                           id, `
-                                           parameters, `
-                                           request, `
-                                           @{name='created'; expression={ ( [System.TimeZoneInfo]::ConvertTimeFromUtc( [datetime]::SpecifyKind( [datetime] "$($_.created)".Substring(0, 19), 'UTC'), $Timezone ) ).ToString("yyyy-MM-dd HH:mm:ss") + $timezoneOffset }}
+            foreach( $returnAuditLogItem in $returnAuditLogItems )
+            {
+                $returnAuditLogItem.created = ( [System.TimeZoneInfo]::ConvertTimeFromUtc( [datetime]::SpecifyKind( [datetime] "$($returnAuditLogItem.created)".Substring(0, 19), 'UTC'), $Timezone ) ).ToString("yyyy-MM-dd HH:mm:ss") + $timezoneOffset
+            }
         }
 
         if ( $Detailed -and $returnAuditLogItems.count )
@@ -416,6 +410,8 @@ param
                 }
             }
         }
+
+        $returnAuditLogItems
 
         if ( $returnAuditLogItems.count )
         {

@@ -17,14 +17,17 @@ Optionally specifies one or more Order IDs that identify orders in the daily pla
 .PARAMETER WorkflowPath
 Optionally specifies the path and/or name of a workflow for which daily plan orders should be returned.
 
+.PARAMETER WorkflowFolder
+Optionally specifies the folder with workflows for which daily plan orders should be returned.
+
 .PARAMETER SchedulePath
 Optionally specifies the path and/or name of a schedule for which daily plan orders should be returned.
 
-.PARAMETER Folder
-Optionally specifies the folder with workflows for which daily plan orders should be returned.
+.PARAMETER ScheduleFolder
+Optionally specifies the folder with schedules for which daily plan orders should be returned.
 
 .PARAMETER Recursive
-When used with the -Folder parameter then any sub-folders of the specified folder will be looked up.
+When used with the -WorkflowFolder and -ScheduleFolder parameters, then any sub-folders of the specified folder will be looked up.
 
 .PARAMETER ControllerId
 Limits results to orders assigned the specified Controller.
@@ -181,7 +184,11 @@ param
     [Parameter(Mandatory=$False,ValueFromPipelinebyPropertyName=$True)]
     [switch] $Submitted,
     [Parameter(Mandatory=$False,ValueFromPipelinebyPropertyName=$True)]
-    [switch] $Finished
+    [switch] $Finished,
+    [Parameter(Mandatory=$False,ValueFromPipelinebyPropertyName=$True)]
+    [switch] $Cyclic,
+    [Parameter(Mandatory=$False,ValueFromPipelinebyPropertyName=$True)]
+    [switch] $NoCyclic
 )
     Begin
     {
@@ -200,7 +207,7 @@ param
 
     Process
     {
-        Write-Debug ".. $($MyInvocation.MyCommand.Name): parameter WorkfowFolder=$WorkflowFolder, WorkflowPath=$WorkflowPath, SchedulePath=$SchedulePath, ScheduleFolder=$ScheduleFolder"
+        Write-Debug ".. $($MyInvocation.MyCommand.Name): parameter OrderId=$OrderId, WorkfowFolder=$WorkflowFolder, WorkflowPath=$WorkflowPath, SchedulePath=$SchedulePath, ScheduleFolder=$ScheduleFolder"
 
         if ( ( $Planned -and $Submitted ) -or ( $Planned -and $Finished ) -or ( $Submitted -and $Finished ) )
         {
@@ -231,18 +238,17 @@ param
             }
         }
 
-
-        if ( $Planned )
+        if ( $Planned -and 'PLANNED' -notin $states )
         {
             $states += 'PLANNED'
         }
 
-        if ( $Submitted )
+        if ( $Submitted -and 'SUBMITTED' -notin $states )
         {
             $states += 'SUBMITTED'
         }
 
-        if ( $Finished )
+        if ( $Finished -and 'FINISHED' -notin $states)
         {
             $states += 'FINISHED'
         }
@@ -267,12 +273,12 @@ param
             }
         }
 
-        if ( $WorkflowPath )
+        if ( $WorkflowPath -and $WorkflowPath -notin $workflowPaths )
         {
             $workflowPaths += $WorkflowPath
         }
 
-        if ( $WorkflowFolder )
+        if ( $WorkflowFolder -and $WorkflowFolder -notin $workflowFolders.folder )
         {
             $objFolder = New-Object PSObject
             Add-Member -Membertype NoteProperty -Name 'folder' -value $WorkflowFolder -InputObject $objFolder
@@ -281,12 +287,12 @@ param
             $workflowFolders += $objFolder
         }
 
-        if ( $SchedulePath )
+        if ( $SchedulePath -and $SchedulePath -notin $schedulePaths )
         {
             $schedulePaths += $SchedulePath
         }
 
-        if ( $ScheduleFolder )
+        if ( $ScheduleFolder -and $ScheduleFolder -notin $scheduleFolders.folder )
         {
             $objFolder = New-Object PSObject
             Add-Member -Membertype NoteProperty -Name 'folder' -value $ScheduleFolder -InputObject $objFolder
@@ -295,12 +301,12 @@ param
             $scheduleFolders += $objFolder
         }
 
-        if ( $ControllerId )
+        if ( $ControllerId -and $ControllerId -notin $controllerIds )
         {
             $controllerIds += $ControllerId
         }
 
-        if ( $Tag )
+        if ( $Tag -and $Tag -notin $tags)
         {
             $tags += $Tag
         }
@@ -308,17 +314,6 @@ param
 
     End
     {
-        # PowerShell/.NET does not create date output in the target timezone but with the local timezone only, let's work around this:
-        $timezoneOffsetPrefix = if ( $Timezone.BaseUtcOffset.toString().startsWith( '-' ) ) { '-' } else { '+' }
-        $timezoneOffsetHours = [Math]::Abs($Timezone.BaseUtcOffset.hours)
-
-        if ( $Timezone.SupportsDaylightSavingTime -and $Timezone.IsDaylightSavingTime( (Get-Date) ) )
-        {
-            $timezoneOffsetHours += 1
-        }
-
-        [string] $timezoneOffset = "$($timezoneOffsetPrefix)$($timezoneOffsetHours.ToString().PadLeft( 2, '0' )):$($Timezone.BaseUtcOffset.Minutes.ToString().PadLeft( 2, '0' ))"
-
         if ( $RelativeDateFrom )
         {
             $dateDirection = $RelativeDateFrom[0]
@@ -331,6 +326,7 @@ param
                 'w' { $dailyPlanDateFrom = (Get-Date).AddDays( "$($dateDirection)$([int]$dateRange*7)" ) }
                 'm' { $dailyPlanDateFrom = (Get-Date).AddMonths( "$($dateDirection)$($dateRange)" ) }
                 'y' { $dailyPlanDateFrom = (Get-Date).AddYears( "$($dateDirection)$($dateRange)" ) }
+                default { throw "unsupported qualifier used in -RelativeDateTo argument" }
             }
 
             $dailyPlanDateFrom = Get-Date $dailyPlanDateFrom -Format 'yyyy-MM-dd'
@@ -350,6 +346,7 @@ param
                 'w' { $dailyPlanDateTo = (Get-Date).AddDays( "$($dateDirection)$([int]$dateRange*7)" ) }
                 'm' { $dailyPlanDateTo = (Get-Date).AddMonths( "$($dateDirection)$($dateRange)" ) }
                 'y' { $dailyPlanDateTo = (Get-Date).AddYears( "$($dateDirection)$($dateRange)" ) }
+                default { throw "unsupported qualifier used in -RelativeDateTo argument" }
             }
 
             $dailyPlanDateTo = Get-Date $dailyPlanDateTo -Format 'yyyy-MM-dd'
@@ -427,27 +424,40 @@ param
             throw ( $response | Format-List -Force | Out-String )
         }
 
-        if ( $Timezone.Id -eq 'UTC' )
+        if ( $Cyclic -eq $True -and $NoCyclic -eq $False )
         {
-            $dailyPlanItems | Sort-Object plannedStartTime
-        } else {
-            $dailyPlanItems | Sort-Object plannedStartTime | Select-Object -Property `
-                                           controllerId, `
-                                           workflowPath, `
-                                           historyId, `
-                                           late, `
-                                           orderId, `
-                                           orderName, `
-                                           period, `
-                                           schedulePath, `
-                                           startMode, `
-                                           state, `
-                                           @{name='plannedStartTime'; expression={ ( [System.TimeZoneInfo]::ConvertTimeFromUtc( [datetime]::SpecifyKind( [datetime] "$($_.plannedStartTime)".Substring(0, 19), 'UTC'), $Timezone ) ).ToString("yyyy-MM-dd HH:mm:ss") + $timezoneOffset }}, `
-                                           @{name='expectedEndTime';  expression={ ( [System.TimeZoneInfo]::ConvertTimeFromUtc( [datetime]::SpecifyKind( [datetime] "$($_.expectedEndTime)".SubString(0,19), 'UTC'), $($Timezone) ) ).ToString("yyyy-MM-dd HH:mm:ss") + $timezoneOffset }}, `
-                                           @{name='startTime'; expression={ ( [System.TimeZoneInfo]::ConvertTimeFromUtc( [datetime]::SpecifyKind( [datetime] "$($_.startTime)".Substring(0, 19), 'UTC'), $Timezone ) ).ToString("yyyy-MM-dd HH:mm:ss") + $timezoneOffset }}, `
-                                           @{name='endTime';  expression={ ( [System.TimeZoneInfo]::ConvertTimeFromUtc( [datetime]::SpecifyKind( [datetime] "$($_.endTime)".SubString(0,19), 'UTC'), $($Timezone) ) ).ToString("yyyy-MM-dd HH:mm:ss") + $timezoneOffset }}, `
-                                           @{name='surveyDate'; expression={ ( [System.TimeZoneInfo]::ConvertTimeFromUtc( [datetime]::SpecifyKind( [datetime] "$($_.surveyDate)".SubString(0, 19), 'UTC'), $($Timezone) ) ).ToString("yyyy-MM-dd HH:mm:ss") + $timezoneOffset }}
+            $dailyPlanItems = $dailyPlanItems | Where-Object { $_.OrderId.Substring(12, 1) -eq 'C' }
         }
+
+        if ( $NoCyclic -eq $True -and $Cyclic -eq $False )
+        {
+            $dailyPlanItems = $dailyPlanItems | Where-Object { $_.OrderId.Substring(12, 1) -ne 'C' }
+        }
+
+        if ( $Timezone -and $Timezone.Id -ne 'UTC' )
+        {
+            # PowerShell/.NET does not create date output in the target timezone but with the local timezone only, let's work around this:
+            $timezoneOffsetPrefix = if ( $Timezone.BaseUtcOffset.toString().startsWith( '-' ) ) { '-' } else { '+' }
+            $timezoneOffsetHours = [Math]::Abs($Timezone.BaseUtcOffset.hours)
+
+            if ( $Timezone.SupportsDaylightSavingTime -and $Timezone.IsDaylightSavingTime( (Get-Date) ) )
+            {
+                $timezoneOffsetHours += 1
+            }
+
+            [string] $timezoneOffset = "$($timezoneOffsetPrefix)$($timezoneOffsetHours.ToString().PadLeft( 2, '0' )):$($Timezone.BaseUtcOffset.Minutes.ToString().PadLeft( 2, '0' ))"
+
+            foreach( $dailyPlanItem in $dailyPlanItems )
+            {
+                $dailyPlanItem.plannedStartTime = ( [System.TimeZoneInfo]::ConvertTimeFromUtc( [datetime]::SpecifyKind( [datetime] "$($dailyPlanItem.plannedStartTime)".Substring(0, 19), 'UTC'), $Timezone ) ).ToString("yyyy-MM-dd HH:mm:ss") + $timezoneOffset
+                $dailyPlanItem.expectedEndTime  = ( [System.TimeZoneInfo]::ConvertTimeFromUtc( [datetime]::SpecifyKind( [datetime] "$($dailyPlanItem.expectedEndTime)".SubString(0,19), 'UTC'), $($Timezone) ) ).ToString("yyyy-MM-dd HH:mm:ss") + $timezoneOffset
+                $dailyPlanItem.startTime        = ( [System.TimeZoneInfo]::ConvertTimeFromUtc( [datetime]::SpecifyKind( [datetime] "$($dailyPlanItem.startTime)".Substring(0, 19), 'UTC'), $Timezone ) ).ToString("yyyy-MM-dd HH:mm:ss") + $timezoneOffset
+                $dailyPlanItem.endTime          = ( [System.TimeZoneInfo]::ConvertTimeFromUtc( [datetime]::SpecifyKind( [datetime] "$($dailyPlanItem.endTime)".SubString(0,19), 'UTC'), $($Timezone) ) ).ToString("yyyy-MM-dd HH:mm:ss") + $timezoneOffset
+                $dailyPlanItem.surveyDate       = ( [System.TimeZoneInfo]::ConvertTimeFromUtc( [datetime]::SpecifyKind( [datetime] "$($dailyPlanItem.surveyDate)".SubString(0, 19), 'UTC'), $($Timezone) ) ).ToString("yyyy-MM-dd HH:mm:ss") + $timezoneOffset
+            }
+        }
+
+        $dailyPlanItems
 
         if ( $dailyPlanItems.count )
         {

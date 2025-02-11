@@ -7,8 +7,8 @@ Returns orders from the JS7 Controller
 .DESCRIPTION
 Orders are selected from the JS7 Controller
 
-* by the folder of the order location including sub-folders,
-* by the workflow that is assigned to an order,
+* by the workflow that is assigned the order,
+* by the folder of the worklow including sub-folders,
 * by an individual Order ID.
 
 Resulting orders can be forwarded to other cmdlets for pipelined bulk operations.
@@ -24,7 +24,7 @@ Optionally specifies the identifier of an order that should be returned.
 .PARAMETER WorkflowPath
 Optionally specifies the path and name of a workflow for which orders should be returned.
 
-One of the parameters -Folder, -WorkflowPath or -OrderId has to be specified if no pipelined order objects are provided.
+One of the -Folder, -WorkflowPath or -OrderId parameters has to be specified if no pipelined order objects are provided.
 
 .PARAMETER WorkflowVersionId
 Deployed workflows are assigned a version identifier. The argument allows to select the
@@ -33,17 +33,24 @@ workflow that is available with the specified version.
 .PARAMETER Folder
 Optionally specifies the folder with workflows for which orders should be returned.
 
-One of the parameters -Folder, -WorkflowPath or -OrderId has to be specified if no pipelined order objects are provided.
+One of the -Folder, -WorkflowPath or -OrderId parameters has to be specified if no pipelined order objects are provided.
 
 .PARAMETER Recursive
 Specifies that all sub-folders should be looked up if the -Folder parameter is used.
 By default no sub-folders will be searched for orders.
 
 .PARAMETER DateTo
-Specifies the date until which orders should be returned.
-Consider that a UTC date has to be provided.
+Specifies the date and time until which orders should be returned.
+Dates can be specified from any time zone, for example:
 
-Default should no Order ID be provided: End of the current day as a UTC date
+* 2025-02-25: begin of day for the indicated date
+* 2025-02-25 17:18:19: specified time for the indicated date
+* 2025-02-25 23:01:02+01:00: specified time and timezone for the indicated date
+* (Get-Date).AddDays(1): current time one day ahead
+
+Default should no Order ID be provided: End of current day in the given timezone
+
+Only one of the -DateTo and -RelativeDateTo arguments can be used.
 
 .PARAMETER RelativeDateTo
 Specifies a relative date until which orders should be returned, e.g.
@@ -58,19 +65,42 @@ Specifies a relative date until which orders should be returned, e.g.
 
 Optionally a time offset can be specified, e.g. 1d+02:00, as otherwise midnight UTC is assumed.
 Alternatively a timezone offset can be added, e.g. by using 1d+TZ, that is calculated by the cmdlet
-for the timezone that is specified with the -Timezone parameter.
+for the timezone that is specified with the -Timezone argument.
+
+Only one of the -DateTo and -RelativeDateTo arguments can be used.
 
 .PARAMETER Timezone
-Specifies the timezone to which a relative date specified with the -RelativeDateTo parameter should be converted.
+Specifies the timezone to which a relative date indicated with the -RelativeDateTo argument should be converted.
 A timezone can e.g. be specified like this:
 
-  Get-JS7Order -Timezone (Get-Timezone -Id 'GMT Standard Time')
+* Relative date specified for the UTC timezone (default)
+** Get-JS7Order -RelativeDateTo +1d+TZ
+* Relative date specified for the current timezone
+** Get-JS7Order -RelativeDateTo +1d+TZ -Timezone (Get-Timezone)
+* Relative date specified for a different timezone
+** Get-JS7Order -RelativeDateTo +1h+TZ -Timezone (Get-Timezone -Id 'IST')
 
-All dates in JS7 are UTC and can be converted e.g. to the local time zone like this:
+Default: Relative dates are converted to UTC.
 
-  Get-JS7Order -Timezone (Get-Timezone)
+.PARAMETER StateDateFrom
+Optionally iimits results to orders that changed to the current status after the indicated date.
 
-Default: Dates are converted to UTC.
+For specification of dates see -DateTo argument.
+
+.PARAMETER RelativeStateDateFrom
+Optionally iimits results to orders that changed to the current status after the indicated relative date.
+
+For specification of relative dates see -RelativeDateTo argument.
+
+.PARAMETER StateDateTo
+Optionally iimits results to orders that changed to the current status before the indicated date.
+
+For specification of dates see -DateTo argument.
+
+.PARAMETER RelativeStateDateTo
+Optionally iimits results to orders that changed to the current status before the indicated relative date.
+
+For specification of relative dates see -RelativeDateTo argument.
 
 .PARAMETER RegularExpression
 Specifies that a regular expession is applied to Order IDs to filter results.
@@ -166,7 +196,7 @@ about_JS7
 [cmdletbinding()]
 param
 (
-    [Parameter(Mandatory=$False,ValueFromPipeline=$True,ValueFromPipelinebyPropertyName=$True)]
+    [Parameter(Mandatory=$False,ValueFromPipeline=$False,ValueFromPipelinebyPropertyName=$True)]
     [string] $OrderId,
     [Parameter(Mandatory=$False,ValueFromPipeline=$False,ValueFromPipelinebyPropertyName=$True)]
     [string] $WorkflowPath,
@@ -182,6 +212,14 @@ param
     [string] $RelativeDateTo,
     [Parameter(Mandatory=$False,ValueFromPipeline=$False,ValueFromPipelinebyPropertyName=$True)]
     [TimeZoneInfo] $Timezone = (Get-Timezone -Id 'UTC'),
+    [Parameter(Mandatory=$False,ValueFromPipeline=$False,ValueFromPipelinebyPropertyName=$True)]
+    [DateTime] $StateDateFrom,
+    [Parameter(Mandatory=$False,ValueFromPipeline=$False,ValueFromPipelinebyPropertyName=$True)]
+    [string] $RelativeStateDateFrom,
+    [Parameter(Mandatory=$False,ValueFromPipeline=$False,ValueFromPipelinebyPropertyName=$True)]
+    [DateTime] $StateDateTo,
+    [Parameter(Mandatory=$False,ValueFromPipeline=$False,ValueFromPipelinebyPropertyName=$True)]
+    [string] $RelativeStateDateTo,
     [Parameter(Mandatory=$False,ValueFromPipeline=$False,ValueFromPipelinebyPropertyName=$True)]
     [string] $RegularExpression,
     [Parameter(Mandatory=$False,ValueFromPipeline=$False,ValueFromPipelinebyPropertyName=$True)]
@@ -215,6 +253,7 @@ param
         $stopWatch = Start-JS7StopWatch
 
         $returnOrders = @()
+        $orderIds = @()
         $workflowIds = @()
         $folders = @()
         $states = @()
@@ -252,83 +291,62 @@ param
             $DateTo = (Get-Date -Hour 0 -Minute 0 -Second 0).AddDays(1).ToUniversalTime()
         }
 
-        if ( $Pending )
+        if ( $Pending -and 'PENDING' -notin $states )
         {
             $states += 'PENDING'
         }
 
-        if ( $Scheduled )
+        if ( $Scheduled -and 'SCHEDULED' -notin $states )
         {
             $states += 'SCHEDULED'
         }
 
-        if ( $InProgress )
+        if ( $InProgress -and 'INPROGRESS' -notin $states )
         {
             $states += 'INPROGRESS'
         }
 
-        if ( $Running )
+        if ( $Running -and 'RUNNING' -notin $states )
         {
             $states += 'RUNNING'
         }
 
-        if ( $Suspended )
+        if ( $Suspended -and 'SUSPENDED' -notin $states )
         {
             $states += 'SUSPENDED'
         }
 
-        if ( $Completed )
+        if ( $Completed -and 'TERMINATED' -notin $states )
         {
             $states += 'TERMINATED'
         }
 
-        if ( $Prompting )
+        if ( $Prompting -and 'PROMPTING' -notin $states )
         {
             $states += 'PROMPTING'
         }
 
-        if ( $Waiting )
+        if ( $Waiting -and 'WAITING' -notin $states )
         {
             $states += 'WAITING'
         }
 
-        if ( $Failed )
+        if ( $Failed -and 'FAILED' -notin $states )
         {
             $states += 'FAILED'
         }
 
-        if ( $Blocked )
+        if ( $Blocked -and 'BLOCKED' -notin $states )
         {
             $states += 'BLOCKED'
         }
 
-        if ( $OrderId )
+        if ( $orderId )
         {
-            $body = New-Object PSObject
-            Add-Member -Membertype NoteProperty -Name 'controllerId' -value $script:jsWebService.ControllerId -InputObject $body
+            $orderIds += $orderId
+        }
 
-            if ( $Compact )
-            {
-                Add-Member -Membertype NoteProperty -Name 'compact' -value $True -InputObject $body
-            }
-
-            Add-Member -Membertype NoteProperty -Name 'orderId' -value $orderId -InputObject $body
-            Add-Member -Membertype NoteProperty -Name 'suppressNotExistException' -value $False -InputObject $body
-
-            [string] $requestBody = $body | ConvertTo-Json -Depth 100
-            $response = Invoke-JS7WebRequest -Path '/order' -Body $requestBody
-
-            if ( $response.StatusCode -eq 200 )
-            {
-                $returnOrders = ( $response.Content | ConvertFrom-Json )
-            } elseif ( $response.StatusCode -eq 420 -and $IgnoreFailed ) {
-                # exception not forwarded
-            } else {
-                throw ( $response | Format-List -Force | Out-String )
-            }
-
-            $returnOrders
-        } elseif ( $WorkflowPath ) {
+        if ( $WorkflowPath -and $WorkflowPath -notin $workflowIds.path ) {
             $objWorkflow = New-Object PSObject
             Add-Member -Membertype NoteProperty -Name 'path' -value $WorkflowPath -InputObject $objWorkflow
 
@@ -338,7 +356,7 @@ param
             }
 
             $workflowIds += $objWorkflow
-        } elseif ( $Folder ) {
+        } elseif ( $Folder -and $Folder -notin $folders.folder ) {
             $objFolder = New-Object PSObject
             Add-Member -Membertype NoteProperty -Name 'folder' -value $Folder -InputObject $objFolder
             Add-Member -Membertype NoteProperty -Name 'recursive' -value ($Recursive -eq $True) -InputObject $objFolder
@@ -349,76 +367,108 @@ param
 
     End
     {
-        if ( !$OrderId )
+        $body = New-Object PSObject
+        Add-Member -Membertype NoteProperty -Name 'controllerId' -value $script:jsWebService.ControllerId -InputObject $body
+
+        if ( $Compact )
         {
-            $body = New-Object PSObject
-            Add-Member -Membertype NoteProperty -Name 'controllerId' -value $script:jsWebService.ControllerId -InputObject $body
-
-            if ( $Compact )
-            {
-                Add-Member -Membertype NoteProperty -Name 'compact' -value $True -InputObject $body
-            }
-
-            if ( $workflowIds.count )
-            {
-                Add-Member -Membertype NoteProperty -Name 'workflowIds' -value $workflowIds -InputObject $body
-            }
-
-            if ( $folders.count )
-            {
-                Add-Member -Membertype NoteProperty -Name 'folders' -value $folders -InputObject $body
-            }
-
-            if ( $DateTo -or $RelativeDateTo )
-            {
-                if ( $RelativeDateTo )
-                {
-                    if ( $RelativeDateTo.endsWith( '+TZ' ) )
-                    {
-                        # PowerShell/.NET does not create date output in the target timezone but with the local timezone only, let's work around this:
-                        $timezoneOffsetPrefix = if ( $Timezone.BaseUtcOffset.toString().startsWith( '-' ) ) { '-' } else { '+' }
-                        $timezoneOffsetHours = [Math]::Abs($Timezone.BaseUtcOffset.hours)
-
-                        if ( $Timezone.SupportsDaylightSavingTime -and $Timezone.IsDaylightSavingTime( (Get-Date) ) )
-                        {
-                            $timezoneOffsetHours += 1
-                        }
-
-                        [string] $timezoneOffset = "$($timezoneOffsetPrefix)$($timezoneOffsetHours.ToString().PadLeft( 2, '0' )):$($Timezone.BaseUtcOffset.Minutes.ToString().PadLeft( 2, '0' ))"
-
-                        $RelativeDateTo = $RelativeDateTo.Substring( 0, $RelativeDateTo.length-3 ) + $timezoneOffset
-                    }
-
-                    Add-Member -Membertype NoteProperty -Name 'dateTo' -value $RelativeDateTo -InputObject $body
-                } else {
-                    Add-Member -Membertype NoteProperty -Name 'dateTo' -value ( Get-Date (Get-Date $DateTo).ToUniversalTime() -Format 'u').Replace(' ', 'T') -InputObject $body
-                }
-            }
-
-            if ( $RegularExpression )
-            {
-                Add-Member -Membertype NoteProperty -Name 'regex' -value $RegularExpression -InputObject $body
-            }
-
-            if ( $states.count )
-            {
-                Add-Member -Membertype NoteProperty -Name 'states' -value $states -InputObject $body
-            }
-
-            [string] $requestBody = $body | ConvertTo-Json -Depth 100
-            $response = Invoke-JS7WebRequest -Path '/orders' -Body $requestBody
-
-            if ( $response.StatusCode -eq 200 )
-            {
-                $returnOrders = ( $response.Content | ConvertFrom-JSON ).orders
-            } elseif ( $response.StatusCode -eq 420 -and $IgnoreFailed ) {
-                # no exception
-            } else {
-                throw ( $response | Format-List -Force | Out-String )
-            }
-
-            $returnOrders
+            Add-Member -Membertype NoteProperty -Name 'compact' -value $True -InputObject $body
         }
+
+        if ( $orderIds.count )
+        {
+            Add-Member -Membertype NoteProperty -Name 'orderIds' -value $orderIds -InputObject $body
+        }
+
+        if ( $workflowIds.count )
+        {
+            Add-Member -Membertype NoteProperty -Name 'workflowIds' -value $workflowIds -InputObject $body
+        }
+
+        if ( $folders.count )
+        {
+            Add-Member -Membertype NoteProperty -Name 'folders' -value $folders -InputObject $body
+        }
+
+        # PowerShell/.NET does not create date output in the target timezone but with the local timezone only, let's work around this:
+        $timezoneOffsetPrefix = if ( $Timezone.BaseUtcOffset.toString().startsWith( '-' ) ) { '-' } else { '+' }
+        $timezoneOffsetHours = [Math]::Abs($Timezone.BaseUtcOffset.hours)
+
+        if ( $Timezone.SupportsDaylightSavingTime -and $Timezone.IsDaylightSavingTime( (Get-Date) ) )
+        {
+            $timezoneOffsetHours += 1
+        }
+
+        [string] $timezoneOffset = "$($timezoneOffsetPrefix)$($timezoneOffsetHours.ToString().PadLeft( 2, '0' )):$($Timezone.BaseUtcOffset.Minutes.ToString().PadLeft( 2, '0' ))"
+
+        if ( $DateTo -or $RelativeDateTo )
+        {
+            if ( $RelativeDateTo )
+            {
+                if ( $RelativeDateTo.endsWith( '+TZ' ) )
+                {
+                    $RelativeDateTo = $RelativeDateTo.Substring( 0, $RelativeDateTo.length-3 ) + $timezoneOffset
+                }
+
+                Add-Member -Membertype NoteProperty -Name 'dateTo' -value $RelativeDateTo -InputObject $body
+            } else {
+                Add-Member -Membertype NoteProperty -Name 'dateTo' -value (Get-Date (Get-Date $DateTo).ToUniversalTime() -Format 'u').Replace(' ', 'T') -InputObject $body
+            }
+        }
+
+        if ( $StateDateFrom -or $RelativeStateDateFrom )
+        {
+            if ( $RelativeStateDateFrom )
+            {
+                if ( $RelativeStateDateFrom.endsWith( '+TZ' ) )
+                {
+                    $RelativeStateDateFrom = $RelativeStateDateFrom.Substring( 0, $RelativeStateDateFrom.length-3 ) + $timezoneOffset
+                }
+
+                Add-Member -Membertype NoteProperty -Name 'stateDateFrom' -value $RelativeStateDateFrom -InputObject $body
+            } else {
+                Add-Member -Membertype NoteProperty -Name 'stateDateFrom' -value (Get-Date (Get-Date $StateDateFrom).ToUniversalTime() -Format 'u').Replace(' ', 'T') -InputObject $body
+            }
+        }
+
+        if ( $StateDateTo -or $RelativeStateDateTo )
+        {
+            if ( $RelativeStateDateTo )
+            {
+                if ( $RelativeStateDateTo.endsWith( '+TZ' ) )
+                {
+                    $RelativeStateDateTo = $RelativeStateDateTo.Substring( 0, $RelativeStateDateTo.length-3 ) + $timezoneOffset
+                }
+
+                Add-Member -Membertype NoteProperty -Name 'stateDateTo' -value $RelativeStateDateTo -InputObject $body
+            } else {
+                Add-Member -Membertype NoteProperty -Name 'stateDateTo' -value (Get-Date (Get-Date $StateDateTo).ToUniversalTime() -Format 'u').Replace(' ', 'T') -InputObject $body
+            }
+        }
+
+        if ( $RegularExpression )
+        {
+            Add-Member -Membertype NoteProperty -Name 'regex' -value $RegularExpression -InputObject $body
+        }
+
+        if ( $states.count )
+        {
+            Add-Member -Membertype NoteProperty -Name 'states' -value $states -InputObject $body
+        }
+
+        [string] $requestBody = $body | ConvertTo-Json -Depth 100
+        $response = Invoke-JS7WebRequest -Path '/orders' -Body $requestBody
+
+        if ( $response.StatusCode -eq 200 )
+        {
+            $returnOrders = ( $response.Content | ConvertFrom-JSON ).orders
+        } elseif ( $response.StatusCode -eq 420 -and $IgnoreFailed ) {
+            # no exception
+        } else {
+            throw ( $response | Format-List -Force | Out-String )
+        }
+
+        $returnOrders
 
         if ( $returnOrders.count )
         {

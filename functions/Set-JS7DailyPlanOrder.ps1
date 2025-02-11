@@ -18,52 +18,39 @@ Specifies the Order ID of an existing daily plan order that should be updated.
 Specifies the identification of the Controller to which orders will be submitted.
 
 .PARAMETER ScheduledFor
-Optionally specifies the date and time that the order should start.
+Optionally specifies the date and time that the order should start. The date can be specified in any time zone.
 
-One of the arguments -ScheduledFor or -RelativeScheduledFor has to be used.
+One of the -ScheduledFor or -RelativeScheduledFor arguments has to be used.
 
 .PARAMETER RelativeScheduledFor
-Specifies a relative date for which the daily plan order should be started, e.g.
+Specifies a relative period for which the daily plan order should be started, e.g.
 
-* +1d, +2d: one day later, two days later
-* +1w, +2w: one week later, two weeks later
-* +1M, +2M: one month later, two months later
-* +1y, +2y: one year later, two years later
+* now: start immediately
+* now+HH:MM[:SS]: start with the given delay of hours, minutes, seconds
+* now+SECONDS: start with the given delay in seconds
+* cur+HH:MM[:SS]: start the number of hours, minutes, seconds after the current start time
+* cur+SECONDS: start the number of seconds after the current start time
+* cur-HH:MM[:SS]: start the number of hours, minutes, seconds before the current start time
+* cur-SECONDS: start the number of seconds before the current start time
 
-Optionally a time offset can be specified, e.g. +1d+02:00, as otherwise midnight UTC is assumed.
+The argument is used alternatively to the -ScheduledFor argument.
 
-This argument is used alternatively to the -ScheduledFor argument.
+.PARAMETER Period
+Specifies the period if a cyclic order should be updated. In addition to the order's start time, such orders hold a period definition.
 
-.PARAMETER ScheduledDate
-Optionally specifies a time for which the order will be started on the given day.
-The order will use the date specified by the -ScheduledFor or -RelativeScheduledFor arguments, and it will use the time specified by this argument.
+The value for the -Period argument is returned when invoking the Get-JS7DailyPlanOrder cmdlet.
+When used with the -RelativeScheduledFor argument, the period will be moved forward/backward accordingly:
 
-The time is specified from a string in the hh:mm:ss format like this:
+Get-JS7Order -Folder /ProductDemo -Recursive -Scheduled | Get-JS7DailyPlanOrder -Cyclic | Set-JS7DailyPlanOrder -RelativeScheduledFor 'cur+03:00:00'
 
-* 23:12:59
 
-Only one of the arguments -ScheduledTime and -RelativeScheduledTime can be used.
 
-.PARAMETER RelativeScheduledTime
-Optionally specifies an offset to the existing time for which the order will be started on the given day.
-The order will use the existing date to which the offset specified by this argument will be added or from which it will be substracted.
+The value for the -Period argument can be created individually like this:
 
-The time offset is specified from a string in the hh:mm:ss format like this:
-
-* Adding 2 hours and 45 minutes to the start time: +02:45:00
-* Subtracting 9 hours and 30 minutes from the start time: -09:30:00
-
-.PARAMETER Cycle
-Specifies the cycle if a cyclic order is updated.
-
-In addition to the order's start time specified by the -ScheduledFor argument such orders hold a cycle definition.
-
-The value for the -Cycle argument can be created like this:
-
-$cycle = New-Object PSCustomObject
-Add-Member -Membertype NoteProperty -Name 'begin' -value '15:30:00' -InputObject $cycle
-Add-Member -Membertype NoteProperty -Name 'end' -value '18:45:00' -InputObject $cycle
-Add-Member -Membertype NoteProperty -Name 'repeat' -value '00:30:00' -InputObject $cycle
+$Period = New-Object PSCustomObject
+Add-Member -Membertype NoteProperty -Name 'begin' -value '15:30:00' -InputObject $Period
+Add-Member -Membertype NoteProperty -Name 'end' -value '18:45:00' -InputObject $Period
+Add-Member -Membertype NoteProperty -Name 'repeat' -value '00:30:00' -InputObject $Period
 
 .PARAMETER Variables
 Optionally specifies a hashtable of Variables
@@ -74,7 +61,7 @@ $variables = @{ 'var_1'='some string'; 'var_2' = 23; 'var_3' = true}
 .PARAMETER RemoveVariables
 Optionally specifies a list of variables that should be removed from the order.
 
-.PARAMETER startPosition
+.PARAMETER StartPosition
 Optionally specifies the label of the first instruction in the workflow that the order should execute.
 
 .PARAMETER EndPositions
@@ -113,19 +100,24 @@ This information is shown in the Audit Log view of JOC Cockpit.
 It can be useful when integrated with a ticket system that logs interventions with JS7.
 
 .OUTPUTS
-This cmdlet returns an array of daily plan orders.
+This cmdlet does not return any output.
 
 .EXAMPLE
-$orders = Get-JS7DailyPlanOrder
-Set-JS7DailyPlanOrder -OrderId $orders[0].orderId -ScheduledFor $orders[0].plannedStartTime -RelativeScheduledTime '+03:00:00'
+$orders = Get-JS7DailyPlanOrder -WorkflowFolder /ProductDemo -Recursive -NoCyclic -DateFrom 2025-02-25
+$orders | Set-JS7DailyPlanOrder -RelativeScheduledFor 'cur+03:00:00' -KeepDailyPlanAssignment
 
-Moves the start time of a non-cyclic order of the current daily plan date 3 hours forward.
+Moves the start time of non-cyclic orders of the indicated daily plan date 3 hours ahead.
 
 .EXAMPLE
-$orders = Get-JS7DailyPlanOrder
-Set-JS7DailyPlanOrder -OrderId $orders[0].orderId -ScheduledFor $orders[0].plannedStartTime -RelativeScheduledTime '-03:00:00' -Cycle $orders[0].period
+$orders = Get-JS7DailyPlanOrder -WorkflowFolder /ProductDemo -Recursive -Cyclic -DateFrom 2025-02-25 | Get-JS7Order -Scheduled | Get-JS7DailyPlanOrder
+$orders | Set-JS7DailyPlanOrder -RelativeScheduledFor 'cur+03:00:00'
 
-Moves the start time of a cyclic order of the current daily plan date 3 hours back.
+Moves the start time of scheduled, cylic orders of today's daily plan date 3 hours ahead.
+
+.EXAMPLE
+Get-JS7DailyPlanOrder -DateFrom 2025-02-25 | Set-JS7DailyPlanOrder -RelativeScheduledFor 'cur-03:00:00'
+
+Moves the start time of all orders of the indicated daily plan date 3 hours earlier.
 
 .LINK
 about_JS7
@@ -142,14 +134,8 @@ param
     [DateTime] $ScheduledFor,
     [Parameter(Mandatory=$False,ValueFromPipelinebyPropertyName=$True)]
     [String] $RelativeScheduledFor,
-    [Parameter(Mandatory=$False,ValueFromPipelinebyPropertyName=$True)]
-    [DateTime] $ScheduledDate,
-    [Parameter(Mandatory=$False,ValueFromPipelinebyPropertyName=$True)]
-    [String] $RelativeScheduledDate,
-    [Parameter(Mandatory=$False,ValueFromPipelinebyPropertyName=$True)]
-    [String] $RelativeScheduledTime,
-    [Parameter(Mandatory=$False,ValueFromPipelinebyPropertyName=$True)]
-    [PSCustomObject] $Cycle,
+    [Parameter(Mandatory=$False,ValueFromPipeline=$False,ValueFromPipelinebyPropertyName=$True)]
+    [PSCustomObject] $Period,
     [Parameter(Mandatory=$False,ValueFromPipelinebyPropertyName=$True)]
     [hashtable] $Variables,
     [Parameter(Mandatory=$False,ValueFromPipelinebyPropertyName=$True)]
@@ -176,144 +162,92 @@ param
         Approve-JS7Command $MyInvocation.MyCommand
         $stopWatch = Start-JS7StopWatch
 
-        if ( !$ScheduledFor -and !$RelativeScheduledFor -and !$RelativeScheduledDate)
+        if ( !$ScheduledFor -and !$RelativeScheduledFor )
         {
-            throw 'one of the arguments -ScheduledFor, -RelativeScheduledFor and -RelativeScheduledDate has to be used'
+            throw 'one of the -ScheduledFor or -RelativeScheduledFor arguments has to be provided'
         }
 
         if ( $ScheduledFor -and $RelativeScheduledFor )
         {
-            throw 'only one of the arguments -ScheduledFor and -RelativeScheduledFor can be used'
+            throw 'only one of the -ScheduledFor and -RelativeScheduledFor arguments can be provided'
         }
 
-        $orderIds = @()
+        if ( $RelativeScheduledFor -and !$RelativeScheduledFor.startsWith('now') -and !$RelativeScheduledFor.startsWith('cur') )
+        {
+            throw "-RelativeScheduledFor argument syntactically must start with 'now', 'now+HH:MM[:SS]', 'cur+HH:MM[:SS]' or 'cur-HH:MM[:SS]'"
+        }
+
+        if ( $Period -and (!$Period.begin -or !$Period.end -or !$Period.repeat) )
+        {
+            throw "-Period argument requires to provide an object holding the 'begin', 'end' and 'repeat' properties"
+        }
     }
 
     Process
     {
-        Write-Debug ".. $($MyInvocation.MyCommand.Name): parameter OrderID=$OrderID"
+        Write-Debug ".. $($MyInvocation.MyCommand.Name): parameter OrderID=$OrderID, ScheduledFor=$ScheduledFor, RelativeScheduledFor=$RelativeScheduledFor"
 
-        if ( $OrderId )
-        {
-            $orderIds += $OrderId
-        }
-    }
-
-    End
-    {
         if ( $RelativeScheduledFor )
         {
-            $dateDirection = $RelativeScheduledFor[0]
-            $dateRange = $RelativeScheduledFor.Substring( 1, $RelativeScheduledFor.Length-2 )
-            $dateUnit = $RelativeScheduledFor[$RelativeScheduledFor.Length-1]
-
-            switch( $dateUnit )
-            {
-                'd' { $dailyPlanScheduledFor = (Get-Date).AddDays( "$($dateDirection)$($dateRange)" ) }
-                'w' { $dailyPlanScheduledFor = (Get-Date).AddDays( "$($dateDirection)$([int]$dateRange*7)" ) }
-                'm' { $dailyPlanScheduledFor = (Get-Date).AddMonths( "$($dateDirection)$($dateRange)" ) }
-                'y' { $dailyPlanScheduledFor = (Get-Date).AddYears( "$($dateDirection)$($dateRange)" ) }
-            }
-
-            $dailyPlanScheduledFor = Get-Date $dailyPlanScheduledFor -Format 'yyyy-MM-dd'
-        } else {
-            $dailyPlanScheduledFor = Get-Date $ScheduledFor -Format 'yyyy-MM-dd'
+            $RelativeScheduledFor = $RelativeScheduledFor -replace "[ ]*"
         }
 
-        if ( $ScheduledDate )
-        {
-            $dailyPlanScheduledFor = Get-Date $dailyPlanScheduledFor -Year (Get-Date $ScheduledDate).Year -Month (Get-Date $ScheduledDate).Month -Day (Get-Date $ScheduledDate).Day -Format 'yyyy-MM-dd'
-        }
-
-        if ( $RelativeScheduledDate )
-        {
-            $dateDirection = $RelativeScheduledDate[0]
-            $dateRange = $RelativeScheduledDate.Substring( 1, $RelativeScheduledDate.Length-2 )
-            $dateUnit = $RelativeScheduledDate[$RelativeScheduledDate.Length-1]
-
-            switch( $dateUnit )
-            {
-                'd' { $dailyPlanScheduledFor = $dailyPlanScheduledFor.AddDays( "$($dateDirection)$($dateRange)" ) }
-                'w' { $dailyPlanScheduledFor = $dailyPlanScheduledFor.AddDays( "$($dateDirection)$([int]$dateRange*7)" ) }
-                'm' { $dailyPlanScheduledFor = $dailyPlanScheduledFor.AddMonths( "$($dateDirection)$($dateRange)" ) }
-                'y' { $dailyPlanScheduledFor = $dailyPlanScheduledFor.AddYears( "$($dateDirection)$($dateRange)" ) }
-            }
-
-            $dailyPlanScheduledFor = Get-Date $dailyPlanScheduledFor -Format 'yyyy-MM-dd'
-        }
-
-        if ( $RelativeScheduledTime )
-        {
-            $dateDirection = $RelativeScheduledTime[0]
-            $dailyPlanScheduledFor = $dailyPlanScheduledFor.AddHours( "$($dateDirection)$($RelativeScheduledTime.Substring( 1, 2 ))" )
-            $dailyPlanScheduledFor = $dailyPlanScheduledFor.AddMinutes( "$($dateDirection)$($RelativeScheduledTime.Substring( 4, 2 ))" )
-            $dailyPlanScheduledFor = $dailyPlanScheduledFor.AddSeconds( "$($dateDirection)$($RelativeScheduledTime.Substring( 7, 2 ))" )
-        } else {
-            $dailyPlanScheduledFor = Get-Date $dailyPlanScheduledFor -Format 'yyyy-MM-dd'
-        }
-
-        Write-Verbose ".. $($MyInvocation.MyCommand.Name): updating daily plan for date $dailyPlanScheduledFor"
+        Write-Verbose ".. $($MyInvocation.MyCommand.Name): updating daily plan for ScheduledFor=$ScheduledFor, RelativeScheduledFor=$RelativeScheduledFor"
 
         $body = New-Object PSObject
 
         if ( $ControllerId )
         {
-            Add-Member -Membertype NoteProperty -Name 'controllerId' -value $ControllerId -InputObject $boldy
+            Add-Member -Membertype NoteProperty -Name 'controllerId' -value $ControllerId -InputObject $body
         } else {
             Add-Member -Membertype NoteProperty -Name 'controllerId' -value $script:jsWebService.ControllerId -InputObject $body
         }
 
-        Add-Member -Membertype NoteProperty -Name 'scheduledFor' -value ( Get-Date (Get-Date $dailyPlanScheduledFor).ToUniversalTime() -Format 'yyyy-MM-dd HH:mm:ss' ) -InputObject $body
-
-        if ( $orderIds )
+        if ( $OrderId )
         {
-            Add-Member -Membertype NoteProperty -Name 'orderIds' -value $orderIds -InputObject $body
+            Add-Member -Membertype NoteProperty -Name 'orderIds' -value @($OrderId) -InputObject $body
         }
 
-        if ( $Cycle )
+        if ( $RelativeScheduledFor -and $Period -and $Period.begin -and $Period.end )
         {
             $scheduledCycle = New-Object PSObject
-            if ( $Cycle.begin )
+
+            if ( $RelativeScheduledFor -eq 'now' )
             {
-                if ( $RelativeScheduledTime )
-                {
-                    $ts = ([TimeSpan]::Parse($Cycle.begin.Substring(11, 8)))
-
-                    if ( $RelativeScheduledTime[0] -eq '-' )
-                    {
-                        $ts -= ([TimeSpan]::Parse($RelativeScheduledTime.Substring(1)))
-                    } else {
-                        $ts += ([TimeSpan]::Parse($RelativeScheduledTime.Substring(1)))
-                    }
-
-                    Add-Member -Membertype NoteProperty -Name 'begin' -value $ts.toString("hh\:mm\:ss") -InputObject $scheduledCycle
-                } else {
-                    Add-Member -Membertype NoteProperty -Name 'begin' -value $Cycle.begin.Substring(11, 8) -InputObject $scheduledCycle
-                }
+                Add-Member -Membertype NoteProperty -Name 'begin' -value ( Get-Date (Get-Date).ToUniversalTime() -Format 'HH:mm:ss' ) -InputObject $scheduledCycle
+            } elseif ( $RelativeScheduledFor.startsWith('now+') ) {
+                Add-Member -Membertype NoteProperty -Name 'begin' -value ( Get-Date ((Get-Date).ToUniversalTime() + ([TimeSpan]::Parse($RelativeScheduledFor.Substring(4))).toString("hh\:mm\:ss") ) -Format 'HH:mm:ss' ) -InputObject $scheduledCycle
+            } elseif ( $RelativeScheduledFor.startsWith('cur+') ) {
+                Add-Member -Membertype NoteProperty -Name 'begin' -value ( Get-Date ($Period.begin + ([TimeSpan]::Parse($RelativeScheduledFor.Substring(4))).toString("hh\:mm\:ss") ) -Format 'HH:mm:ss' ) -InputObject $scheduledCycle
+            } elseif ( $RelativeScheduledFor.startsWith('cur-') ) {
+                Add-Member -Membertype NoteProperty -Name 'begin' -value ( Get-Date ($Period.begin - ([TimeSpan]::Parse($RelativeScheduledFor.Substring(4))).toString("hh\:mm\:ss") ) -Format 'HH:mm:ss' ) -InputObject $scheduledCycle
             }
 
-            if ( $Cycle.end )
+            if ( $RelativeScheduledFor -eq 'now' )
             {
-                if ( $RelativeScheduledTime )
-                {
-                    $ts = ([TimeSpan]::Parse($Cycle.end.Substring(11, 8)))
-
-                    if ( $RelativeScheduledTime[0] -eq '-' )
-                    {
-                        $ts -= ([TimeSpan]::Parse($RelativeScheduledTime.Substring(1)))
-                    } else {
-                        $ts += ([TimeSpan]::Parse($RelativeScheduledTime.Substring(1)))
-                    }
-
-                    Add-Member -Membertype NoteProperty -Name 'end' -value $ts.toString("hh\:mm\:ss") -InputObject $scheduledCycle
-                } else {
-                    Add-Member -Membertype NoteProperty -Name 'end' -value $Cycle.end.Substring(11, 8) -InputObject $scheduledCycle
-                }
+                Add-Member -Membertype NoteProperty -Name 'end' -value ( Get-Date ((Get-Date).ToUniversalTime() + (New-TimeSpan -Start $Period.begin -End $Period.end).toString("hh\:mm\:ss") ) -Format 'HH:mm:ss' ) -InputObject $scheduledCycle
+            } elseif ( $RelativeScheduledFor.startsWith( 'now+' ) ) {
+                Add-Member -Membertype NoteProperty -Name 'end' -value ( Get-Date ((Get-Date).ToUniversalTime() + ([TimeSpan]::Parse($RelativeScheduledFor.Substring(4))).toString("hh\:mm\:ss") + (New-TimeSpan -Start $Period.begin -End $Period.end) ) -Format 'HH:mm:ss' ) -InputObject $scheduledCycle
+            } elseif ( $RelativeScheduledFor.startsWith( 'cur+' ) ) {
+                $ts = ([TimeSpan]::Parse((Get-Date $Period.end -Format 'HH:mm:ss')))
+                $ts += ([TimeSpan]::Parse($RelativeScheduledFor.Substring(4)))
+                Add-Member -Membertype NoteProperty -Name 'end' -value $ts.toString("hh\:mm\:ss") -InputObject $scheduledCycle
+            } elseif ( $RelativeScheduledFor.startsWith( 'cur-' ) ) {
+                $ts = ([TimeSpan]::Parse((Get-Date $Period.end -Format 'HH:mm:ss')))
+                $ts -= ([TimeSpan]::Parse($RelativeScheduledFor.Substring(4)))
+                Add-Member -Membertype NoteProperty -Name 'end' -value $ts.toString("hh\:mm\:ss") -InputObject $scheduledCycle
             }
 
-            Add-Member -Membertype NoteProperty -Name 'repeat' -value ( "{0:hh\:mm\:ss}" -f ([timespan]::fromseconds($Cycle.repeat)) ) -InputObject $scheduledCycle
-
+            Add-Member -Membertype NoteProperty -Name 'repeat' -value ( "{0:hh\:mm\:ss}" -f ([timespan]::fromseconds($Period.repeat)) ) -InputObject $scheduledCycle
             Add-Member -Membertype NoteProperty -Name 'cycle' -value $scheduledCycle -InputObject $body
+            Add-Member -Membertype NoteProperty -Name 'scheduledFor' -value ( $OrderId | Select-String -Pattern "^#(\d{4}-\d{2}-\d{2})#" ).matches.groups[1].value -InputObject $body
+        } else {
+            if ( $RelativeScheduledFor )
+            {
+                Add-Member -Membertype NoteProperty -Name 'scheduledFor' -value $RelativeScheduledFor -InputObject $body
+            } else {
+                Add-Member -Membertype NoteProperty -Name 'scheduledFor' -value (Get-Date $ScheduledFor.ToUniversalTime() -Format 'yyyy-MM-dd HH:mm:ss') -InputObject $body
+            }
         }
 
         if ( $Variables )
@@ -348,7 +282,7 @@ param
 
         if ( $KeepDailyPlanAssignment )
         {
-            Add-Member -Membertype NoteProperty -Name 'stickDailyPlanDate' -value ( $ForceJobAdmission -eq $True ) -InputObject $body
+            Add-Member -Membertype NoteProperty -Name 'stickDailyPlanDate' -value ( $KeepDailyPlanAssignment -eq $True ) -InputObject $body
         }
 
         if ( $AuditComment -or $AuditTimeSpent -or $AuditTicketLink )
@@ -388,7 +322,10 @@ param
                 Write-Verbose ".. $($MyInvocation.MyCommand.Name): no Daily Plan orders updated"
             }
         }
+    }
 
+    End
+    {
         Trace-JS7StopWatch -CommandName $MyInvocation.MyCommand.Name -StopWatch $stopWatch
         Update-JS7Session
     }

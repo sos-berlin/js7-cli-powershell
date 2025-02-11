@@ -68,15 +68,13 @@ This parameter accepts any number of target file names separated by a comma.
 
 .PARAMETER DateFrom
 Specifies the date starting from which file transfer history items should be returned.
-Consider that a UTC date has to be provided.
 
-Default: Beginning of the current day as a UTC date
+Default: Begin of current day in the current timezone
 
 .PARAMETER DateTo
 Specifies the date until which file transfer history items should be returned.
-Consider that a UTC date has to be provided.
 
-Default: End of the current day as a UTC date
+Default: End of current day in the current timezone
 
 .PARAMETER RelativeDateFrom
 Specifies a relative date starting from which file transfer history items should be returned, for example:
@@ -257,17 +255,17 @@ param
     {
         Write-Debug ".. $($MyInvocation.MyCommand.Name):"
 
-        if ( $Successful )
+        if ( $Successful -and 'SUCCESSFUL' -notin $states )
         {
             $states += 'SUCCESSFUL'
         }
 
-        if ( $Failed )
+        if ( $Failed -and 'FAILED' -notin $states )
         {
             $states += 'FAILED'
         }
 
-        if ( $InProgress )
+        if ( $InProgress -and 'INCOMPLETE' -notin $states )
         {
             $states += 'INCOMPLETE'
         }
@@ -451,28 +449,17 @@ param
             throw ( $response | Format-List -Force | Out-String )
         }
 
-        if ( $Timezone.Id -eq 'UTC' )
+        if ( $Timezone -and $Timezone.Id -ne 'UTC' )
         {
-            $returnItems
-        } else {
-            $returnItems | Select-Object -Property `
-                                           controllerId, `
-                                           id, `
-                                           historyId, `
-                                           orderId, `
-                                           workflowPath, `
-                                           job, `
-                                           jobPosition, `
-                                           _operation, `
-                                           error, `
-                                           numOfFiles, `
-                                           source, `
-                                           target, `
-                                           state, `
-                                           @{name='start'; expression={ ( [System.TimeZoneInfo]::ConvertTimeFromUtc( [datetime]::SpecifyKind( [datetime] "$($_.start)".Substring(0, 19), 'UTC'), $Timezone ) ).ToString("yyyy-MM-dd HH:mm:ss") + $timezoneOffset }}, `
-                                           @{name='end';   expression={ ( [System.TimeZoneInfo]::ConvertTimeFromUtc( [datetime]::SpecifyKind( [datetime] "$($_.end)".Substring(0, 19), 'UTC'), $Timezone ) ).ToString("yyyy-MM-dd HH:mm:ss") + $timezoneOffset }}, `
-                                           @{name='surveyDate'; expression={ ( [System.TimeZoneInfo]::ConvertTimeFromUtc( [datetime]::SpecifyKind( [datetime] "$($_.surveyDate)".SubString(0, 19), 'UTC'), $($Timezone) ) ).ToString("yyyy-MM-dd HH:mm:ss") + $timezoneOffset }}
+            foreach( $returnItem in $returnItems )
+            {
+               $returnItem.start = ( [System.TimeZoneInfo]::ConvertTimeFromUtc( [datetime]::SpecifyKind( [datetime] "$($returnItem.start)".Substring(0, 19), 'UTC'), $Timezone ) ).ToString("yyyy-MM-dd HH:mm:ss") + $timezoneOffset
+               $returnItem.end = ( [System.TimeZoneInfo]::ConvertTimeFromUtc( [datetime]::SpecifyKind( [datetime] "$($returnItem.end)".Substring(0, 19), 'UTC'), $Timezone ) ).ToString("yyyy-MM-dd HH:mm:ss") + $timezoneOffset
+               $returnItem.surveyDate = ( [System.TimeZoneInfo]::ConvertTimeFromUtc( [datetime]::SpecifyKind( [datetime] "$($returnItem.surveyDate)".SubString(0, 19), 'UTC'), $($Timezone) ) ).ToString("yyyy-MM-dd HH:mm:ss") + $timezoneOffset
+            }
         }
+
+        $returnItems
 
         if ( $returnItems.count )
         {

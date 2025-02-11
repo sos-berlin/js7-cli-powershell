@@ -78,6 +78,7 @@ about_JS7
 
 #>
 [cmdletbinding()]
+[OutputType([System.Object[]])]
 param
 (
     [Parameter(Mandatory=$False,ValueFromPipeline=$True,ValueFromPipelinebyPropertyName=$True)]
@@ -216,17 +217,13 @@ param
                 throw ( $response | Format-List -Force | Out-String )
             }
 
-            $returnCalendars | Select-Object -Property `
-                               @{name='calendarPath'; expression={$_.path}}, `
-                               from, `
-                               id, `
-                               includes, `
-                               name, `
-                               path, `
-                               title, `
-                               to, `
-                               type
+            foreach( $returnCalendar in $returnCalendars )
+            {
+                Add-Member -Membertype NoteProperty -Name 'calendarPath' -value $returnCalendar.path -InputObject $returnCalendar
+            }
         }
+
+        $returnCalendars
 
         if ( $returnCalendars.count )
         {

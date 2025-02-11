@@ -41,15 +41,15 @@ A regular expression 'Identifier$' matches the above Order ID.
 
 .PARAMETER DateFrom
 Specifies the date starting from which history items should be returned.
-Consider that a UTC date has to be provided.
+Dates can be specified in any time zone.
 
-Default should no Order ID be provided: Begin of the current day as a UTC date
+Default should no Order ID be provided: Begin of current day in the current timezone
 
 .PARAMETER DateTo
 Specifies the date until which history items should be returned.
-Consider that a UTC date has to be provided.
+Dates can be specified in any time zone.
 
-Default should no Order ID be provided: End of the current day as a UTC date
+Default should no Order ID be provided: End of current day in the current timezone
 
 .PARAMETER RelativeDateFrom
 Specifies a relative date starting from which history items should be returned, e.g.
@@ -83,7 +83,7 @@ Optionally a time offset can be specified, e.g. -1d+02:00, as otherwise midnight
 Alternatively a timezone offset can be added, e.g. by using -1d+TZ. This is calculated by the cmdlet
 for the timezone that is specified with the -Timezone parameter.
 
-This parameter takes precedence over the -DateFrom parameter.
+This parameter takes precedence over the -DateTo parameter.
 
 .PARAMETER Timezone
 Specifies the timezone to which dates should be converted from the history information.
@@ -211,7 +211,7 @@ param
     [Parameter(Mandatory=$False,ValueFromPipeline=$False,ValueFromPipelinebyPropertyName=$True)]
     [string] $RegularExpression,
     [Parameter(Mandatory=$False,ValueFromPipeline=$False,ValueFromPipelinebyPropertyName=$True)]
-    [DateTime] $DateFrom = (Get-Date (Get-Date).ToUniversalTime() -Format 'yyyy-MM-dd'),
+    [DateTime] $DateFrom = (Get-Date -Format 'yyyy-MM-dd'),
     [Parameter(Mandatory=$False,ValueFromPipeline=$False,ValueFromPipelinebyPropertyName=$True)]
     [DateTime] $DateTo,
     [Parameter(Mandatory=$False,ValueFromPipeline=$False,ValueFromPipelinebyPropertyName=$True)]
@@ -269,29 +269,29 @@ param
             $Recursive = $True
         }
 
-        if ( $Successful )
+        if ( $Successful -and 'SUCCESSFUL' -notin $historyStates )
         {
             $historyStates += 'SUCCESSFUL'
         }
 
-        if ( $Failed )
+        if ( $Failed -and 'FAILED' -notin $historyStates )
         {
             $historyStates += 'FAILED'
         }
 
-        if ( $InProgress )
+        if ( $InProgress -and 'INCOMPLETE' -notin $historyStates )
         {
             $historyStates += 'INCOMPLETE'
         }
 
         if ( !$OrderId -and !$DateFrom )
         {
-            $DateFrom = (Get-Date -Hour 0 -Minute 0 -Second 0).ToUniversalTime()
+            $DateFrom = (Get-Date -Hour 0 -Minute 0 -Second 0)
         }
 
         if ( !$OrderId -and !$DateTo )
         {
-            $DateTo = (Get-Date -Hour 0 -Minute 0 -Second 0).AddDays(1).ToUniversalTime()
+            $DateTo = (Get-Date -Hour 0 -Minute 0 -Second 0).AddDays(1)
         }
 
         if ( $OrderId -or $WorkflowPath )
@@ -418,23 +418,18 @@ param
             throw ( $response | Format-List -Force | Out-String )
         }
 
-        if ( $Timezone.Id -eq 'UTC' )
+        if ( $Timezone -and $Timezone.Id -ne 'UTC' )
         {
-            $returnHistoryItems
-        } else {
-            $returnHistoryItems | Select-Object -Property `
-                                           controllerId, `
-                                           historyId, `
-                                           orderId, `
-                                           workflow, `
-                                           position, `
-                                           sequence, `
-                                           state, `
-                                           @{name='plannedTime'; expression={ ( [System.TimeZoneInfo]::ConvertTimeFromUtc( [datetime]::SpecifyKind( [datetime] "$($_.plannedTime)".Substring(0, 19), 'UTC'), $Timezone ) ).ToString("yyyy-MM-dd HH:mm:ss") + $timezoneOffset }}, `
-                                           @{name='startTime'; expression={ ( [System.TimeZoneInfo]::ConvertTimeFromUtc( [datetime]::SpecifyKind( [datetime] "$($_.startTime)".Substring(0, 19), 'UTC'), $Timezone ) ).ToString("yyyy-MM-dd HH:mm:ss") + $timezoneOffset }}, `
-                                           @{name='endTime';  expression={ ( [System.TimeZoneInfo]::ConvertTimeFromUtc( [datetime]::SpecifyKind( [datetime] "$($_.endTime)".SubString(0,19), 'UTC'), $($Timezone) ) ).ToString("yyyy-MM-dd HH:mm:ss") + $timezoneOffset }}, `
-                                           @{name='surveyDate'; expression={ ( [System.TimeZoneInfo]::ConvertTimeFromUtc( [datetime]::SpecifyKind( [datetime] "$($_.surveyDate)".SubString(0, 19), 'UTC'), $($Timezone) ) ).ToString("yyyy-MM-dd HH:mm:ss") + $timezoneOffset }}
+            foreach( $returnHistoryItem in $returnHistoryItems )
+            {
+                $returnHistoryItem.plannedTime = ( [System.TimeZoneInfo]::ConvertTimeFromUtc( [datetime]::SpecifyKind( [datetime] "$($returnHistoryItem.plannedTime)".Substring(0, 19), 'UTC'), $Timezone ) ).ToString("yyyy-MM-dd HH:mm:ss") + $timezoneOffset
+                $returnHistoryItem.startTime = ( [System.TimeZoneInfo]::ConvertTimeFromUtc( [datetime]::SpecifyKind( [datetime] "$($returnHistoryItem.startTime)".Substring(0, 19), 'UTC'), $Timezone ) ).ToString("yyyy-MM-dd HH:mm:ss") + $timezoneOffset
+                $returnHistoryItem.endTime = ( [System.TimeZoneInfo]::ConvertTimeFromUtc( [datetime]::SpecifyKind( [datetime] "$($returnHistoryItem.endTime)".SubString(0,19), 'UTC'), $($Timezone) ) ).ToString("yyyy-MM-dd HH:mm:ss") + $timezoneOffset
+                $returnHistoryItem.surveyDate = ( [System.TimeZoneInfo]::ConvertTimeFromUtc( [datetime]::SpecifyKind( [datetime] "$($returnHistoryItem.surveyDate)".SubString(0, 19), 'UTC'), $($Timezone) ) ).ToString("yyyy-MM-dd HH:mm:ss") + $timezoneOffset
+            }
         }
+
+        $returnHistoryItems
 
         if ( $returnHistoryItems.count )
         {

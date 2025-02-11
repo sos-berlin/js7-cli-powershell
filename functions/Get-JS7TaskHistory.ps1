@@ -44,15 +44,15 @@ Specifies the name of a job that is looked up by use of * and ? wildcard charact
 
 .PARAMETER DateFrom
 Specifies the date starting from which history items should be returned.
-Consider that a UTC date has to be provided.
+Dates can be specified in any timezone.
 
-Default: Beginning of the current day as a UTC date
+Default: Begin of current day in the UTC timezone
 
 .PARAMETER DateTo
 Specifies the date until which history items should be returned.
-Consider that a UTC date has to be provided.
+Datesn can be specified in any timezone.
 
-Default: End of the current day as a UTC date
+Default: End of current day in the UTC timezone
 
 .PARAMETER RelativeDateFrom
 Specifies a relative date starting from which history items should be returned, e.g.
@@ -222,9 +222,9 @@ param
     [Parameter(Mandatory=$False,ValueFromPipeline=$False,ValueFromPipelinebyPropertyName=$True)]
     [string] $JobName,
     [Parameter(Mandatory=$False,ValueFromPipeline=$False,ValueFromPipelinebyPropertyName=$True)]
-    [DateTime] $DateFrom = (Get-Date -Hour 0 -Minute 0 -Second 0).ToUniversalTime(),
+    [DateTime] $DateFrom = (Get-Date -Hour 0 -Minute 0 -Second 0),
     [Parameter(Mandatory=$False,ValueFromPipeline=$False,ValueFromPipelinebyPropertyName=$True)]
-    [DateTime] $DateTo = (Get-Date -Hour 0 -Minute 0 -Second 0).AddDays(1).ToUniversalTime(),
+    [DateTime] $DateTo = (Get-Date -Hour 0 -Minute 0 -Second 0).AddDays(1),
     [Parameter(Mandatory=$False,ValueFromPipeline=$False,ValueFromPipelinebyPropertyName=$True)]
     [string] $RelativeDateFrom,
     [Parameter(Mandatory=$False,ValueFromPipeline=$False,ValueFromPipelinebyPropertyName=$True)]
@@ -462,28 +462,17 @@ param
             throw ( $response | Format-List -Force | Out-String )
         }
 
-        if ( $Timezone.Id -eq 'UTC' )
+        if ( $Timezone -and $Timezone.Id -ne 'UTC' )
         {
-            $returnHistoryItems
-        } else {
-            $returnHistoryItems | Select-Object -Property `
-                                           controllerId, `
-                                           agentUrl, `
-                                           taskId, `
-                                           orderId, `
-                                           workflow, `
-                                           position, `
-                                           job, `
-                                           criticality, `
-                                           sequence, `
-                                           retryCounter, `
-                                           exitCode, `
-                                           state, `
-                                           arguments, `
-                                           @{name='startTime'; expression={ ( [System.TimeZoneInfo]::ConvertTimeFromUtc( [datetime]::SpecifyKind( [datetime] "$($_.startTime)".Substring(0, 19), 'UTC'), $Timezone ) ).ToString("yyyy-MM-dd HH:mm:ss") + $timezoneOffset }}, `
-                                           @{name='endTime';  expression={ ( [System.TimeZoneInfo]::ConvertTimeFromUtc( [datetime]::SpecifyKind( [datetime] "$($_.endTime)".SubString(0,19), 'UTC'), $($Timezone) ) ).ToString("yyyy-MM-dd HH:mm:ss") + $timezoneOffset }}, `
-                                           @{name='surveyDate'; expression={ ( [System.TimeZoneInfo]::ConvertTimeFromUtc( [datetime]::SpecifyKind( [datetime] "$($_.surveyDate)".SubString(0, 19), 'UTC'), $($Timezone) ) ).ToString("yyyy-MM-dd HH:mm:ss") + $timezoneOffset }}
+            foreach( $returnHistoryItem in $returnHistoryItems )
+            {
+                $returnHistoryItem.startTime = ( [System.TimeZoneInfo]::ConvertTimeFromUtc( [datetime]::SpecifyKind( [datetime] "$($returnHistoryItem.startTime)".Substring(0, 19), 'UTC'), $Timezone ) ).ToString("yyyy-MM-dd HH:mm:ss") + $timezoneOffset
+                $returnHistoryItem.endTime = ( [System.TimeZoneInfo]::ConvertTimeFromUtc( [datetime]::SpecifyKind( [datetime] "$($returnHistoryItem.endTime)".SubString(0,19), 'UTC'), $($Timezone) ) ).ToString("yyyy-MM-dd HH:mm:ss") + $timezoneOffset
+                $returnHistoryItem.surveyDate = ( [System.TimeZoneInfo]::ConvertTimeFromUtc( [datetime]::SpecifyKind( [datetime] "$($returnHistoryItem.surveyDate)".SubString(0, 19), 'UTC'), $($Timezone) ) ).ToString("yyyy-MM-dd HH:mm:ss") + $timezoneOffset
+            }
         }
+
+        $returnHistoryItems
 
         if ( $returnHistoryItems.count )
         {
