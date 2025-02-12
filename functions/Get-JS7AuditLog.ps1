@@ -105,7 +105,7 @@ for the timezone that is specified with the -Timezone parameter.
 This parameter takes precedence over the -DateFrom parameter.
 
 .PARAMETER Timezone
-Specifies the timezone for which dates should be converted to from the history information.
+Specifies the timezone for which dates should be converted to from the audit log information.
 A timezone can e.g. be specified like this:
 
   Get-JS7AuditLog -Timezone (Get-Timezone -Id 'GMT Standard Time')
