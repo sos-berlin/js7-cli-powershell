@@ -17,12 +17,18 @@ Specifies the unique name of the Identity Service.
 .PARAMETER Type
 Specifies the type of the Identity Service which is one of:
 
+* CERTIFICATE: allow access from certificates, manage roles with JOC Cockpit
+* FIDO: manage accounts from FIDO, manage roles with JOC Cockpit
 * JOC: manage accounts and roles with JOC Cockpit
+* KEYCLOAK: manage accounts and roles with Keycloak Server
+* KEYCLOAK-JOC: manage accounts with Keycloak Server, mange roles with JOC Cockpit
 * LDAP: manage accounts and roles with LDAP Server
-* LDAP_JOC: manage accounts with LDAP Server, manage roles with JOC Cockpit
+* LDAP-JOC: manage accounts with LDAP Server, manage roles with JOC Cockpit
+* OIDC: manage accounts and roles with OIDC Server
+* OIDC-JOC: manage accounts with OIDC Server, manage roles with JOC Cockpit
 * VAULT: manage accounts and roles with Vault Server
-* VAULT_JOC: manage accounts with Vault Server, manage roles with JOC Cockpit
-* VAULT_JOC_ACTIVE: manage accounts with Vault Server and JOC Cockpit, manage roles with JOC Cockpit
+* VAULT-JOC: manage accounts with Vault Server, manage roles with JOC Cockpit
+* VAULT-JOC-ACTIVE: manage accounts with Vault Server and JOC Cockpit, manage roles with JOC Cockpit
 
 .PARAMETER Ordering
 Optionally specifies the position in the list of Identity Services.
@@ -32,6 +38,9 @@ Specifies if the Identity Service is required. For any required Identity Service
 
 .PARAMETER Disabled
 The Identity Service is disabled, i.e. it is not used for authentication of user accounts.
+
+.PARAMETER SecondFactor
+Specifies that the Identity Service is used as a second factor in MFA.
 
 .PARAMETER AuthenticationScheme
 * Optionally specifies the authentication scheme which is one of
@@ -44,6 +53,10 @@ iF single-factor authentication is used then this switch specifies if certificat
 
 .PARAMETER SingleFactorPassword
 iF single-factor authentication is used then this switch specifies if passwords are accepted as a single factor.
+
+.PARAMETER SecondFactorService
+If the -AuzthenticationScheme parameter is used with the TWO-FACTOR value, then the argument
+specifies the name of the Identity Service that is used as a second factor.
 
 .PARAMETER AuditComment
 Specifies a free text that indicates the reason for the current intervention,
@@ -77,9 +90,14 @@ $service = Set-JS7IAMService -Service 'JOC' -Type 'JOC' -SingleFactorPassword
 Stores the Identity Service to JOC Cockpit for use with passwords as a single factor.
 
 .EXAMPLE
-$service = Set-JS7IAMService -Service 'JOC' -Type 'JOC' -AuthenticationScheme 'SINGLE-FACTOR' -SingleFactorCertificate -SingleFactorPassword
+$service = Set-JS7IAMService -Service 'Certficate' -Type CERTIFICATE -SingleFactorCertificate -SecondFactor
 
-Stores the Identity Service to JOC Cockpit and allows any of certificates and passwords to be used as a single factor for authentication.
+Stores the Identity Service for use with certificates as a second factor in MFA.
+
+.EXAMPLE
+$service = Set-JS7IAMService -Service 'Multi-Factor' -Type JOC -AuthenticationScheme 'TWO-FACTOR' -SecondFactorService 'Certificate'
+
+Stores the Identity Service for MFA using a password and a certificate from the 'Certificate' Identity Service.
 
 .LINK
 about_JS7
@@ -93,7 +111,7 @@ param
     [string] $Service,
     [Alias('IdentityServiceType')]
     [Parameter(Mandatory=$True,ValueFromPipeline=$False,ValueFromPipelinebyPropertyName=$True)]
-    [ValidateSet('JOC','LDAP','LDAP_JOC','VAULT','VAULT_JOC','VAULT_JOC_ACTIVE',IgnoreCase = $False)]
+    [ValidateSet('CERTIFICATE','FIDO','JOC','KEYCLOAK','KEYCLOAK-JOC','LDAP','LDAP-JOC','OIDC','OIDC-JOC','VAULT','VAULT-JOC','VAULT-JOC-ACTIVE',IgnoreCase = $False)]
     [string] $Type,
     [Parameter(Mandatory=$False,ValueFromPipeline=$False,ValueFromPipelinebyPropertyName=$True)]
     [int] $Ordering,
@@ -102,12 +120,18 @@ param
     [Parameter(Mandatory=$False,ValueFromPipeline=$False,ValueFromPipelinebyPropertyName=$True)]
     [switch] $Disabled,
     [Parameter(Mandatory=$False,ValueFromPipeline=$False,ValueFromPipelinebyPropertyName=$True)]
+    [switch] $SecondFactor,
+    [Alias('ServiceAuthenticationScheme')]
+    [Parameter(Mandatory=$False,ValueFromPipeline=$False,ValueFromPipelinebyPropertyName=$True)]
     [ValidateSet('SINGLE-FACTOR','TWO-FACTOR',IgnoreCase = $False)]
     [string] $AuthenticationScheme = 'SINGLE-FACTOR',
     [Parameter(Mandatory=$False,ValueFromPipeline=$False,ValueFromPipelinebyPropertyName=$True)]
     [switch] $SingleFactorCertificate,
     [Parameter(Mandatory=$False,ValueFromPipeline=$False,ValueFromPipelinebyPropertyName=$True)]
     [switch] $SingleFactorPassword,
+    [Alias('SecondFactorIdentityServiceName')]
+    [Parameter(Mandatory=$False,ValueFromPipeline=$False,ValueFromPipelinebyPropertyName=$True)]
+    [string] $SecondFactorService,
     [Parameter(Mandatory=$False,ValueFromPipeline=$False,ValueFromPipelinebyPropertyName=$True)]
     [string] $AuditComment,
     [Parameter(Mandatory=$False,ValueFromPipeline=$False,ValueFromPipelinebyPropertyName=$True)]
@@ -130,7 +154,7 @@ param
             throw "$($MyInvocation.MyCommand.Name): one of the authentication schemes 'SINGLE-FACTOR' or 'TWO-FACTOR' has to be used"
         }
 
-        if ( $AuthenticationScheme  -eq 'SINGLE-FACTOR' -and !$SingleFactorCertificate -and !$SingleFactorPassword )
+        if ( $AuthenticationScheme -eq 'SINGLE-FACTOR' -and !$SingleFactorCertificate -and !$SingleFactorPassword )
         {
             throw "$($MyInvocation.MyCommand.Name): one of the authentication factors -SingleFactorCertificate or -SingleFactorPassword has to be used"
         }
@@ -138,6 +162,11 @@ param
         if ( $AuthenticationScheme -eq 'TWO-FACTOR' -and ( $SingleFactorCertificate -or $SingleFactorPassword ) )
         {
             throw "$($MyInvocation.MyCommand.Name): two-factor authentication cannot be used with a choice of -SingleFactorCertificate and -SingleFactorPassword"
+        }
+
+        if ( $AuthenticationScheme -eq 'TWO-FACTOR' -and !$SecondFactorService )
+        {
+            throw "$($MyInvocation.MyCommand.Name): two-factor authentication requires to specify name of second identity service using -SecondFactorService"
         }
     }
 
@@ -149,6 +178,7 @@ param
         Add-Member -Membertype NoteProperty -Name 'identityServiceType' -value $Type -InputObject $body
         Add-Member -Membertype NoteProperty -Name 'required' -value ($Required -eq $True) -InputObject $body
         Add-Member -Membertype NoteProperty -Name 'disabled' -value ($Disabled -eq $True) -InputObject $body
+        Add-Member -Membertype NoteProperty -Name 'secondFactor' -value ($SecondFactor -eq $True) -InputObject $body
 
         if ( $Ordering )
         {
@@ -160,6 +190,11 @@ param
             Add-Member -Membertype NoteProperty -Name 'serviceAuthenticationScheme' -value $AuthenticationScheme -InputObject $body
             Add-Member -Membertype NoteProperty -Name 'singleFactorCert' -value ($SingleFactorCertificate -eq $True) -InputObject $body
             Add-Member -Membertype NoteProperty -Name 'singleFactorPwd' -value ($SingleFactorPassword -eq $True) -InputObject $body
+        }
+
+        if ( $SecondFactorService )
+        {
+            Add-Member -Membertype NoteProperty -Name 'secondFactorIdentityServiceName' -value $SecondFactorService -InputObject $body
         }
 
         if ( $AuditComment -or $AuditTimeSpent -or $AuditTicketLink )
@@ -189,10 +224,10 @@ param
             {
                 $requestResult = ( $response.Content | ConvertFrom-Json )
 
-                if ( !$requestResult )
-                {
-                    throw ( $response | Format-List -Force | Out-String )
-                }
+                # if ( !$requestResult )
+                # {
+                #     throw ( $response | Format-List -Force | Out-String )
+                # }
 
                 $requestResult
             } else {

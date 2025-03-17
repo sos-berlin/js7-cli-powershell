@@ -23,6 +23,20 @@ Specifies the folder and optionally sub-folders from which Notices are returned.
 When used with the -Folder parameter specifies that any sub-folders should be looked up.
 By default no sub-folders will be searched for Notice Boards.
 
+.PARAMETER PlanSchemaId
+Specifies the Schema ID of the Plan to which notices are assigned.
+
+One of the following can be specified:
+
+* Global
+* DailyPlan
+
+.PARAMETER PlanKey
+For plannable Notice Boards specified from the -PlanSchemaId argument with the value 'DailyPlan'
+the key of the plan instance is a date in ISO format: yyyy-mm-dd.
+
+The argument is ignored if the -PlanSchemaId argument is used with a value 'global'.
+
 .PARAMETER ControllerId
 Optionally specifies the identification of the Controller from which to read Notices.
 
@@ -69,7 +83,14 @@ param
     [Parameter(Mandatory=$False,ValueFromPipeline=$False,ValueFromPipelinebyPropertyName=$True)]
     [switch] $Recursive,
     [Parameter(Mandatory=$False,ValueFromPipeline=$False,ValueFromPipelinebyPropertyName=$True)]
+    [ValidateSet('Global','DailyPlan',IgnoreCase = $False)]
+    [string[]] $PlanSchemaId,
+    [Parameter(Mandatory=$False,ValueFromPipeline=$False,ValueFromPipelinebyPropertyName=$True)]
+    [string[]] $PlanKey,
+    [Parameter(Mandatory=$False,ValueFromPipeline=$False,ValueFromPipelinebyPropertyName=$True)]
     [string] $ControllerId,
+    [Parameter(Mandatory=$False,ValueFromPipeline=$False,ValueFromPipelinebyPropertyName=$True)]
+    [switch] $Compact,
     [Parameter(Mandatory=$False,ValueFromPipeline=$False,ValueFromPipelinebyPropertyName=$True)]
     [int] $Limit = 10000
 )
@@ -85,6 +106,8 @@ param
 
         $folders = @()
         $paths = @()
+        $planSchemaIds = @()
+        $planKeys = @()
     }
 
     Process
@@ -106,11 +129,22 @@ param
         {
             $paths += $NoticeBoardPath
         }
+
+        if ( $PlanSchemaId )
+        {
+            $planSchemaIds += $PlanSchemaId
+        }
+
+        if ( $PlanKey )
+        {
+            $planKeys += $PlanKey
+        }
     }
 
     End
     {
         $body = New-Object PSObject
+        Add-Member -Membertype NoteProperty -Name 'compact' -value ($Compact -eq $True) -InputObject $body
 
         if ( $ControllerId )
         {
@@ -119,19 +153,29 @@ param
             Add-Member -Membertype NoteProperty -Name 'controllerId' -value $script:jsWebService.ControllerId -InputObject $body
         }
 
-        if ( $folders )
+        if ( $folders.count )
         {
             Add-Member -Membertype NoteProperty -Name 'folders' -value $folders -InputObject $body
         }
 
-        if ( $paths )
+        if ( $paths.count )
         {
             Add-Member -Membertype NoteProperty -Name 'noticeBoardPaths' -value $paths -InputObject $body
         }
 
-        if ( $limit )
+        if ( $planSchemaIds.count )
         {
-            Add-Member -Membertype NoteProperty -Name 'limit' -value $limit -InputObject $body
+            Add-Member -Membertype NoteProperty -Name 'planSchemaIds' -value $planSchemaIds -InputObject $body
+        }
+
+        if ( $planKeys.count )
+        {
+            Add-Member -Membertype NoteProperty -Name 'planKeys' -value $planKeys -InputObject $body
+        }
+
+        if ( $Limit )
+        {
+            Add-Member -Membertype NoteProperty -Name 'limit' -value $Limit -InputObject $body
         }
 
         [string] $requestBody = $body | ConvertTo-Json -Depth 100

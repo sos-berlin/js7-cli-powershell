@@ -90,6 +90,11 @@ param
 		Approve-JS7Command $MyInvocation.MyCommand
         $stopWatch = Start-JS7StopWatch
 
+        if ( $Branch -and $Tag )
+        {
+            throw 'only one of the -Branch and -Tag arguments can be provided'
+        }
+
         if ( !$AuditComment -and ( $AuditTimeSpent -or $AuditTicketLink ) )
         {
             throw "$($MyInvocation.MyCommand.Name): Audit Log comment required, use parameter -AuditComment if one of the parameters -AuditTimeSpent or -AuditTicketLink is used"

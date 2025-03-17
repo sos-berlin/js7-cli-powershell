@@ -59,10 +59,10 @@ param
         {
             $requestResult = ( $response.Content | ConvertFrom-Json ).identityServiceItems
 
-            if ( !$requestResult )
-            {
-                throw ( $response | Format-List -Force | Out-String )
-            }
+            # if ( !$requestResult )
+            # {
+            #     throw ( $response | Format-List -Force | Out-String )
+            # }
 
             $requestResult
         } else {

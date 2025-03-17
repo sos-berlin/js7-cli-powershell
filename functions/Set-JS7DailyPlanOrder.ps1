@@ -48,8 +48,8 @@ Get-JS7Order -Folder /ProductDemo -Recursive -Scheduled | Get-JS7DailyPlanOrder 
 The value for the -Period argument can be created individually like this:
 
 $Period = New-Object PSCustomObject
-Add-Member -Membertype NoteProperty -Name 'begin' -value '15:30:00' -InputObject $Period
-Add-Member -Membertype NoteProperty -Name 'end' -value '18:45:00' -InputObject $Period
+Add-Member -Membertype NoteProperty -Name 'begin' -value (Get-Date '2025-02-25 15:30:00') -InputObject $Period
+Add-Member -Membertype NoteProperty -Name 'end' -value (Get-Date '2025-02-25 18:45:00') -InputObject $Period
 Add-Member -Membertype NoteProperty -Name 'repeat' -value '00:30:00' -InputObject $Period
 
 .PARAMETER Variables
@@ -162,11 +162,6 @@ param
         Approve-JS7Command $MyInvocation.MyCommand
         $stopWatch = Start-JS7StopWatch
 
-        if ( !$ScheduledFor -and !$RelativeScheduledFor )
-        {
-            throw 'one of the -ScheduledFor or -RelativeScheduledFor arguments has to be provided'
-        }
-
         if ( $ScheduledFor -and $RelativeScheduledFor )
         {
             throw 'only one of the -ScheduledFor and -RelativeScheduledFor arguments can be provided'
@@ -238,14 +233,14 @@ param
                 Add-Member -Membertype NoteProperty -Name 'end' -value $ts.toString("hh\:mm\:ss") -InputObject $scheduledCycle
             }
 
-            Add-Member -Membertype NoteProperty -Name 'repeat' -value ( "{0:hh\:mm\:ss}" -f ([timespan]::fromseconds($Period.repeat)) ) -InputObject $scheduledCycle
+            Add-Member -Membertype NoteProperty -Name 'repeat' -value ( "{0:hh\:mm\:ss}" -f $Period.repeat ) -InputObject $scheduledCycle
             Add-Member -Membertype NoteProperty -Name 'cycle' -value $scheduledCycle -InputObject $body
             Add-Member -Membertype NoteProperty -Name 'scheduledFor' -value ( $OrderId | Select-String -Pattern "^#(\d{4}-\d{2}-\d{2})#" ).matches.groups[1].value -InputObject $body
         } else {
             if ( $RelativeScheduledFor )
             {
                 Add-Member -Membertype NoteProperty -Name 'scheduledFor' -value $RelativeScheduledFor -InputObject $body
-            } else {
+            } elseif ( $ScheduledFor ) {
                 Add-Member -Membertype NoteProperty -Name 'scheduledFor' -value (Get-Date $ScheduledFor.ToUniversalTime() -Format 'yyyy-MM-dd HH:mm:ss') -InputObject $body
             }
         }
@@ -257,7 +252,7 @@ param
 
         if ( $RemoveVariables )
         {
-            Add-Member -Membertype NoteProperty -Name 'removeVariables' -value @($RemoveVariables) -InputObject $body
+            Add-Member -Membertype NoteProperty -Name 'removeVariables' -value $RemoveVariables -InputObject $body
         }
 
         if ( $StartPosition )
@@ -265,9 +260,9 @@ param
             Add-Member -Membertype NoteProperty -Name 'startPosition' -value $StartPosition -InputObject $body
         }
 
-        if ( $EndPosition )
+        if ( $EndPositions )
         {
-            Add-Member -Membertype NoteProperty -Name 'endPositions' -value @($EndPositions) -InputObject $body
+            Add-Member -Membertype NoteProperty -Name 'endPositions' -value $EndPositions -InputObject $body
         }
 
         if ( $BlockPosition )
@@ -310,7 +305,7 @@ param
 
             if ( $response.StatusCode -eq 200 )
             {
-                $dailyPlanItems = ( $response.Content | ConvertFrom-JSON ).orderIds
+                $dailyPlanItems = ( $response.Content | ConvertFrom-Json ).orderIds
             } else {
                 throw ( $response | Format-List -Force | Out-String )
             }
