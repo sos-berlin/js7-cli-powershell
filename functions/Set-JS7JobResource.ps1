@@ -409,9 +409,9 @@ param
                     # remove trailing \n\r added from Out-String, double \ do to JS7 JOC Cockpit quoting
                     $result=((($result -replace "`r`$", '') -replace "`n`$", '') -replace '\\', '\\')
                     Add-Member -Membertype NoteProperty -Name "$($Key)_key" -value "`"enc:$($result)`"" -InputObject $configuration.arguments -Force
-                    Add-Member -Membertype NoteProperty -Name $Key -value "`"toFile( '$(Get-Content $tempOutfile -Raw)', '*.fil')`"" -InputObject $configuration.arguments -Force
+                    Add-Member -Membertype NoteProperty -Name $Key -value "toFile( '$(Get-Content $tempOutfile -Raw)', '*.fil')" -InputObject $configuration.arguments -Force
                 } else {
-                    Add-Member -Membertype NoteProperty -Name $Key -value "`"toFile( '$(Get-Content $File -Raw)', '*.fil')`"" -InputObject $configuration.arguments -Force
+                    Add-Member -Membertype NoteProperty -Name $Key -value "toFile( '$(Get-Content $File -Raw)', '*.fil')" -InputObject $configuration.arguments -Force
                 }
             }
 
