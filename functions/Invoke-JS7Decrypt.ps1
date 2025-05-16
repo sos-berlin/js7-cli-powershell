@@ -125,16 +125,10 @@ param
     {
         try
         {
-            $parts = $Value.split(' ')
-
-            if ( $parts.count -ne 3 )
+            if ( $Value.split(' ').count -ne 3 )
             {
                throw "$($MyInvocation.MyCommand.Name): value does not include symmetric key, initialization vector and encrypted secret separated by space: -Value $Value"
             }
-
-             $encryptedKey = $parts[0]
-             $iv = $parts[1]
-             $encryptedSecret = $parts[2]
 
             if ( $File -and !(Test-Path -Path $File -PathType leaf) )
             {
@@ -238,8 +232,7 @@ param
                 '-classpath', "$($JavaLib)/patches/*$($separator)$($JavaLib)/sos/*$($separator)$($JavaLib)/3rd-party/*$($separator)$($JavaLib)/stdout",
                 "com.sos.commons.encryption.executable.Decrypt",
                 "--key=$($KeyPath)",
-                "--encrypted-key=$($encryptedKey)",
-                "--iv=$($iv)")
+                "--in=$($Value)")
 
             if ( $KeyCredential )
             {
@@ -249,17 +242,13 @@ param
             }
 
             if ( $File ) {
-                $cmdPath = "$($env:JAVA_HOME)/bin/java"
                 $cmdArgList += @(
                     "--infile=$($File)",
                     "--outfile=$($OutFile)" )
-                $result=(& $cmdPath $cmdArgList) | Out-String
-            } else {
-                $cmdPath = "$($env:JAVA_HOME)/bin/java"
-                $cmdArgList += @(
-                    "--in=$($encryptedSecret)" )
-                $result=(& $cmdPath $cmdArgList) | Out-String
             }
+            
+            $cmdPath = "$($env:JAVA_HOME)/bin/java"
+            $result=(& $cmdPath $cmdArgList) | Out-String
 
             # remove trailing \n\r added from Out-String
             $result=(($result -replace "`r`$", '') -replace "`n`$", '')

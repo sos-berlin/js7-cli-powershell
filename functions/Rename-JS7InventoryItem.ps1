@@ -62,7 +62,7 @@ This cmdlet accepts pipelined job objects that are e.g. returned from a Get-JS7W
 This cmdlet returns no output.
 
 .EXAMPLE
-Rename-JS7InventoryItem -Path /some_path/workflow173 -Type WORKFLOW -Name workflow174
+Rename-JS7InventoryItem -Path /some_path/workflow173 -Type WORKFLOW -NewPath /some_other_path/workflow174
 
 Renames the given workflow in the JOC Cockpit inventory.
 
