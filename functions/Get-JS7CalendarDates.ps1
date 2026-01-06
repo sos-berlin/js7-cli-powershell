@@ -42,6 +42,11 @@ $dates = Get-JS7CalendarDates -CalendarPath /BusinessDays -DateTo (Get-Date).Add
 Returns the calendar dates for the next 30 days.
 
 .EXAMPLE
+$dates = Get-JS7CalendarDates -CalendarPath /BusinessDays -DateTo (Get-Date).AddDays(30) -Excluded
+
+Returns excluded calendar dates for the next 30 days.
+
+.EXAMPLE
 $dates = Get-JS7Calendar -WorkingDays | Get-JS7calendarDates
 
 Returns the dates from any working day calendars available with the inventory.
@@ -58,7 +63,9 @@ param
     [Parameter(Mandatory=$False,ValueFromPipelinebyPropertyName=$True)]
     [DateTime] $DateFrom,
     [Parameter(Mandatory=$False,ValueFromPipelinebyPropertyName=$True)]
-    [DateTime] $DateTo
+    [DateTime] $DateTo,
+    [Parameter(Mandatory=$False,ValueFromPipeline=$False,ValueFromPipelinebyPropertyName=$True)]
+    [switch] $Excluded    
 )
     Begin
     {
@@ -101,7 +108,12 @@ param
 
         if ( $response.StatusCode -eq 200 )
         {
-            $returnCalendarDateItems = ( $response.Content | ConvertFrom-Json ).dates
+            if ( $Excluded )
+            {
+                $returnCalendarDateItems = ( $response.Content | ConvertFrom-Json ).withExcludes
+            } else {
+                $returnCalendarDateItems = ( $response.Content | ConvertFrom-Json ).dates
+            }
         } else {
             throw ( $response | Format-List -Force | Out-String )
         }

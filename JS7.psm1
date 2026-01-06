@@ -460,6 +460,11 @@ function Invoke-JS7WebRequest( [string] $Path, [object] $Body, [string] $Method=
     $Headers.Add( 'X-Access-Token', $script:jsWebService.AccessToken )
     $requestParams.Add( 'Headers', $Headers )
 
+    if ( isPowerShellVersion 5 )
+    {
+        $requestParams.Add( 'UseBasicParsing', $true )
+    }
+
     if ( isPowerShellVersion 6 )
     {
         $requestParams.Add( 'AllowUnencryptedAuthentication', $true )

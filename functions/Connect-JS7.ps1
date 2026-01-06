@@ -436,6 +436,11 @@ param
         $requestParams.Add( 'ContentType', 'application/json' )
         $requestParams.Add( 'Method', 'POST' )
 
+        if ( isPowerShellVersion 5 )
+        {
+            $requestParams.Add( 'UseBasicParsing', $true )
+        }
+
         if ( isPowerShellVersion 6 )
         {
             $requestParams.Add( 'AllowUnencryptedAuthentication', $true )
